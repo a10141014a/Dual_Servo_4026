@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_CS_sysIO" Id="{0a451535-5037-4ea3-a3e3-1d2893241438}">
+    <Declaration><![CDATA[TYPE ST_CS_sysIO :
+STRUCT
+    // PLC -> KRC
+	qSTOP		: BOOL;		//停止     
+	qSTART		: BOOL;     //開始     
+	qPAUSE		: BOOL;     //暫停     
+	qCONTINUE	: BOOL;     //繼續     
+	qRESET		: BOOL;     //停止並卸載  
+	qENABLE		: BOOL;     //激活scara
+	qPGNO       : BYTE;     //AppID0 
+	qACKNOWLEDGEMSG	: BOOL; //確認消息   
+	qOVERRIDE		: BOOL; //程序倍率   
+
+    // KRC -> PLC
+    iREADY           : BOOL;   // 系統就緒   
+    iRUNNING         : BOOL;   // 運行中    
+    iPAUSED          : BOOL;   // 已暫停    
+    iSTOPPED         : BOOL;   // 已停止    
+    iERROR           : BOOL;   // 程序錯誤   
+    iSAFEGURAD_ON    : BOOL;   // 安全門已打開 
+    iESTOP_ON        : BOOL;   // 緊急停止已按下
+	iSERROR				: BOOL;
+	iWARING             : BOOL;
+	iENABLED            : BOOL;
+	iACKNOWLEDGED       : BOOL;
+	iERROR_CODE         : BOOL;
+	iOVER_RIDE_OUT      : BOOL;
+	iHome_Pos			:BOOL;
+	iEXT_CONTROL		:BOOL;
+END_STRUCT               		
+END_TYPE     
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

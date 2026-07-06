@@ -1,0 +1,179 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="Spacil_FC" Id="{35f2ca77-a05a-4003-a50b-0a82cc719b28}" SpecialFunc="None">
+    <Declaration><![CDATA[{attribute 'hide_all_locals'}
+FUNCTION_BLOCK Spacil_FC
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+	SystemTime			:DT;
+	ScanCounter			:DWORD;
+	SM400	:BOOL;			// Alway TRUE
+	SM401	:BOOL;			// Alway FALSE
+	SM402	:BOOL;			// First Scan
+	SM403	:BOOL;			// Secend Scan
+	SM410	:BOOL;			// 0.1 Sec blinking
+	SM411	:BOOL;			// 0.2 Sec blinking
+	SM412	:BOOL;			// 1.0 Sec blinking
+	SM413	:BOOL;			// 2.0 Sec blinking
+	CpuUsage           :UDINT;
+END_VAR
+VAR
+	_aryTmr			:ARRAY [0..10] OF TON;
+	_IntenalHeart	:DWORD;
+	fbLocalSystemTime:FB_LocalSystemTime := (bEnable := TRUE);
+	timeAsDT        : DT;
+	bRegi			:ARRAY [0..99] OF BOOL;
+	wBuffer			:ARRAY [0..99] OF DWORD;
+	i				:INT;
+	fbCpuUsage:TC_CpuUsage;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[ScanCounter	:= ScanCounter+1;
+SM402	:= NOT SM400;
+SM403	:= NOT SM402 ;
+SM400	:= TRUE;
+SM401	:= FALSE;
+//SM410 0.1s
+_aryTmr[0](IN:= TRUE , PT:= T#50MS);
+IF _aryTmr[0].q  THEN
+	_aryTmr[0](IN:= FALSE);
+	IF SM410 THEN
+		SM410	:= FALSE;
+	ELSE
+		SM410	:= TRUE;
+	END_IF
+END_IF
+//SM411 0.2s
+_aryTmr[1](IN:= TRUE , PT:= T#100MS);
+IF _aryTmr[1].q  THEN
+	_aryTmr[1](IN:= FALSE);
+	IF SM411 THEN
+		SM411	:= FALSE;
+	ELSE
+		SM411	:= TRUE;
+	END_IF
+END_IF
+//SM412 1.0s
+_aryTmr[2](IN:= TRUE , PT:= T#500MS);
+IF _aryTmr[2].q  THEN
+	_aryTmr[2](IN:= FALSE);
+	IF SM412 THEN
+		SM412	:= FALSE;
+	ELSE
+		SM412	:= TRUE;
+	END_IF
+END_IF
+//sm413 2.0s
+_aryTmr[3](IN:= TRUE , PT:= T#1S);
+IF _aryTmr[3].q  THEN
+	_aryTmr[3](IN:= FALSE);
+	IF SM413 THEN
+		SM413	:= FALSE;
+	ELSE
+		SM413	:= TRUE;
+	END_IF
+END_IF
+fbLocalSystemTime();
+SystemTime:= SYSTEMTIME_TO_DT(fbLocalSystemTime.systemTime);
+fbCpuUsage(START:=SM410,USAGE=>CpuUsage);]]></ST>
+    </Implementation>
+    <Method Name="GetOvertime" Id="{be29ac89-2895-4c8d-b6a8-cfe4f60b1edb}">
+      <Declaration><![CDATA[METHOD GetOvertime : Time
+VAR_INPUT
+	mark	: INT;	//
+END_VAR
+VAR
+	_CurrentCounter,_disCounter	:DWORD;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ _CurrentCounter :=ScanCounter;
+ IF  wBuffer[mark] <> 0 THEN
+	 
+	IF _CurrentCounter >  wBuffer[mark] THEN
+		_disCounter	:=  _CurrentCounter -  wBuffer[mark];
+		ELSE
+		_disCounter	:=   wBuffer[mark] - _CurrentCounter;	
+	END_IF
+	
+	
+	 GetOvertime:= DWORD_TO_TIME(_disCounter);
+END_IF;
+
+ wBuffer[mark]	:= _CurrentCounter;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetOvertime_Clear" Id="{888a7556-8fec-40c2-8173-8524455795c4}">
+      <Declaration><![CDATA[METHOD GetOvertime_Clear : BOOL
+VAR_INPUT
+	mark	: INT;	//
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ wBuffer[mark]	:= 0;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetOvertime_Renew" Id="{aa35daba-1a06-4b96-bc14-5417167b2d30}">
+      <Declaration><![CDATA[METHOD GetOvertime_Renew : Time
+VAR_INPUT
+	mark	: INT;	//
+END_VAR
+VAR
+	_CurrentCounter,_disCounter	:DWORD;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ _CurrentCounter :=ScanCounter;
+ wBuffer[mark]	:= _CurrentCounter;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Spacil_FC">
+      <LineId Id="103" Count="3" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="44" Count="3" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="147" Count="2" />
+      <LineId Id="51" Count="4" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="56" Count="5" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="145" Count="1" />
+      <LineId Id="65" Count="5" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="112" Count="0" />
+    </LineIds>
+    <LineIds Name="Spacil_FC.GetOvertime">
+      <LineId Id="7" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="20" Count="2" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Spacil_FC.GetOvertime_Clear">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Spacil_FC.GetOvertime_Renew">
+      <LineId Id="30" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

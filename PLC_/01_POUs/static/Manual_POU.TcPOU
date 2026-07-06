@@ -1,0 +1,208 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Manual_POU" Id="{48250a18-44d0-49bc-8f62-7b4b94f75257}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Manual_POU
+VAR
+	fbGeneralAxis:ARRAY [1..6]OF FB_AxisGeneral;
+	Clear							:ST_HMIAxieControl;
+	HMIAxis_Box,HMIAxis_Dual1,HMIAxis_Dual2,HMIAxis_flyin,HMIAxis_load1,HMIAxis_load2				:ST_HMIAxieControl;
+	wAxisNumb,wControlNumb,nChangeStep	:INT;
+	tmrChangeMode			:TON;
+	wTemp,i		:INT;
+	bHMI_VerticalRoller , bHMI_VerticalBelt	:BOOL;
+	bHMI_UnboxingInitial	,bHMI_UnboxingInitialDone,bHMI_UnboxingStart,bHMI_UnboxingDone:BOOL;
+	bDualGearIn,bDualGearOut	:BOOL;
+	MC_GearIn,MC_GearInload:MC_GearIn;
+	MC_GearOut,MC_GearOutload:MC_GearOut;
+	A1TouchPos,A2TouchPos					:ARRAY [1..5] OF LREAL;
+	tempA1,tempA2	:LREAL;
+	fbMC_UngroupAllAxes	: MC_UngroupAllAxes;
+	fbMC_GroupDisable	: MC_GroupDisable;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Roller();
+Axis();
+
+]]></ST>
+    </Implementation>
+    <Action Name="Axis" Id="{a8c6ee8a-1977-47ca-9ffa-1eff20488e7a}">
+      <Implementation>
+        <ST><![CDATA[fbGeneralAxis[1](Axis:= Axis_FlyIn,HmiPanel:= HMIAxis_flyin);
+fbGeneralAxis[2](Axis:= Axis_DualServo1,HmiPanel:= HMIAxis_Dual1);
+fbGeneralAxis[3](Axis:= Axis_DualServo2,HmiPanel:= HMIAxis_Dual2);
+fbGeneralAxis[4](Axis:= Axis_BoxPullOut,HmiPanel:= HMIAxis_Box,i_homecam:= NOT Sen_AxisBoxORG);	
+fbGeneralAxis[5](Axis:= Axis_load1,HmiPanel:= HMIAxis_load1);
+fbGeneralAxis[6](Axis:= Axis_load2,HmiPanel:= HMIAxis_load2);
+
+MC_GearIn(
+	Master:= Axis_DualServo1, 
+	Slave:= Axis_DualServo2, 
+	Execute:= bDualGearIn, 
+	RatioNumerator:= , 
+	RatioDenominator:= , 
+	Acceleration:= , 
+	Deceleration:= , 
+	Jerk:= , 
+	BufferMode:= , 
+	Options:= , 
+	InGear=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+
+MC_GearOut(
+	Slave:= Axis_DualServo2, 
+	Execute:= bDualGearOut, 
+);		
+
+MC_GearInload(
+	Master:= Axis_load1, 
+	Slave:= Axis_load2, 
+	Execute:= , 
+	RatioNumerator:= , 
+	RatioDenominator:= , 
+	Acceleration:= , 
+	Deceleration:= , 
+	Jerk:= , 
+	BufferMode:= , 
+	Options:= , 
+	InGear=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+
+MC_GearOutload(
+	Slave:= Axis_load2, 
+	Execute:= , 
+);		
+UngroupAllAxes();
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Roller" Id="{83b3b19c-1248-4507-9ca7-e03f600c5e09}">
+      <Implementation>
+        <ST><![CDATA[IF bHMI_VerticalRoller THEN
+	AssRoller.Roller();	
+END_IF
+
+IF bHMI_VerticalBelt THEN
+	AssRoller.Belt();	
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="Seizure" Id="{dfe7ba06-b60b-4710-88d0-89aa4fe757ba}">
+      <Implementation>
+        <ST><![CDATA[(*
+tmrChangeMode(PT:=T#1S);
+
+
+
+CASE wControlNumb OF
+	0:
+		fbGeneralAxis[1](Axis:= Axis_FlyIn,HmiPanel:= HMIControlAxis);
+	1:
+		fbGeneralAxis[2](Axis:= Axis_Conv1,HmiPanel:= HMIControlAxis);
+	2:
+		fbGeneralAxis[3](Axis:= Axis_Conv2,HmiPanel:= HMIControlAxis);
+	3:
+		fbGeneralAxis[4](Axis:= Axis_BoxPullOut,HmiPanel:= HMIControlAxis);	
+	4:
+		fbGeneralAxis[5](Axis:= Axis_Unload1,HmiPanel:= HMIControlAxis);
+	5:
+		fbGeneralAxis[6](Axis:= Axis_Unload2,HmiPanel:= HMIControlAxis);
+END_CASE
+CASE nChangeStep OF
+	0:
+		IF wTemp<> wAxisNumb THEN
+			nChangeStep	 := 5 ;
+		END_IF; 
+
+	5:
+		HMIControlAxis:= Clear;
+		tmrChangeMode(IN:= TRUE,PT:=T#1S);
+		IF tmrChangeMode.Q THEN
+			tmrChangeMode(IN:= FALSE);
+			wControlNumb	:= wAxisNumb;
+			nChangeStep	 	:= 0 ;
+		END_IF
+
+
+END_CASE
+
+
+wTemp	:= wAxisNumb ;
+*)
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="UngroupAllAxes" Id="{46f9945f-0b23-4d86-9aa0-67027dd84466}">
+      <Declaration><![CDATA[METHOD UngroupAllAxes : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[fbMC_GroupDisable(
+	AxesGroup:= DualGroupRef, 
+	Execute:= , 
+	Done=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorId=> );	
+
+fbMC_UngroupAllAxes(
+	AxesGroup:= DualGroupRef, 
+	Execute:= fbMC_GroupDisable.Done, 
+	Done=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorId=> );	
+	
+UngroupAllAxes :=fbMC_UngroupAllAxes.Done AND fbMC_GroupDisable.Done;]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Manual_POU">
+      <LineId Id="52" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="132" Count="0" />
+    </LineIds>
+    <LineIds Name="Manual_POU.Axis">
+      <LineId Id="50" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="54" Count="15" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="70" Count="1" />
+      <LineId Id="73" Count="1" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="76" Count="21" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="98" Count="0" />
+    </LineIds>
+    <LineIds Name="Manual_POU.Roller">
+      <LineId Id="1" Count="2" />
+      <LineId Id="6" Count="2" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Manual_POU.Seizure">
+      <LineId Id="1" Count="0" />
+      <LineId Id="3" Count="37" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="41" Count="0" />
+    </LineIds>
+    <LineIds Name="Manual_POU.UngroupAllAxes">
+      <LineId Id="6" Count="15" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <GVL Name="GVL" Id="{50e5aea6-7a13-4d7c-af9a-a310723619e3}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	OP		:ST_Operation	;
+	SF		:Spacil_FC;
+	slot	:ARRAY [1..5] OF ST_SlotData;
+	DualGroupRef 		: AXES_GROUP_REF;
+	M_Openbox1			:Ass_Openbox;				// 
+	M_DualServo			:Ass_DualServo;				//雙伺服輸送
+	M_LoadPic3			:Ass_LoadPic;				//裝箱 
+	M_Sealing2			:Ass_Sealing;				//封箱底部 
+	M_UnloadNG4			:Ass_UnloadNG;				//
+	M_StackComv5		:Ass_StackComv;				//推疊機構 
+	M_RBStack6			:Ass_RBStack;				//手臂堆疊 
+	M_Pallet			:Ass_Pallet;
+	RecipeManCommands	:RecipeManCommands;			//配方處理 
+	MainControl			:MainControl;
+	DoNotLoadingRB: BOOL;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

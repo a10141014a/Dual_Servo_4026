@@ -1,0 +1,263 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FB_CylinderBase" Id="{97fb96fe-ea69-4de0-bfa5-ae51e7218c65}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_CylinderBase 
+VAR_INPUT
+	i_en					:BOOL;
+	ref_stCyl              : REFERENCE TO ST_Cylinder;  // 綁定目標 
+END_VAR
+VAR
+    // 既有：除抖與監看 
+	_tonTimeOutEnd,_tonEndDeb		:TON;	
+	_tonTimeOutORI,_tonORIDeb		:TON;
+    // === ConsistencyCheck 專用的「保留狀態」 === 
+    _cc_tonStuck   : TON;   // 感測卡住用；放在 FB 內才能跨掃描記憶 
+	
+	
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT i_en THEN
+	RETURN;
+END_IF
+
+// === 確認使用的型號 ===  
+CASE ref_stCyl.stCylinderPara.eCylinderType OF 
+	E_CylinderType.ThreePort_TwoPosition:
+		ThreePort_TwoPosition();
+	E_CylinderType.FivePort_TwoPosition:
+		FivePort_TwoPosition();
+END_CASE
+
+_cc_tonStuck(IN:= ref_stCyl.iEndSensor AND ref_stCyl.iOriginSensor , PT:=T#0.3S);
+IF _cc_tonStuck.Q THEN
+	ref_stCyl.eCylFault	:= E_CylFault.BothSensorsOn;
+END_IF
+IF ref_stCyl.bReset THEN
+	ref_stCyl.bReset:=FALSE;
+	Reset();
+END_IF
+
+
+_UpdateFaultFlag();]]></ST>
+    </Implementation>
+    <Method Name="_UpdateFaultFlag" Id="{4b601817-3cd7-4932-862b-12560673e7f2}">
+      <Declaration><![CDATA[METHOD PRIVATE _UpdateFaultFlag : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[ref_stCyl.bError := (ref_stCyl.eCylFault <> E_CylFault.None) ;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FivePort_TwoPosition" Id="{804f7a54-f6f1-4ac6-84c8-f91a3881ee6e}">
+      <Declaration><![CDATA[METHOD INTERNAL FivePort_TwoPosition
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//異常感測時間	
+	_tonTimeOutEnd(IN := ref_stCyl.qExtendCoil AND NOT ref_stCyl.iEndSensor, PT := ref_stCyl.stCylinderPara.tEndTimeout);
+	
+	IF _tonTimeOutEnd.Q AND NOT ref_stCyl.stCylinderPara.bEndNoSensor THEN		//確認TimeOut + NO Sensor 
+		ref_stCyl.eCylFault := E_CylFault.TimeoutExtend;
+	END_IF
+
+	_tonTimeOutORI(IN := ref_stCyl.qRetractCoil AND NOT ref_stCyl.iOriginSensor, PT := ref_stCyl.stCylinderPara.tOriginTimeout);
+	
+	IF _tonTimeOutORI.Q AND NOT ref_stCyl.stCylinderPara.bOriginNoSensor THEN		//確認TimeOut + NO Sensor 
+		ref_stCyl.eCylFault := E_CylFault.TimeoutRetract;
+	END_IF	
+
+	
+//穩定時間 輸出監控 
+	
+	IF NOT ref_stCyl.stCylinderPara.bEndNoSensor  THEN			//有感測器 
+		_tonEndDeb(IN:=ref_stCyl.iEndSensor , PT := ref_stCyl.stCylinderPara.tEndDebounceTime );
+		ref_stCyl.bEndConfirmed	:= _tonEndDeb.Q ;
+	ELSE														//沒感測器 
+		_tonEndDeb(IN:=ref_stCyl.qExtendCoil , PT := ref_stCyl.stCylinderPara.tEndDebounceTime );
+		ref_stCyl.bEndConfirmed	:= _tonEndDeb.Q ;		
+	END_IF
+
+	
+//穩定時間 回歸
+
+	IF NOT ref_stCyl.stCylinderPara.bOriginNoSensor  THEN			//有感測器 
+		_tonORIDeb(IN:=ref_stCyl.iOriginSensor , PT := ref_stCyl.stCylinderPara.tOriginDebounceTime );
+		ref_stCyl.bOriginConfirmed	:= _tonORIDeb.Q ;
+	ELSE														//沒感測器  
+		_tonORIDeb(IN:= ref_stCyl.qRetractCoil , PT := ref_stCyl.stCylinderPara.tOriginDebounceTime );
+		ref_stCyl.bOriginConfirmed	:= _tonORIDeb.Q ;		
+	END_IF
+//自動關閉 
+	IF ref_stCyl.stCylinderPara.bCoilAutoOff THEN
+		IF ref_stCyl.iEndSensor	THEN
+			ref_stCyl.qExtendCoil :=FALSE;
+		END_IF
+		IF ref_stCyl.iOriginSensor	THEN
+			ref_stCyl.qRetractCoil :=FALSE;
+		END_IF	
+	
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Home" Id="{12ecb7da-4fa2-4989-bf54-16ddc6ce5cc4}">
+      <Declaration><![CDATA[METHOD Home : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE ref_stCyl.stCylinderPara.eCylinderType OF 
+	E_CylinderType.ThreePort_TwoPosition:
+		ref_stCyl.qExtendCoil	:=FALSE;
+	E_CylinderType.FivePort_TwoPosition:
+		ref_stCyl.qExtendCoil	:=FALSE;
+		ref_stCyl.qRetractCoil	:= TRUE;
+END_CASE
+Home:= ref_stCyl.iOriginSensor;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Reset" Id="{a023ba7c-23c1-4fb5-8466-5cfa667519a2}">
+      <Declaration><![CDATA[METHOD Reset
+VAR_INPUT
+END_VAR
+// ======================================================
+//  Reset  — 復歸：清錯 + 停止所有監看/定時器
+// ======================================================]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+// 停止監看
+_watchOri := FALSE;
+_watchEnd := FALSE;
+
+// 關閉所有 TON
+_tonTO_Ori(IN := FALSE);
+_tonTO_End(IN := FALSE);
+_tonOriDeb(IN := FALSE);
+_tonEndDeb(IN := FALSE);
+_cc_tonStuck(IN := FALSE);
+
+*)
+// 清除錯誤/故障碼
+ref_stCyl.eCylFault      := E_CylFault.None;
+ref_stCyl.bError         := FALSE;
+
+// （可選）清除已確認狀態，讓到位需重新經過除抖
+ref_stCyl.bOriginConfirmed := FALSE;
+ref_stCyl.bEndConfirmed    := FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ThreePort_TwoPosition" Id="{b4ab4507-2acc-4b60-a06b-0fa2c5650d46}">
+      <Declaration><![CDATA[METHOD INTERNAL ThreePort_TwoPosition
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//異常感測時間	
+	_tonTimeOutEnd(IN := ref_stCyl.qExtendCoil AND NOT ref_stCyl.iEndSensor, PT := ref_stCyl.stCylinderPara.tEndTimeout);
+	
+	IF _tonTimeOutEnd.Q AND NOT ref_stCyl.stCylinderPara.bEndNoSensor THEN		//確認TimeOut + NO Sensor 
+		ref_stCyl.eCylFault := E_CylFault.TimeoutExtend;
+	END_IF
+
+	_tonTimeOutORI(IN := NOT ref_stCyl.qExtendCoil AND NOT ref_stCyl.iOriginSensor, PT := ref_stCyl.stCylinderPara.tOriginTimeout);
+	
+	IF _tonTimeOutORI.Q AND NOT ref_stCyl.stCylinderPara.bOriginNoSensor THEN		//確認TimeOut + NO Sensor 
+		ref_stCyl.eCylFault := E_CylFault.TimeoutRetract;
+	END_IF	
+
+	
+//穩定時間 輸出監控 
+	
+	IF NOT ref_stCyl.stCylinderPara.bEndNoSensor  THEN			//有感測器 
+		_tonEndDeb(IN:=ref_stCyl.iEndSensor , PT := ref_stCyl.stCylinderPara.tEndDebounceTime );
+		ref_stCyl.bEndConfirmed	:= _tonEndDeb.Q ;
+	ELSE														//沒感測器 
+		_tonEndDeb(IN:=ref_stCyl.qExtendCoil , PT := ref_stCyl.stCylinderPara.tEndDebounceTime );
+		ref_stCyl.bEndConfirmed	:= _tonEndDeb.Q ;		
+	END_IF
+
+	
+//穩定時間 回歸
+
+	IF NOT ref_stCyl.stCylinderPara.bOriginNoSensor  THEN			//有感測器 
+		_tonORIDeb(IN:=ref_stCyl.iOriginSensor , PT := ref_stCyl.stCylinderPara.tOriginDebounceTime );
+		ref_stCyl.bOriginConfirmed	:= _tonORIDeb.Q ;
+	ELSE														//沒感測器  
+		_tonORIDeb(IN:=NOT ref_stCyl.qExtendCoil , PT := ref_stCyl.stCylinderPara.tOriginDebounceTime );
+		ref_stCyl.bOriginConfirmed	:= _tonORIDeb.Q ;		
+	END_IF
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_CylinderBase">
+      <LineId Id="103" Count="2" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="72" Count="3" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="77" Count="1" />
+      <LineId Id="87" Count="1" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="119" Count="1" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="76" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CylinderBase._UpdateFaultFlag">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CylinderBase.FivePort_TwoPosition">
+      <LineId Id="9" Count="33" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="51" Count="3" />
+      <LineId Id="49" Count="1" />
+      <LineId Id="48" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CylinderBase.Home">
+      <LineId Id="6" Count="4" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="13" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CylinderBase.Reset">
+      <LineId Id="29" Count="0" />
+      <LineId Id="6" Count="9" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="16" Count="2" />
+      <LineId Id="20" Count="3" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_CylinderBase.ThreePort_TwoPosition">
+      <LineId Id="17" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="20" Count="2" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="58" Count="1" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="27" Count="1" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="52" Count="5" />
+      <LineId Id="49" Count="2" />
+      <LineId Id="47" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

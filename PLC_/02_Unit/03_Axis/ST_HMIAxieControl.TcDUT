@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_HMIAxieControl" Id="{4fea0f2e-581a-4d74-927d-9f3718a9fd12}">
+    <Declaration><![CDATA[TYPE ST_HMIAxieControl :
+STRUCT
+	strStatus	:STRING(30);
+	bServoSwitch,bORG,bAbsPos,bINCPos,bJogF,bJogB,bStop,bReset,bSupp1,bSupp2:BOOL;
+	CommandAddres	, CommandVelo ,ORGOffset	:REAL;
+	moniDI										:UDINT;
+	moniDeviceErrorCode							:WORD;
+	bMoniReady,bMoniDeviceError	,bMoniHomed,bMoniConpled,bMoniControlLoopClosed				:BOOL;
+
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

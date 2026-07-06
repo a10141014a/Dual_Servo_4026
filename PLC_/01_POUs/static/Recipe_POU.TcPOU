@@ -1,0 +1,320 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Recipe_POU" Id="{95390418-b344-4f7c-80c6-a06b0ed686c4}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Recipe_POU
+VAR	
+	bLoadDefData		:BOOL;
+	bCreateRecipe		:BOOL;
+	bSaveParameter 		:BOOL;  //保存文件 
+	bLoadParameter 		:BOOL;  //讀取文件 
+	bDelete				:BOOL;	//刪除配方 
+	bRecipeCount		:BOOL	:=TRUE;	//讀取配方數量
+	bSaveView,bLoadView,bCreateView		:BOOL;
+	dwError				:DWORD;
+	sRecipeName			:STRING(50);
+    arrFileName : ARRAY[1..100] OF STRING;
+	arrFileBtn 	: ARRAY[1..100] OF BOOL;
+	bCopytoWork	:BOOL;
+	i,RecipeQty: INT;
+	bTest,bPreview: BOOL;
+END_VAR
+
+VAR CONSTANT
+	//參數數量
+	QuantityLimit	:INT := 100;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR i:= 1 TO QuantityLimit DO
+	IF arrFileBtn[i] THEN
+		Edit_Parameter.strName	:= arrFileName[i];
+		RunParameter.strName	:= arrFileName[i];
+		arrFileBtn[i]:=FALSE;
+	END_IF
+END_FOR
+Edit_Parameter.strName:= F_TrimRightSpace(Edit_Parameter.strName);
+sRecipeName	:= Edit_Parameter.strName;
+
+/////////////讀取recipeQty /////////////////
+IF bRecipeCount THEN
+	ReloadList();
+	bRecipeCount:=FALSE;
+END_IF;
+//将plc数据以文件形式保存在工控机中 
+
+CheckCreateView();
+IF bCreateRecipe THEN
+	dwError	:=RecipeManCommands.CreateRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=sRecipeName );
+	dwError	:=RecipeManCommands.ReadAndSaveRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=sRecipeName );
+	ReloadList();
+	bCreateRecipe :=FALSE;
+END_IF
+//将工控机中的文件数据读取到plc中 
+CheckLoadView();
+IF bLoadParameter THEN
+	dwError	:=	0;
+    dwError:= RecipeManCommands.LoadAndWriteRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=sRecipeName);
+    bLoadParameter:=FALSE;
+END_IF 
+IF bSaveParameter THEN  
+	dwError	:=RecipeManCommands.ReadAndSaveRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=sRecipeName );
+	bSaveParameter:=FALSE;
+END_IF
+
+IF bTest THEN
+	dwError	:=RecipeManCommands.ReloadRecipes(RecipeDefinitionName:='Recipes' );
+	bTest:=FALSE;
+END_IF
+
+IF bDelete THEN
+	dwError	:=RecipeManCommands.DeleteRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=sRecipeName );
+	dwError	:=RecipeManCommands.DeleteRecipeFile(RecipeDefinitionName:='Recipes' , RecipeName:=sRecipeName );
+	ReloadList();
+	bDelete	:=FALSE;
+END_IF
+IF bCopytoWork THEN
+	bCopytoWork:=FALSE;
+	RunParameter:= Edit_Parameter;
+END_IF
+
+IF bPreview THEN
+	RunParameter.strName:= F_TrimRightSpace(RunParameter.strName);
+	dwError:= RecipeManCommands.LoadAndWriteRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=RunParameter.strName);	
+	bPreview:= FALSE;
+	IF dwError<> 0 THEN
+		EventLogger.eEventType		:= 2;
+		EventLogger.strEventText	:= 'Recipe Not Find ';	
+		EventLogger();
+		ELSE	
+		RunParameter	:= Edit_Parameter;
+		EventLogger.eEventType		:= 1;
+		EventLogger.strEventText	:= 'Recipe Loaded ';	
+		EventLogger();
+	END_IF
+END_IF
+
+IF bLoadDefData THEN
+	LoadDefData();
+	bLoadDefData:=FALSE;
+END_IF
+]]></ST>
+    </Implementation>
+    <Action Name="CheckCreateView" Id="{4465b55e-08f6-4c92-9b43-6c0c7c2ba776}">
+      <Implementation>
+        <ST><![CDATA[IF sRecipeName='' THEN
+	bCreateView:=FALSE;
+	RETURN;
+END_IF
+//確認數量不超過 
+IF RecipeQty < QuantityLimit THEN
+	bSaveView	:=FALSE;
+	bLoadView	:=FALSE;
+	bCreateView:=TRUE;
+END_IF
+
+FOR i := 1 TO QuantityLimit DO
+	IF sRecipeName = arrFileName[i] THEN
+		bCreateView:=FALSE;
+		EXIT;
+	END_IF
+END_FOR
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="CheckLoadView" Id="{9f98fe8b-860a-47e3-a636-2f8c1a273c34}">
+      <Implementation>
+        <ST><![CDATA[bLoadview:=FALSE;
+bSaveView:=FALSE;
+IF sRecipeName='' THEN
+	RETURN;
+END_IF
+
+FOR i := 1 TO QuantityLimit DO
+	IF sRecipeName = arrFileName[i] THEN
+		bLoadview:= bSaveView:=TRUE;
+		EXIT;
+	END_IF
+END_FOR
+IF Edit_Parameter.Dual_Velo = 0 OR Edit_Parameter.Fly_Velo = 0 THEN
+	bSaveView:=FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="LoadDefData" Id="{6c5fc0bc-6347-40ca-ba28-44e9b8cdcaa5}">
+      <Implementation>
+        <ST><![CDATA[Edit_Parameter.Dual_LoadInPos			:= 1500;
+Edit_Parameter.Dual_ModulePitchLength	:= 100;
+Edit_Parameter.Dual_Length				:= 430;
+Edit_Parameter.Dual_Gap					:= 150;
+Edit_Parameter.Dual_LoadOutPos			:= 2800;
+Edit_Parameter.Dual_LoadOutSecPos		:= 3200;
+Edit_Parameter.Dual_TwiceClip			:= FALSE;
+Edit_Parameter.Dual_Velo				:= 1000;
+Edit_Parameter.Dual_LoadInQty[0]		:= 4;
+Edit_Parameter.Dual_LoadInQty[1]		:= 4;
+Edit_Parameter.Dual_LoadInQty[2]		:= 4;
+Edit_Parameter.Dual_LoadInQty[3]		:= 4;
+
+
+Edit_Parameter.Fly_DelayTime			:= T#0.2S;
+Edit_Parameter.Fly_Disdance				:= 700;
+Edit_Parameter.Fly_Velo					:= 1000;
+
+Edit_Parameter.Unboxing_PullOut			:= 320;
+Edit_Parameter.Unboxing_LoadOut			:= 525;
+Edit_Parameter.Unboxing_Velo			:= 150;
+
+Edit_Parameter.Load_Sdandby				:= 0;
+Edit_Parameter.Load_RBLoadin			:= 300;
+Edit_Parameter.Load_Velo				:= 200;
+Edit_Parameter.Load_LoadOut				:= 0;		//暫無使用 
+]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="LoadingRecipe" Id="{81bda9c0-8a6d-46f4-b021-2044b8eccdb9}">
+      <Declaration><![CDATA[METHOD LoadingRecipe : BOOL
+VAR_INPUT
+	Name			:STRING(50);
+END_VAR
+
+VAR
+	bGetRecipe: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Name='' THEN
+	LoadingRecipe:=FALSE;
+	RETURN;
+END_IF
+bGetRecipe:=FALSE;
+FOR i := 1 TO QuantityLimit DO
+	IF Name = arrFileName[i] THEN
+		bGetRecipe:=TRUE;
+		EXIT;
+	END_IF
+END_FOR
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="ReloadList" Id="{a70e3f02-4589-42dc-ae1f-f9cfe5a08a7d}">
+      <Implementation>
+        <ST><![CDATA[	FOR i :=1 TO QuantityLimit DO
+		arrFileName[i] := '';
+	END_FOR
+	
+	dwError := RecipeManCommands.ReloadRecipes('Recipes');
+	RecipeQty:= RecipeMancommands.GetRecipeCount('Recipes');
+	IF dwError = 0 THEN
+		dwError := RecipeManCommands.GetRecipeNames(
+		RecipeDefinitionName := 'Recipes',
+		pStrings := ADR(arrFileName),
+		iSize := 50,
+		iStartIndex := 0);
+	END_IF]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="Recipe_POU">
+      <LineId Id="291" Count="0" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="438" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="467" Count="0" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="256" Count="2" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="269" Count="2" />
+      <LineId Id="363" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="56" Count="1" />
+      <LineId Id="59" Count="2" />
+      <LineId Id="444" Count="2" />
+      <LineId Id="442" Count="0" />
+      <LineId Id="468" Count="1" />
+      <LineId Id="474" Count="0" />
+      <LineId Id="470" Count="1" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="357" Count="0" />
+      <LineId Id="359" Count="0" />
+      <LineId Id="364" Count="0" />
+      <LineId Id="361" Count="1" />
+      <LineId Id="360" Count="0" />
+      <LineId Id="238" Count="0" />
+      <LineId Id="439" Count="0" />
+      <LineId Id="441" Count="0" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="496" Count="2" />
+      <LineId Id="503" Count="0" />
+      <LineId Id="514" Count="0" />
+      <LineId Id="504" Count="0" />
+      <LineId Id="507" Count="1" />
+      <LineId Id="505" Count="0" />
+      <LineId Id="509" Count="0" />
+      <LineId Id="516" Count="0" />
+      <LineId Id="512" Count="1" />
+      <LineId Id="511" Count="0" />
+      <LineId Id="506" Count="0" />
+      <LineId Id="499" Count="0" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="324" Count="0" />
+      <LineId Id="356" Count="0" />
+      <LineId Id="352" Count="1" />
+      <LineId Id="323" Count="0" />
+    </LineIds>
+    <LineIds Name="Recipe_POU.CheckCreateView">
+      <LineId Id="2" Count="3" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="6" Count="5" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="Recipe_POU.CheckLoadView">
+      <LineId Id="18" Count="1" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="4" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="11" Count="5" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="21" Count="1" />
+    </LineIds>
+    <LineIds Name="Recipe_POU.LoadDefData">
+      <LineId Id="1" Count="1" />
+      <LineId Id="4" Count="5" />
+      <LineId Id="20" Count="5" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="30" Count="1" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="34" Count="3" />
+    </LineIds>
+    <LineIds Name="Recipe_POU.LoadingRecipe">
+      <LineId Id="7" Count="10" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Recipe_POU.ReloadList">
+      <LineId Id="2" Count="2" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="5" Count="7" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

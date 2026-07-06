@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ST_CylinderParameter" Id="{ff358cf8-e722-42ee-9ee9-ed72e3c75542}">
+    <Declaration><![CDATA[TYPE ST_CylinderParameter :
+STRUCT
+    eCylinderType      : E_CylinderType;  // 氣缸型式 (3/2 或 5/2)
+    // --- 末端 (End) 相關 ---
+    bEndNoSensor       : BOOL;            // 末端無感測模式
+    tEndDebounceTime   : TIME;            // 末端除抖/穩定判定時間
+    tEndTimeout        : TIME;            // 末端動作超時
+    // --- 原點 (Origin) 相關 ---
+    bOriginNoSensor    : BOOL;            // 原點無感測模式
+    tOriginDebounceTime: TIME;            // 原點除抖/穩定判定時間
+    tOriginTimeout     : TIME;            // 原點動作超時
+    // --- 共用 ---
+    bCoilAutoOff       : BOOL;            // 動作完成自動斷電
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,220 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Initial_POU" Id="{9593bfb5-296d-4592-9257-2c0aff8b49cd}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Initial_POU
+VAR
+	nStep	:INT;
+	strText	:STRING;
+	aryBit	:ARRAY [0..100] OF BOOL;
+	dwError: DWORD;
+	tmrDelay,tmrDone	:TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE nStep OF
+	0:
+		tmrDelay(IN:=FALSE);
+		tmrDone(IN:=FALSE);
+		strText:= 'Intiail Runing';
+		EventLogger.eEventType		:= 2;
+		EventLogger.strEventText	:= 'Ini. Execute! ';	
+		EventLogger();
+		OP.xInitialDone				:=FALSE;
+		nStep:= 5;
+		IF LEN(RunParameter.strName) = 0 THEN
+			nStep			:= 90;
+			EventLogger.eEventType		:= 3;
+			EventLogger.strEventText	:= 'Recipe Not Find ';	
+			EventLogger();
+			strText			:= 'Ini.Recipe Not Find';
+		END_IF;
+	5:
+		tmrDelay(IN:=TRUE,PT:=T#5S);		
+		IF tmrDelay.Q THEN
+			strText:= 'Ini.Recipe Time Up ';
+			EventLogger.eEventType		:= 3;
+			EventLogger.strEventText	:= 'Recipe TimeUp ';	
+			EventLogger();
+			tmrDelay(IN:=FALSE);
+			nStep			:= 90;
+		END_IF	
+			dwError:= RecipeManCommands.LoadAndWriteRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=RunParameter.strName);	
+			IF dwError = 0 THEN
+				RunParameter	:= Edit_Parameter;
+				strText:= 'Ini.Run Home ';
+				nStep			:= 6;
+				ELSE
+				nStep			:= 90;
+				strText:= 'Ini.Recipe Not Find';
+				EventLogger.eEventType		:= 3;
+				EventLogger.strEventText	:= 'Recipe Not Find ';	
+				EventLogger();
+			END_IF
+	6:
+		MainControl.ErrorReset();
+		IF Air_Signal THEN
+			nStep			:= 10;
+			ELSE
+			nStep			:= 90;
+			strText:= 'Ini. Insuff. Air Pressure ';
+			EventLogger.eEventType		:= 3;
+			EventLogger.strEventText	:= ' Insuff. Air Pressure  ';	
+			EventLogger();
+		END_IF;		
+	10:
+		tmrDelay(IN:=TRUE,PT:=T#50S);		
+		IF tmrDelay.Q THEN
+			strText:= 'RB Init.TimeUp ';
+			EventLogger.eEventType		:= 3;
+			EventLogger.strEventText	:= ' RB Init.TimeUp ';	
+			EventLogger();
+			tmrDelay(IN:=FALSE);
+			nStep			:= 90;
+		END_IF	
+	
+		
+		tmrDone(IN:= aryBit[7] AND aryBit[8],PT:=T#0.1S );
+		aryBit[7]:=RB_CS.Initialization();
+		aryBit[8]:=RB_KR.Initialization();					
+		IF 	RB_CS.CommandError THEN
+			strText:= 'RB Init. CS BOX Error ';
+			EventLogger.eEventType		:= 3;
+			EventLogger.strEventText	:= 'RB Init. CS BOX Error';	
+			EventLogger();
+			tmrDelay(IN:=FALSE);
+			nStep			:= 90;
+		END_IF
+		IF tmrDone.Q THEN
+			tmrDelay(IN:=FALSE);
+			nStep	:= 20;	
+		END_IF
+	20:
+		aryBit[0]:=M_DualServo.Initialization(FALSE);
+		aryBit[1]:=M_Openbox1.Initialization(FALSE);
+		aryBit[2]:=M_Sealing2.Initialization(FALSE);
+		aryBit[3]:=M_LoadPic3.Initialization(FALSE);
+		aryBit[4]:=M_UnloadNG4.Initialization(FALSE);
+		aryBit[5]:=M_StackComv5.Initialization(FALSE);
+		aryBit[6]:=M_RBStack6.Initialization(FALSE);
+		tmrDelay(IN:=TRUE,PT:=T#50S);		
+		IF tmrDelay.Q THEN
+			strText:= 'Init. TimeUp ';
+			EventLogger.eEventType		:= 3;
+			EventLogger.strEventText	:= 'Hardware TimeUp';	
+			EventLogger();
+			tmrDelay(IN:=FALSE);
+			nStep			:= 99;	
+		END_IF
+		tmrDone(IN:= aryBit[0] AND aryBit[1] AND aryBit[2] AND aryBit[3] AND aryBit[4] AND aryBit[5] AND aryBit[6] ,PT:=T#0.1S);
+		IF  tmrDone.q THEN
+			tmrDone(IN:=FALSE);
+			tmrDelay(IN:=FALSE);
+			EventLogger.eEventType		:= 1;
+			EventLogger.strEventText	:= 'Intil. Complete';	
+			EventLogger();
+			strText:= 'Int.Finished';
+			nStep			:= 50;
+		END_IF;
+		
+	50:
+		OP.xInitialDone	:= TRUE;	
+	90:		
+		EventLogger.eEventType		:= 3;
+		EventLogger.strEventText	:= 'Ini. Cancel!';	
+		EventLogger();	
+		nStep			:= 91;	
+END_CASE]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{f0e1d5c9-cb6f-4d69-9756-baed2e282f23}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[nStep	:= 0;
+strText	:= '';]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="Initial_POU">
+      <LineId Id="5" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="183" Count="1" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="102" Count="2" />
+      <LineId Id="186" Count="1" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="105" Count="10" />
+      <LineId Id="175" Count="1" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="167" Count="2" />
+      <LineId Id="189" Count="1" />
+      <LineId Id="188" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="151" Count="2" />
+      <LineId Id="192" Count="1" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="154" Count="1" />
+      <LineId Id="149" Count="1" />
+      <LineId Id="156" Count="1" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="145" Count="1" />
+      <LineId Id="195" Count="1" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="147" Count="1" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="20" Count="6" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="198" Count="1" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="87" Count="1" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="201" Count="1" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="138" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="177" Count="1" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="44" Count="0" />
+    </LineIds>
+    <LineIds Name="Initial_POU.FB_init">
+      <LineId Id="7" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

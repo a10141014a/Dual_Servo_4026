@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <EnumerationTextList Name="E_CylFault" Id="{685a65f6-221f-4fdc-9178-f7e14cfce148}">
+    <Declaration><![CDATA[{attribute 'strict'}
+{attribute 'qualified_only'}
+{attribute 'to_string'}
+TYPE E_CylFault :
+(
+	None                  := 0,
+    TimeoutExtend         := 1,  // 預期伸出但到位逾時
+    TimeoutRetract        := 2,  // 預期縮回但到位逾時
+    BothSensorsOn         := 3,  // 原點與末端同時為真（邏輯矛盾/配線錯）
+    CoilConflict          := 4,  // 兩線圈同時為真（監測到）
+    SensorStuck           := 5   // 感測卡住（可選，見下方邏輯）
+);
+END_TYPE
+ ]]></Declaration>
+    <XmlArchive>
+      <Data>
+        <o xml:space="preserve" t="TextListEnumerationTextListObject">
+          <l n="TextList" t="ArrayList" cet="TextListRow">
+            <o>
+              <v n="TextID">"None"</v>
+              <v n="TextDefault">"0"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"TimeoutExtend"</v>
+              <v n="TextDefault">"1"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"TimeoutRetract"</v>
+              <v n="TextDefault">"2"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"BothSensorsOn"</v>
+              <v n="TextDefault">"3"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"CoilConflict"</v>
+              <v n="TextDefault">"4"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">"SensorStuck"</v>
+              <v n="TextDefault">"5"</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+            <o>
+              <v n="TextID">""</v>
+              <v n="TextDefault">""</v>
+              <l n="LanguageTexts" t="ArrayList" />
+            </o>
+          </l>
+          <l n="Languages" t="ArrayList" />
+          <v n="GuidInit">{2b180318-4059-4ec8-aa4f-0b0c4ade1447}</v>
+          <v n="GuidReInit">{50a6d3c5-1ace-45c9-a3f2-557a66be19f0}</v>
+          <v n="GuidExitX">{4eda3319-4fe7-44df-b952-dae490ee6737}</v>
+        </o>
+      </Data>
+      <TypeList>
+        <Type n="ArrayList">System.Collections.ArrayList</Type>
+        <Type n="Guid">System.Guid</Type>
+        <Type n="String">System.String</Type>
+        <Type n="TextListEnumerationTextListObject">{4b60233c-f940-4beb-b331-82133b520151}</Type>
+        <Type n="TextListRow">{53da1be7-ad25-47c3-b0e8-e26286dad2e0}</Type>
+      </TypeList>
+    </XmlArchive>
+  </EnumerationTextList>
+</TcPlcObject>

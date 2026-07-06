@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_KR_stackingIO" Id="{1db152f6-7e2b-4ae7-bc73-7859e6b5892e}">
+    <Declaration><![CDATA[TYPE ST_KR_stackingIO :
+STRUCT
+	cmd_bPallet_AllowPut		:BOOL;	//棧板_棧板允許堆疊
+	cmd_bReady					:BOOL;	//棧板_預約
+	cmd_bCount0					:BOOL;		//棧板_歸零
+	cmd_bFence					:BOOL;		//棧板_光柵 
+	cmd_wSize_length			:INT;	
+	cmd_wSize_width				:INT;
+	cmd_wSize_height			:INT;
+	cmd_wLayer_No				:BYTE;
+	cmd_bPartInPos				:BOOL;
+	cmd_bSetting2Box			:BOOL;
+	cmd_wIndex					:BYTE;
+	cmd_Velo					: BYTE;
+////////////////////////////////////////////////////	
+	fb_wPartNo					:INT;
+	fb_bPickFinish				:BOOL;
+	fb_bWorking				:BOOL;
+	fb_bPalletFinish			:BOOL;
+	fb_bPalletInPos			:BOOL;
+	fb_wIndex					:BYTE;
+	fb_wProNo					:BYTE;
+	fb_bError				:ARRAY [0..7]OF BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

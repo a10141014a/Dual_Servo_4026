@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_Operation" Id="{c0202e6f-666b-406a-bcd9-34dd56bf8e55}">
+    <Declaration><![CDATA[TYPE ST_Operation :
+STRUCT
+	bInitialSign		:BOOL;	//初始化驅動 
+	xInitialDone		:BOOL;	//初始化完成 
+	xInitialRuning		:BOOL;	//初始化運行中 
+	bChangeMode			:BOOL;	//切換PLC狀態 
+	xAutoMode			:BOOL;	//自動狀態 
+	bStop_Sign			:BOOL;	//停止訊號  
+	xAutoRuning			:BOOL;	//自動運行中 
+	bCycleStep			:BOOL;	//半自動 
+	bStart				:BOOL;
+	strStatusText		:WSTRING(100);
+	bReset				:BOOL;	//RESET
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

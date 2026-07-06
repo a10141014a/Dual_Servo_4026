@@ -1,0 +1,402 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="MST_POU" Id="{bb25d244-c2a1-434f-b4af-71e7caee6e2a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MST_POU	//Mechanical structure testing
+VAR
+	bDualRingCycleTest	:BOOL;
+	dualtestVelo		:REAL;
+	nStep				:INT;
+	strText				:STRING(50);
+
+	//
+	tmrDelay			:TON;
+	MC_GearIn			:MC_GearIn;
+	MC_Stop				: MC_Stop;
+	MC_MoveVelocity		: MC_MoveVelocity := (Velocity := 100);
+	fbTrigger_Load1	,	fbTrigger_Load2			:R_TRIG;
+	Loadin1Pos		:ARRAY [1..10] OF LREAL ;
+	Loadin2Pos		:ARRAY [1..10] OF LREAL ;
+	i					:INT;
+	
+	//
+	M	:ARRAY [0..50] OF BOOL ;
+	D	:ARRAY [0..50] OF INT := [60, 90, 49(0)] ;
+	MC_TouchProbeDual1,MC_TouchProbeDual2,MC_TouchProbeFly: MC_TouchProbe;
+	TouchTriggerDual1,TouchTriggerDual2,TouchTriggerFly	:TRIGGER_REF;
+	MC_AbortTrigger1,MC_AbortTrigger2					: MC_AbortTrigger;
+	fbLDF		:ARRAY [0..50] OF F_TRIG;
+	//Loadcell Check
+	bLoadcell_MaxLoad , bLoadcell_RefLoad ,bLoadcell_Percent ,bLoadcell_fbcmd ,bLoadTara ,bLoadcell_ZeroCali ,bLoadcell_Loadcail	:BOOL;
+	tmrLoadcellfbcmd	:TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF PB_EMG OR OP.xInitialRuning OR OP.xAutoRuning THEN
+	FOR i:= 0 TO 50 DO
+		M[i]:=FALSE;
+	END_FOR
+END_IF
+
+
+
+IF M[0] THEN
+	M[6]:= M_DualServo.Initialization(M[1]);
+	IF M[6] THEN
+		M[0]	:=FALSE;
+	END_IF
+END_IF
+
+IF M[4] THEN
+	MainControl.SoftStopAxis();
+END_IF
+IF M[5] THEN
+	M_DualServo.Process(FALSE);
+END_IF
+
+fbTrigger_Load1(CLK:= Sen_AxisLoad1ORG);
+fbTrigger_Load2(CLK:= Sen_AxisLoad2ORG);
+IF fbTrigger_Load1.Q THEN
+	FOR i := 9 TO 1 BY -1 DO
+		Loadin1Pos[i+1]:= Loadin1Pos[i];
+	END_FOR
+	Loadin1Pos[1]	:= Axis_load1.NcToPlc.ActPos;
+END_IF
+
+IF fbTrigger_Load2.Q THEN
+	FOR i := 9 TO 1 BY -1 DO
+		Loadin2Pos[i+1]:= Loadin2Pos[i];
+	END_FOR
+	Loadin2Pos[1]	:= Axis_load2.NcToPlc.ActPos;
+END_IF
+
+//開箱 
+IF M[10] THEN
+	M[11]:=M_Openbox1.Initialization(FALSE);
+END_IF;
+IF M[11] THEN
+	M[10]:=FALSE;
+END_IF;
+IF M[12] THEN
+	M[11]:=M_Openbox1.Process(M[13]);
+END_IF;
+IF M[14] THEN
+	M_Openbox1.HaltStepContiune();
+	M[14]:=FALSE;
+END_IF;
+		
+//裝箱  
+IF M[15] THEN
+	M[16]:=M_LoadPic3.Initialization(FALSE);
+END_IF;
+IF M[16] THEN
+	M[15]:=FALSE;
+END_IF;
+IF M[16] THEN
+	M[15]:=FALSE;
+END_IF;
+IF M[17] THEN
+	M[16]:=M_LoadPic3.Process(M[18]);
+END_IF;
+IF M[19] THEN
+	M_LoadPic3.HaltStepContiune();
+	M[19]:=FALSE;
+END_IF;
+
+//封箱底  
+IF M[20] THEN
+	M[21]:=M_Sealing2.Initialization(FALSE);
+END_IF;
+IF M[21] THEN
+	M[20]:=FALSE;
+END_IF;
+IF M[22] THEN
+	M[21]:=M_Sealing2.Process(M[23]);
+END_IF;
+IF M[24] THEN
+	M_Sealing2.HaltStepContiune();
+	M[24]:=FALSE;
+END_IF;
+
+//秤重晃   
+IF M[25] THEN
+	M[26]:=M_UnloadNG4.Initialization(FALSE);
+END_IF;
+IF M[26] THEN
+	M[25]:=FALSE;
+END_IF;
+IF M[27] THEN
+	M[26]:=M_UnloadNG4.Process(M[28]);
+END_IF;
+IF M[29] THEN
+	M_UnloadNG4.HaltStepContiune();
+	M[29]:=FALSE;
+END_IF;
+
+//堆疊
+
+IF M[30] THEN
+	M[31]:=M_StackComv5.Initialization(FALSE);
+END_IF;
+IF M[31] THEN
+	M[30]:=FALSE;
+END_IF;
+IF M[32] THEN
+	M[31]:=M_StackComv5.Process(FALSE);
+END_IF;
+//堆疊手臂
+
+IF M[35] THEN
+	M[36]:=M_RBStack6.Initialization(FALSE);
+END_IF;
+IF M[37] THEN
+	M[36]:=M_RBStack6.Process(M[38]);
+END_IF;
+IF M[39] THEN
+	M_RBStack6.HaltStepContiune();
+	M[39]:=FALSE;
+END_IF;
+
+IF M[40] THEN
+	MainControl.StopAllAxes();
+	M[40]:=FALSE;
+END_IF
+
+IF M[41] THEN
+	 M[42]:=RB_CS.Initialization();
+END_IF
+
+IF M[43] THEN
+	 M[42]:=RB_CS.POU_Run(INT_TO_BYTE(D[0]));
+END_IF
+
+IF M[44] THEN
+	 M[45]:=RB_KR.POU_Run(INT_TO_BYTE(D[1]));
+END_IF
+IF M[46] THEN
+	 M[45]	:=	RB_KR.Initialization();
+END_IF
+
+
+
+//Loadcell
+IF bLoadcell_MaxLoad THEN
+	bLoadcell_fbcmd	:=LoadCell.SetNomialLoad(Setting_MaxLoad);
+END_IF
+
+IF bLoadcell_RefLoad THEN
+	bLoadcell_fbcmd	:=LoadCell.SetRefLoad(Setting_RefLoad);
+
+END_IF
+
+IF bLoadcell_Percent THEN
+	bLoadcell_fbcmd	:=LoadCell.SetScaleFactor(Setting_LoadPercent);
+END_IF
+
+IF bLoadcell_ZeroCali THEN
+	bLoadcell_fbcmd	:=LoadCell.SetZeroCalibration();
+END_IF
+
+IF bLoadcell_Loadcail THEN
+	bLoadcell_fbcmd	:=LoadCell.SetLoadCalibration();
+END_IF
+
+IF bLoadTara THEN
+	bLoadcell_fbcmd	:= LoadCell.GetTara();
+END_IF
+tmrLoadcellfbcmd(IN:= bLoadcell_fbcmd,PT:= T#2S);
+IF tmrLoadcellfbcmd.Q THEN
+	bLoadcell_fbcmd		:=FALSE;
+	bLoadTara			:=FALSE;
+	bLoadcell_Loadcail	:=FALSE;
+	bLoadcell_Percent	:=FALSE;
+	bLoadcell_RefLoad	:=FALSE;
+	bLoadcell_MaxLoad	:=FALSE;
+END_IF
+]]></ST>
+    </Implementation>
+    <Action Name="Initial" Id="{d96def79-e81e-4673-a173-099a26a03c91}">
+      <Implementation>
+        <ST><![CDATA[MC_GearIn(Master:= Axis_DualServo1,Slave:= Axis_DualServo2,Execute	:= FALSE);
+MC_MoveVelocity(Axis:= Axis_DualServo1 ,Velocity := dualtestVelo,Execute:= FALSE);
+MC_Stop(Axis := Axis_DualServo1,Execute:= FALSE);
+tmrDelay(IN:=FALSE);]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="TestDualServoCycleLeng" Id="{957fb334-92da-4247-8b18-dc0e5cdf814d}">
+      <Implementation>
+        <ST><![CDATA[IF Axis_DualServo1.Error OR Axis_DualServo2.Error THEN
+	bDualRingCycleTest	:=FALSE;
+	nStep:= 0;
+END_IF
+
+
+CASE nStep OF
+	0:
+		IF bDualRingCycleTest THEN
+			Initial();
+			nStep:= 5;
+		END_IF
+	5:
+
+	
+		IF Axis_DualServo1.ServoOn() AND Axis_DualServo2.ServoOn() THEN
+			nStep:= 6;
+		END_IF
+	6:
+		IF Axis_DualServo1.Status.StandStill AND Axis_DualServo2.Status.StandStill THEN
+			nStep:= 7;
+		END_IF
+	7:
+		MC_GearIn(Master:= Axis_DualServo1,Slave:= Axis_DualServo2,Execute	:= TRUE);
+		IF 	MC_GearIn.InGear THEN
+			nStep:= 10;
+		END_IF
+	10:
+		MC_MoveVelocity(Axis:= Axis_DualServo1  ,Velocity := dualtestVelo);
+	
+
+		IF NOT bDualRingCycleTest THEN
+			nStep:= 20;
+		END_IF
+		
+	20:
+		MC_Stop(Axis := Axis_DualServo1,Execute:= TRUE);
+		IF MC_Stop.Done THEN
+			nStep:= 25;
+		END_IF
+	25:
+		MC_Stop(Axis := Axis_DualServo1,Execute:= FALSE);		
+		nStep:= 0;
+	
+END_CASE]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="TestLoadCycleLeng" Id="{a538b0e7-2b0b-4c19-89b4-3f2d98240614}">
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="MST_POU">
+      <LineId Id="462" Count="3" />
+      <LineId Id="460" Count="1" />
+      <LineId Id="458" Count="1" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="794" Count="2" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="266" Count="2" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="172" Count="1" />
+      <LineId Id="175" Count="2" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="178" Count="5" />
+      <LineId Id="157" Count="0" />
+      <LineId Id="298" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="232" Count="2" />
+      <LineId Id="522" Count="0" />
+      <LineId Id="524" Count="0" />
+      <LineId Id="521" Count="0" />
+      <LineId Id="296" Count="1" />
+      <LineId Id="295" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="303" Count="3" />
+      <LineId Id="798" Count="1" />
+      <LineId Id="797" Count="0" />
+      <LineId Id="526" Count="1" />
+      <LineId Id="525" Count="0" />
+      <LineId Id="307" Count="5" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="338" Count="4" />
+      <LineId Id="801" Count="1" />
+      <LineId Id="800" Count="0" />
+      <LineId Id="343" Count="5" />
+      <LineId Id="337" Count="0" />
+      <LineId Id="374" Count="0" />
+      <LineId Id="376" Count="3" />
+      <LineId Id="804" Count="1" />
+      <LineId Id="803" Count="0" />
+      <LineId Id="380" Count="5" />
+      <LineId Id="375" Count="0" />
+      <LineId Id="410" Count="0" />
+      <LineId Id="373" Count="0" />
+      <LineId Id="412" Count="0" />
+      <LineId Id="414" Count="2" />
+      <LineId Id="807" Count="1" />
+      <LineId Id="806" Count="0" />
+      <LineId Id="417" Count="2" />
+      <LineId Id="423" Count="0" />
+      <LineId Id="433" Count="0" />
+      <LineId Id="424" Count="8" />
+      <LineId Id="411" Count="0" />
+      <LineId Id="491" Count="0" />
+      <LineId Id="490" Count="0" />
+      <LineId Id="492" Count="0" />
+      <LineId Id="494" Count="0" />
+      <LineId Id="493" Count="0" />
+      <LineId Id="667" Count="0" />
+      <LineId Id="809" Count="1" />
+      <LineId Id="668" Count="0" />
+      <LineId Id="698" Count="1" />
+      <LineId Id="703" Count="1" />
+      <LineId Id="732" Count="2" />
+      <LineId Id="700" Count="0" />
+      <LineId Id="764" Count="1" />
+      <LineId Id="763" Count="0" />
+      <LineId Id="701" Count="1" />
+      <LineId Id="556" Count="1" />
+      <LineId Id="555" Count="0" />
+      <LineId Id="621" Count="0" />
+      <LineId Id="559" Count="0" />
+      <LineId Id="587" Count="0" />
+      <LineId Id="566" Count="0" />
+      <LineId Id="622" Count="0" />
+      <LineId Id="569" Count="0" />
+      <LineId Id="564" Count="0" />
+      <LineId Id="586" Count="0" />
+      <LineId Id="565" Count="0" />
+      <LineId Id="623" Count="0" />
+      <LineId Id="571" Count="0" />
+      <LineId Id="585" Count="0" />
+      <LineId Id="574" Count="0" />
+      <LineId Id="624" Count="0" />
+      <LineId Id="576" Count="0" />
+      <LineId Id="584" Count="0" />
+      <LineId Id="580" Count="0" />
+      <LineId Id="625" Count="0" />
+      <LineId Id="579" Count="0" />
+      <LineId Id="589" Count="0" />
+      <LineId Id="588" Count="0" />
+      <LineId Id="626" Count="0" />
+      <LineId Id="591" Count="0" />
+      <LineId Id="629" Count="0" />
+      <LineId Id="628" Count="0" />
+      <LineId Id="639" Count="0" />
+      <LineId Id="630" Count="0" />
+      <LineId Id="632" Count="3" />
+      <LineId Id="631" Count="0" />
+      <LineId Id="563" Count="0" />
+    </LineIds>
+    <LineIds Name="MST_POU.Initial">
+      <LineId Id="2" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="7" Count="1" />
+    </LineIds>
+    <LineIds Name="MST_POU.TestDualServoCycleLeng">
+      <LineId Id="2" Count="43" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="MST_POU.TestLoadCycleLeng">
+      <LineId Id="1" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

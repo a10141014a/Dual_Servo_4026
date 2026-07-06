@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_Parameter" Id="{c7aa7906-955d-4991-abed-78d18fcfafb8}">
+    <Declaration><![CDATA[TYPE ST_Parameter :
+STRUCT
+	strName						:STRING(50);
+	//拆箱 
+	Unboxing_PullOut			:REAL;			//出紙箱位置 
+	Unboxing_LoadOut			:REAL;			//推出位置 
+	Unboxing_Velo				:REAL;			//運行速度 
+	Unboxing_DelayTime			:ARRAY [0..2] OF TIME;			
+	
+	
+	//雙伺服環形參數 
+	Dual_LoadInQty				:ARRAY [0..9]	OF INT;	//每層數量
+	Dual_LoadInPos				:REAL;			//環形接料點
+	Dual_LoadOutPos				:REAL;			//環形出料點_RB 
+	Dual_LoadOutSecPos			:REAL;			//環形出料2點_RB 
+	Dual_ModuleSlotQty			:UINT;			//輸送帶格數 
+	Dual_ModulePitchLength		:REAL;			//每格長度
+	Dual_Length					:REAL;			//輸送帶長
+	Dual_Velo					:REAL;			//運行速度 
+	Dual_Gap					:REAL;			//安全間距
+	Dual_TwiceClip				:BOOL;			//兩次夾取  
+	
+	//入料輸送
+	Fly_Disdance				:REAL;		//輸送帶偵測料件輸送距離 
+	Fly_Velo					:REAL;
+	Fly_DelayTime				:TIME;
+	
+	//裝箱參數 
+	Load_Sdandby			:REAL;			//預備位置 
+	Load_RBLoadin			:REAL;			//手臂入料位置
+	Load_LoadOut			:REAL;			//推出位置 	
+	Load_Velo				:REAL;			//速度
+	Load_RBPrgNo			:BYTE;
+	Load_Type			:UINT;				//1= 四夾 , 2= 兩夾
+	Load_RBVelo			:BYTE;
+	//產品資訊  
+	PackagingPicQuantity		:INT;		//每箱包裝數量   
+	PackagingBoxQuantity		:INT;		//盒棧箱數量 
+	PackagingWeight			:REAL;			//包裝重量 
+	PackagingWeightUpLimit	:REAL;
+	PackagingWeightLowLimit	:REAL;				
+	PackagingCheck			:BOOL;
+	PackagingBarcode		:BOOL;
+	PackagingHaltAuto		:BOOL;
+	
+	//震動 
+	shock_HighTime				:TIME;
+	shock_DelayTime				:TIME;
+	//推疊 
+	stack_bUsed					:BOOL;
+	stack_DelayTime1			:TIME;
+	stack_DelayTime2			:TIME;
+	//堆棧  
+	StackingRB_DelayTime1			:TIME;
+	StackingRB_DelayTime2			:TIME;	
+	StackingRB_LayerData			:ARRAY [0..2]	OF INT;;
+	StackingRB_RBPrgNo				:BYTE;
+	StackingRB_length					:INT;
+	StackingRB_width					:INT;
+	StackingRB_height					:INT;
+	StackingRB_RBVelo			:BYTE;
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_HMIitfStructCommandTester" Id="{0507080a-756d-4d1d-bd8f-a0b0866f7553}">
+    <Declaration><![CDATA[TYPE ST_HMIitfStructCommandTester :
+STRUCT
+	bInitial			:BOOL;
+	bInitialTest		:BOOL;
+	bProcess			:BOOL;
+	bProcessHaltMode	:BOOL;
+	bProcessHaltStep	:BOOL;
+	bCmdFeedback		:BOOL;
+	
+	
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

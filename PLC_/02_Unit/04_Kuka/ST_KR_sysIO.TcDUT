@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_KR_sysIO" Id="{d713c66e-9ced-4a4c-ad05-57fd60780831}">
+    <Declaration><![CDATA[TYPE ST_KR_sysIO :
+STRUCT
+    // PLC -> KRC
+    qDRIVES_ON       : BOOL;   // PLC -> KRC, $DRIVES_ON
+    qDRIVES_OFF      : BOOL;   // PLC -> KRC, $DRIVES_OFF
+    qMOVE_ENABLE     : BOOL;   // PLC -> KRC, $MOVE_ENABLE
+    qCONF_MESS       : BOOL;   // PLC -> KRC, $CONF_MESS
+    qEXT_START       : BOOL;   // PLC -> KRC, $EXT_START
+    qPGNO            : BYTE;   // PLC -> KRC, program number
+    qPGNO_VALID      : BOOL;   // PLC -> KRC, $PGNO_VALID
+    // KRC -> PLC
+    iEXT_CONTROL     : BOOL;   // KRC -> PLC, $EXT
+    iCONTROL_READY   : BOOL;   // KRC -> PLC, control ready
+    iSTOP_MESS       : BOOL;   // KRC -> PLC, $STOPMESS
+    iDRIVES_READY    : BOOL;   // KRC -> PLC, drives ready
+    iPGNO_REQ        : BOOL;   // KRC -> PLC, request program number
+    iRobotHomePos    : BOOL;   // KRC -> PLC, $IN_HOME
+    iRobotRunning    : BOOL;   // KRC -> PLC, robot running / $PRO_ACT
+END_STRUCT               		
+END_TYPE                 	
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

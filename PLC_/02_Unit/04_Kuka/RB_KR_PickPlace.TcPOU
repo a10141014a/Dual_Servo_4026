@@ -1,0 +1,521 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <POU Name="RB_KR_PickPlace" Id="{c9f12692-5f34-4330-981d-5bc83a04e51f}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK RB_KR_PickPlace
+VAR_INPUT
+	state			AT%I*	:UINT;
+	aryEIPInput		AT%I*	:ARRAY [0..63] OF UINT ;
+END_VAR
+VAR_OUTPUT
+	eCSStatus			:E_CS_Status;
+	strTextBox			:STRING(50);
+	aryEIPOutput		AT%Q*	:ARRAY [0..63] OF UINT ;
+	bOffline				:BOOL;
+	bBackRun			:BOOL;
+END_VAR
+VAR
+	tmrSimuLoadingDelay,tmrBGRun		:TON;	
+	_bLoadingDoneScan	:BOOL;
+	tmrSimuPickupDelay,tmrInit	:TON;	
+	_bPickUpScan,_bPOUrun,_bInit	:BOOL;
+	_POUrun,_PickUpScan		,_LoadingDoneScan,_Init	:INT;	
+	tmrPouRun		:TON;
+	fbLdf_EnableOff,rPickTrigger	:F_TRIG;
+	tmrStartPulse,tmrStopPulse,tmrResetPulse,tmrqPAUSEPulse,tmrCONTINUEPulse,tmrAckPulse	:TON;
+	wRetry: INT;
+	tPartCycTime:TIME;
+	wInitilRetry: INT;
+	wBGHistory,wBKtemp	:BYTE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IO_Mapp();
+// =====================================================
+// I/O
+// =====================================================
+
+fbLdf_EnableOff(CLK:=RB_CS_SysIO.iENABLED);
+IF fbLdf_EnableOff.Q THEN
+	IF RB_CS_SysIO.qENABLE THEN
+		RB_CS_SysIO.qENABLE	:=FALSE;
+		EventLogger.eEventType		:= 3;
+		EventLogger.strEventText	:= 'RB_CS Enable Off ';	
+		EventLogger();
+	END_IF
+END_IF
+
+tmrStopPulse(IN:= RB_CS_SysIO.qSTOP,PT:=T#0.3S);
+IF tmrStopPulse.Q THEN
+	RB_CS_SysIO.qSTOP	:=FALSE;
+END_IF
+tmrStartPulse(IN:= RB_CS_SysIO.qSTART,PT:=T#0.3S);
+IF tmrStartPulse.Q THEN
+	RB_CS_SysIO.qSTART	:=FALSE;
+END_IF
+tmrResetPulse(IN:= RB_CS_SysIO.qRESET,PT:=T#0.3S);
+IF tmrResetPulse.Q THEN
+	RB_CS_SysIO.qRESET	:=FALSE;
+END_IF
+tmrqPAUSEPulse(IN:= RB_CS_SysIO.qPAUSE,PT:=T#0.3S);
+IF tmrqPAUSEPulse.Q THEN
+	RB_CS_SysIO.qPAUSE	:=FALSE;
+END_IF
+tmrCONTINUEPulse(IN:= RB_CS_SysIO.qCONTINUE,PT:=T#0.3S);
+IF tmrCONTINUEPulse.Q THEN
+	RB_CS_SysIO.qCONTINUE	:=FALSE;
+END_IF
+tmrAckPulse(IN:= RB_CS_SysIO.qACKNOWLEDGEMSG,PT:=T#0.3S);
+IF tmrAckPulse.Q THEN
+	RB_CS_SysIO.qACKNOWLEDGEMSG	:=FALSE;
+END_IF
+rPickTrigger(CLK:= RB_CS_PickIO.cmd_bPartInPos);
+IF rPickTrigger.Q THEN
+	tPartCycTime:=SF.GetOvertime(0);
+END_IF
+
+// =====================================================
+// Flag
+// =====================================================
+IF RB_CS_SysIO.iREADY THEN
+	eCSStatus:=E_CS_Status.DriveReady;
+	ELSE
+	eCSStatus:=E_CS_Status.Idle;	
+END_IF
+
+
+IF RB_CS_SysIO.iENABLED THEN
+	eCSStatus:=E_CS_Status.ReadyToWork;	
+	IF RB_CS_SysIO.iRUNNING THEN
+		eCSStatus:=E_CS_Status.Pou_Runing;	
+	END_IF;
+	IF RB_CS_SysIO.iPAUSED THEN
+		eCSStatus:=E_CS_Status.Pou_Run_Pause;	
+	END_IF;	
+	IF RB_CS_SysIO.iSTOPPED THEN
+		eCSStatus:=E_CS_Status.Pou_Run_Down;	
+	END_IF
+END_IF
+
+IF RB_CS_SysIO.iERROR  THEN
+	eCSStatus:=E_CS_Status.Error;	
+END_IF
+
+IF RB_CS_SysIO.iESTOP_ON THEN
+	RB_CS_SysIO.qENABLE	:=FALSE;
+	RB_CS_SysIO.qSTART	:=FALSE;
+	eCSStatus:=E_CS_Status.EStop;	
+END_IF
+//IF NOT RB_CS_SysIO.iEXT_CONTROL THEN
+//	eCSStatus:=E_CS_Status.LocalControl;	
+//END_IF
+//
+IF state<> 0 THEN
+	eCSStatus:=E_CS_Status.Offline;
+END_IF
+// =====================================================
+// BG
+// =====================================================
+tmrBGRun(IN:=  RB_CS_PickIO.cmd_wIndex <> RB_CS_PickIO.fb_wIndex,PT:= T#1s);
+IF RB_CS_PickIO.cmd_wIndex = RB_CS_PickIO.fb_wIndex THEN
+	RB_CS_PickIO.cmd_wIndex	:= RB_CS_PickIO.cmd_wIndex + 1;
+	IF RB_CS_PickIO.cmd_wIndex > 255 THEN
+		RB_CS_PickIO.cmd_wIndex:= 1;
+	END_IF
+END_IF
+
+
+// =====================================================
+// Mathod
+// =====================================================
+
+IF NOT _bLoadingDoneScan THEN
+	_LoadingDoneScan	:= 0;
+	tmrSimuLoadingDelay(IN:=FALSE);
+END_IF
+
+
+_bLoadingDoneScan:=FALSE;
+
+
+
+
+IF NOT _bPickUpScan THEN
+	_PickUpScan	:= 0;
+	tmrSimuPickupDelay(IN:=FALSE);
+END_IF
+
+
+
+_bPickUpScan:=FALSE;
+
+IF NOT _bPOUrun THEN
+	_POUrun	:= 0;
+	tmrPouRun(IN:=FALSE);
+END_IF
+
+
+_bPOUrun:=FALSE;
+
+
+
+
+
+
+IF NOT _bInit THEN
+	_Init:= 0;
+END_IF
+
+
+_bInit:= FALSE;
+]]></ST>
+    </Implementation>
+    <Property Name="CommandError" Id="{60f16dda-afc7-4871-a1e2-d0f12431a84f}">
+      <Declaration><![CDATA[PROPERTY CommandError : BOOL]]></Declaration>
+      <Get Name="Get" Id="{295126ec-3c84-4322-acc6-a3dae0d3e519}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CommandError	:= _Init = 99 OR _POUrun = 99;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Initialization" Id="{ff8db983-4e5d-4398-a228-1200e658229d}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bInit	:= TRUE;
+
+
+CASE _Init OF
+0:
+	RB_CS_SysIO.qENABLE	:= TRUE;
+	tmrInit(IN:=FALSE);
+	CASE eCSStatus OF
+		E_CS_Status.Idle,E_CS_Status.EStop :
+			_Init:= 99;
+		E_CS_Status.DriveReady:
+			_Init:= 50;
+	    E_CS_Status.ReadyToWork:
+			_Init:= 50;
+	    E_CS_Status.Pou_Runing:
+			_Init:= 11;
+	    E_CS_Status.Pou_Run_Pause:
+			_Init:= 11;
+	    E_CS_Status.Pou_Run_Down:
+			_Init:= 50;
+	    E_CS_Status.Error:	
+			_Init:= 10;		
+	END_CASE
+1:
+	tmrInit(IN:=TRUE,PT:= T#0.5S);
+	IF tmrInit.Q THEN
+		wInitilRetry	:= wInitilRetry + 1;
+		_Init:= 0;	
+	END_IF
+	
+10://Error Reset
+	RB_CS_SysIO.qRESET			:= TRUE;
+	RB_CS_SysIO.qACKNOWLEDGEMSG	:= TRUE;
+	_Init:= 1;
+11://POU OFF
+	RB_CS_SysIO.qSTOP			:= TRUE;
+	_Init:= 1;	
+50:
+	tmrInit(IN:=FALSE);
+	IF RB_CS_SysIO.iHome_Pos THEN
+		_Init:= 90;
+		ELSE
+		_Init:= 55;
+	END_IF
+55:
+	RB_CS_SysIO.qPGNO			:= 61;
+	RB_CS_SysIO.qSTART			:= TRUE;
+	RB_CS_PickIO.cmd_Velo		:= 20;
+	_Init			:= 56;
+56:
+	CASE eCSStatus OF
+		 E_CS_Status.Pou_Run_Down:
+			_Init:= 50;		
+		E_CS_Status.ReadyToWork	:
+			_Init:= 50;
+		 E_CS_Status.Error:	
+		 	_Init:= 99;
+	END_CASE;
+		
+90:
+	Initialization	:= TRUE;
+	
+99:
+;
+
+
+   
+    
+
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="IO_Mapp" Id="{baa19ce6-9d6a-4fcc-85cb-1d5e7b11f9b8}">
+      <Implementation>
+        <ST><![CDATA[IF state <> 0 THEN
+	;
+END_IF
+
+aryEIPOutput[0].0:=	RB_CS_SysIO.qSTOP		;	       
+aryEIPOutput[0].1:=	RB_CS_SysIO.qSTART		;      
+aryEIPOutput[0].2:=	RB_CS_SysIO.qPAUSE		;        
+aryEIPOutput[0].3:=	RB_CS_SysIO.qCONTINUE	;      
+aryEIPOutput[0].4:=	RB_CS_SysIO.qRESET		;        
+aryEIPOutput[0].5:=  RB_CS_SysIO.qENABLE		;       
+aryEIPOutput[0].6:=  RB_CS_SysIO.qPGNO.0		;
+aryEIPOutput[0].7:=  RB_CS_SysIO.qPGNO.1			;       
+aryEIPOutput[0].8:=  RB_CS_SysIO.qPGNO.2			;       
+aryEIPOutput[0].9:=  RB_CS_SysIO.qPGNO.3			;       
+aryEIPOutput[0].10:= RB_CS_SysIO.qPGNO.4			;       
+aryEIPOutput[0].11:= RB_CS_SysIO.qPGNO.5			;	      
+aryEIPOutput[0].12:= RB_CS_SysIO.qACKNOWLEDGEMSG	;
+aryEIPOutput[0].13:= RB_CS_SysIO.qOVERRIDE		; 
+aryEIPOutput[1].0	:=  RB_CS_PickIO.cmd_bBoxInPos;
+aryEIPOutput[1].1	:=  RB_CS_PickIO.cmd_bPartInPos;
+aryEIPOutput[1].8	:= RB_CS_PickIO.cmd_Velo.0;
+aryEIPOutput[1].9	:= RB_CS_PickIO.cmd_Velo.1;
+aryEIPOutput[1].10	:= RB_CS_PickIO.cmd_Velo.2;
+aryEIPOutput[1].11	:= RB_CS_PickIO.cmd_Velo.3;
+aryEIPOutput[1].12	:= RB_CS_PickIO.cmd_Velo.4;
+aryEIPOutput[1].13	:= RB_CS_PickIO.cmd_Velo.5;
+aryEIPOutput[1].14	:= RB_CS_PickIO.cmd_Velo.6;
+aryEIPOutput[1].15	:= RB_CS_PickIO.cmd_Velo.7;
+
+MEMCPY(ADR(aryEIPOutput[2]),ADR(RB_CS_PickIO.cmd_wIndex),1);
+
+
+
+//
+
+RB_CS_SysIO. iREADY    			:=   aryEIPInput[0].0;
+RB_CS_SysIO. iRUNNING      		:=	 aryEIPInput[0].1;
+RB_CS_SysIO. iPAUSED       		:=	 aryEIPInput[0].2;
+RB_CS_SysIO. iSTOPPED      		:=	 aryEIPInput[0].3;
+RB_CS_SysIO. iERROR        		:=	 aryEIPInput[0].4;
+RB_CS_SysIO. iSAFEGURAD_ON 		:=	 aryEIPInput[0].5;
+RB_CS_SysIO. iESTOP_ON     		:=	 aryEIPInput[0].6;
+RB_CS_SysIO. iSERROR			:=	 aryEIPInput[0].7;
+RB_CS_SysIO. iWARING            :=	 aryEIPInput[0].8;
+RB_CS_SysIO. iENABLED         :=	 aryEIPInput[0].9;
+RB_CS_SysIO. iACKNOWLEDGED    :=	 aryEIPInput[0].10;
+RB_CS_SysIO. iERROR_CODE       :=	 aryEIPInput[0].11;
+RB_CS_SysIO. iOVER_RIDE_OUT    :=	 aryEIPInput[0].12;
+RB_CS_SysIO.iHome_Pos			:= aryEIPInput[3].0;
+RB_CS_SysIO.iEXT_CONTROL			:= aryEIPInput[3].1;
+
+
+RB_CS_PickIO.fb_bPacking		:= aryEIPInput[1].0;
+RB_CS_PickIO.fb_bPackFinish		:= aryEIPInput[1].1;
+RB_CS_PickIO.fb_putting			:= aryEIPInput[1].2;
+RB_CS_PickIO.fb_PutFinish		:= aryEIPInput[1].3;
+RB_CS_PickIO.fb_PackLayer.0		:= aryEIPInput[1].8;
+RB_CS_PickIO.fb_PackLayer.1		:= aryEIPInput[1].9;
+RB_CS_PickIO.fb_PackLayer.2		:= aryEIPInput[1].10;
+RB_CS_PickIO.fb_PackLayer.3		:= aryEIPInput[1].11;
+
+MEMCPY(ADR(RB_CS_PickIO.fb_Velo),ADR(aryEIPInput[2]),1);
+MEMCPY(ADR(RB_CS_PickIO.fb_wIndex),ADR(aryEIPInput[2])+1,1);
+
+//RB_CS_PickIO.cmd_Velo	:= RunParameter.Load_RBVelo;]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="LoadingDone" Id="{dc04e8d4-3760-4fc1-92c3-cfcfdb32a429}">
+      <Declaration><![CDATA[METHOD LoadingDone : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bLoadingDoneScan	:= TRUE;
+
+IF Hmi_bBoxAutoTest THEN
+	tmrSimuLoadingDelay(IN:= TRUE , PT:= Hmi_bBoxAutoTestTime);
+	LoadingDone	:= tmrSimuLoadingDelay.q;
+END_IF
+
+IF NOT Hmi_bBoxAutoTest THEN
+	CASE _LoadingDoneScan OF
+		0:
+			RB_CS_PickIO.cmd_bBoxInPos	:= TRUE;
+			_LoadingDoneScan	:= 5;
+		5:
+			IF RB_CS_PickIO.fb_PutFinish THEN
+				RB_CS_PickIO.cmd_bBoxInPos	:= FALSE;
+				_LoadingDoneScan	:= 10;
+			END_IF;		
+		10:
+			IF NOT RB_CS_PickIO.fb_PutFinish THEN
+				_LoadingDoneScan	:= 15;
+			END_IF;					
+		15:
+			LoadingDone:= TRUE;		
+	END_CASE
+END_IF;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="PickUp" Id="{92aa6469-14ff-47bd-a17e-4c8771c20cce}">
+      <Declaration><![CDATA[METHOD PickUp : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bPickUpScan:=TRUE;
+
+
+IF Hmi_bPickAutoTest THEN
+	tmrSimuPickupDelay(IN:= TRUE,PT:= Hmi_bPickAutoTestTime);
+	PickUp	:=  tmrSimuPickupDelay.Q ;
+END_IF;		
+/////////
+IF NOT Hmi_bPickAutoTest THEN
+	CASE _PickUpScan OF
+		0:
+			RB_CS_PickIO.cmd_bPartInPos	:= TRUE;
+			_PickUpScan	:= 5;
+		5:
+			IF RB_CS_PickIO.fb_bPackFinish	THEN
+				RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+				_PickUpScan	:= 10;
+			END_IF
+		10:
+			IF NOT RB_CS_PickIO.fb_bPackFinish	THEN
+				_PickUpScan	:= 15;
+			END_IF				
+		15:
+			PickUp:= TRUE;		
+	END_CASE
+END_IF;
+
+IF Hmi_bPickFeedTest THEN
+	RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+	Hmi_bPickFeedTest:=FALSE;
+	PickUp	:= TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="POU_Run" Id="{08300108-7f7a-41c2-a137-7ee63c49b30e}">
+      <Declaration><![CDATA[METHOD POU_Run : BOOL
+VAR_INPUT
+	Numb		:WORD;
+END_VAR
+VAR_OUTPUT
+	Working		:BOOL;
+	failRetrun	:BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bPOUrun := TRUE;
+CASE _POUrun OF
+	0:
+		RB_CS_SysIO.qRESET	:= FALSE;
+		RB_CS_SysIO.qSTART	:= FALSE;
+		RB_CS_PickIO.cmd_bBoxInPos	:=FALSE;
+		RB_CS_PickIO.cmd_bPartInPos	:=FALSE;
+		tmrPouRun(IN:=FALSE);
+		wRetry				:= 0;
+			CASE eCSStatus OF
+				E_CS_Status.Idle :
+					_POUrun:= 99;
+				E_CS_Status.DriveReady:
+					_POUrun:= 5;
+			    E_CS_Status.ReadyToWork:
+					_POUrun:= 10;
+					IF Numb=0 THEN
+						strTextBox:='Wait To Call';
+						_POUrun:= 90;
+					END_IF
+			    E_CS_Status.Pou_Runing:
+					_POUrun:= 90;
+			    E_CS_Status.Pou_Run_Pause:
+					_POUrun:= 90;
+			    E_CS_Status.Pou_Run_Down:
+					_POUrun:= 10;
+					IF Numb=0 THEN
+						strTextBox:='Wait To Call';
+						_POUrun:= 90;
+					END_IF
+				E_CS_Status.EStop:
+					_POUrun:= 99;
+			    E_CS_Status.Error:	
+					_POUrun:= 50;		
+			END_CASE
+	5:
+			tmrPouRun(IN:= TRUE,PT:=T#1S);
+			RB_CS_SysIO.qENABLE	:= TRUE;
+			IF RB_CS_SysIO.iENABLED THEN
+				_POUrun:= 0;
+			END_IF
+			IF tmrPouRun.Q THEN
+				wRetry			:= wRetry+1;
+				RB_CS_SysIO.qENABLE	:= FALSE;
+				tmrPouRun(IN:=FALSE);
+				_POUrun:= 6;
+			END_IF
+	6:
+			tmrPouRun(IN:= TRUE,PT:=T#0.5S);
+			IF tmrPouRun.Q THEN
+				tmrPouRun(IN:=FALSE);
+				_POUrun:= 5;
+				IF wRetry >2 THEN
+					strTextBox:='ENABLE Faild';
+					_POUrun:= 98;	
+				END_IF
+			END_IF				
+			
+	10:
+			tmrPouRun(IN:= TRUE,PT:=T#1S);
+			RB_CS_SysIO.qPGNO:= WORD_TO_BYTE(Numb);
+			RB_CS_SysIO.qSTART	:= TRUE;
+			IF RB_CS_SysIO.iRUNNING THEN
+				strTextBox:='Running';
+				tmrPouRun(IN:= FALSE);
+				_POUrun:= 90;
+			END_IF
+			IF Numb>65 THEN
+				tmrPouRun(IN:= FALSE);
+				strTextBox:='Numb. Out of Range';
+				_POUrun:= 98;
+			END_IF
+			IF tmrPouRun.Q THEN
+				strTextBox:='Star Time Out';
+				_POUrun:= 98;
+				tmrPouRun(IN:= FALSE);
+			END_IF
+	50://Error Reset
+		tmrPouRun(IN:= TRUE,PT:=T#1S);	
+		RB_CS_SysIO.qRESET	:= TRUE;
+		IF eCSStatus<>  E_CS_Status.Error THEN
+			strTextBox:='ERROR Reset';
+			tmrPouRun(IN:= FALSE,PT:=T#1S);	
+			_POUrun:= 10;
+		END_IF
+		
+			IF tmrPouRun.Q THEN
+				strTextBox:='Reset Faild';
+				_POUrun:= 98;
+				tmrPouRun(IN:= FALSE);
+			END_IF	
+	90://成功
+		POU_Run	:= TRUE;
+	
+	98:
+		
+	99://失敗
+		failRetrun:= TRUE;
+		strTextBox:='Disallowed status';
+
+
+
+
+
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Automatic_POU" Id="{d539cfdc-f8c2-4c03-ad90-2b9ea190d71a}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM Automatic_POU
+VAR
+	nStep 			:INT;
+	bHlatMode,bNextStep		:BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//實例化
+
+CASE  nStep OF
+	0:
+		M_Openbox1.Process(bHlatMode);
+		M_Sealing2.Process(FALSE);
+		M_LoadPic3.Process(FALSE);
+		M_UnloadNG4.Process(FALSE);
+		M_DualServo.Process(FALSE);
+		M_StackComv5.Process(FALSE);
+		M_RBStack6.Process(FALSE);
+END_CASE
+IF bNextStep THEN
+	M_Openbox1.HaltStepContiune();
+	bNextStep:=FALSE;
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="Automatic_POU">
+      <LineId Id="150" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="340" Count="2" />
+      <LineId Id="353" Count="0" />
+      <LineId Id="343" Count="1" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="345" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

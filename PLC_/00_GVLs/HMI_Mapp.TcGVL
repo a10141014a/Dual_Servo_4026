@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <GVL Name="HMI_Mapp" Id="{d6fee79e-0671-4c41-93d8-0c08e1395184}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	Edit_Parameter	:ST_Parameter 	;
+	Hmi_bDualAutoTest		:BOOL;
+	Hmi_bDualFeedTest		:BOOL;
+	Hmi_bDualAutoTestTime	:TIME;
+	
+	Hmi_bPickAutoTest		:BOOL;
+	Hmi_bPickAutoTestTime	:TIME;
+	Hmi_bPickFeedTest		:BOOL;
+	
+	Hmi_bBoxAutoTest		:BOOL;
+	Hmi_bBoxAutoTestTime	:TIME;
+	Hmi_bBoxFeedTest		:BOOL;		
+	//換詹版
+	Hmi_bAutoChangePallet	:BOOL;
+	Hmi_bChangePalletbtn	:BOOL;
+	Hmi_bChangePalletDemand	:BOOL;
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

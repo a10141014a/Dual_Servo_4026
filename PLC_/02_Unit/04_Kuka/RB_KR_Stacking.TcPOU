@@ -1,0 +1,575 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="RB_KR_Stacking" Id="{a85c7ca9-d251-4387-9841-f5f96417914e}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK RB_KR_Stacking
+VAR_INPUT
+	state			AT%I*	:UINT;
+	aryEIPInput		AT%I*	:ARRAY [0..127] OF BYTE ;
+END_VAR
+
+VAR_OUTPUT
+	aryEIPOutput		AT%Q*	:ARRAY [0..127] OF BYTE ;
+	strTextBox			:STRING(50);
+	eKRStatus				:E_CS_Status;
+	bOffline			:BOOL;
+END_VAR
+VAR
+	_bCapture			:BOOL;
+	_CaptureStep		:INT;
+	_bPOUrun,_bPickUpScan,_bInit	:BOOL;
+	_POUrun,_PickUpScan	,_InitStep			:INT;	
+	tmrCapture			:TON;
+	strText				:STRING;
+	rPGNO_REQ			:R_TRIG;	
+	tmrDriverReadyOnPulse,tmrConfMessOnPulse,tmrExtStarOnPulse	:TON;
+	tmrPouRun,tmrForceExtStarOff: TON;
+	tmrBGRun: TON;
+	wRetry: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IO_Mapp();
+// =====================================================
+// I/O
+// =====================================================
+
+tmrDriverReadyOnPulse(IN:=RB_KR_SysIO.qDRIVES_ON,PT:= T#0.3S);
+IF tmrDriverReadyOnPulse.Q THEN
+	RB_KR_SysIO.qDRIVES_ON	:=FALSE;
+END_IF
+
+tmrConfMessOnPulse(IN:= RB_KR_SysIO.qCONF_MESS,PT:=T#0.3S);
+IF tmrConfMessOnPulse.Q THEN
+	RB_KR_SysIO.qCONF_MESS:=FALSE;
+END_IF
+
+tmrExtStarOnPulse(IN:=RB_KR_SysIO.qEXT_START,PT:=T#0.3S);
+IF tmrExtStarOnPulse.Q THEN
+	RB_KR_SysIO.qEXT_START:=FALSE;
+END_IF;
+IF tmrForceExtStarOff.Q THEN
+	tmrForceExtStarOff.IN:= FALSE;
+END_IF
+
+
+
+rPGNO_REQ(CLK:= RB_KR_SysIO.iPGNO_REQ);
+IF rPGNO_REQ.Q THEN
+	;
+END_IF
+
+// =====================================================
+// FLAG
+// =====================================================
+
+IF NOT RB_KR_SysIO.iEXT_CONTROL THEN
+	eKRStatus:= E_CS_Status.LocalControl;
+	
+	ELSE
+	IF RB_KR_SysIO.iDRIVES_READY THEN
+		eKRStatus:= E_CS_Status.DriveReady;
+		
+		IF	RB_KR_SysIO.iCONTROL_READY THEN
+				eKRStatus:= E_CS_Status.DriverOn;
+			IF RB_KR_SysIO.iPGNO_REQ THEN
+				eKRStatus:= E_CS_Status.ReadyToWork;
+			END_IF
+			IF NOT RB_KR_SysIO.iRobotHomePos THEN
+				eKRStatus:= E_CS_Status.LessHome;
+			END_IF
+
+		END_IF
+		IF RB_KR_SysIO.iRobotRunning THEN
+			eKRStatus:= E_CS_Status.Pou_Runing;
+			IF RB_KR_SysIO.iPGNO_REQ THEN
+				eKRStatus:= E_CS_Status.ReadyToWork;
+			END_IF
+		END_IF			
+		
+		IF RB_KR_SysIO.iSTOP_MESS THEN
+			eKRStatus:= E_CS_Status.StopMess;
+		END_IF		
+
+			
+		ELSE
+		eKRStatus:= E_CS_Status.Idle;
+	END_IF
+END_IF
+
+tmrBGRun(IN:=  RB_KR_StackingIO.cmd_wIndex <> RB_KR_StackingIO.fb_wIndex,PT:= T#1S);
+IF RB_KR_StackingIO.cmd_wIndex = RB_KR_StackingIO.fb_wIndex THEN
+	RB_KR_StackingIO.cmd_wIndex	:= RB_KR_StackingIO.cmd_wIndex + 1;
+	IF RB_KR_StackingIO.cmd_wIndex > 255 THEN
+		RB_KR_StackingIO.cmd_wIndex:= 1;
+	END_IF
+END_IF
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+IF NOT _bCapture THEN
+	_CaptureStep	:=0;
+
+END_IF
+
+_bCapture	:= FALSE;
+
+//
+IF NOT _bPOUrun THEN
+	_POUrun	:=0;
+END_IF
+
+_bPOUrun:=FALSE;
+]]></ST>
+    </Implementation>
+    <Method Name="Capture" Id="{f67292ed-8e66-4759-8a0c-01706440bd87}">
+      <Declaration><![CDATA[METHOD Capture : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bCapture	:= TRUE;
+
+CASE _CaptureStep OF
+	0:
+		RB_KR_StackingIO.cmd_bPartInPos	:= TRUE;
+		_CaptureStep	:= 5;
+		
+	5:
+		IF RB_KR_StackingIO.fb_bPickFinish THEN
+			RB_KR_StackingIO.cmd_bPartInPos	:= FALSE;
+			_CaptureStep	:= 10;
+		END_IF
+
+	10:
+		IF NOT RB_KR_StackingIO.fb_bPickFinish THEN
+			_CaptureStep	:= 15;
+		END_IF		
+	15:
+		Capture:= TRUE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialization" Id="{6fa53bd7-fcc2-4892-8375-9d5b223e64e6}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bInit	:= TRUE;
+
+CASE _InitStep OF
+	0:
+		RB_KR_SysIO.qPGNO			:= 0;
+		RB_KR_SysIO.qDRIVES_OFF		:= TRUE;
+		RB_KR_SysIO.qMOVE_ENABLE	:= TRUE;
+		RB_KR_SysIO.qCONF_MESS		:=  RB_KR_SysIO.iSTOP_MESS;
+		_InitStep:= 5;
+		
+	5:
+		CASE eKRStatus OF
+				E_CS_Status.Idle :
+					_InitStep:= 10;
+				E_CS_Status.DriveReady:
+					_InitStep:= 11;
+				E_CS_Status.DriverOn:
+					_InitStep:= 50;
+			    E_CS_Status.ReadyToWork:
+					_InitStep:= 50;
+				E_CS_Status.StopMess:
+					_InitStep:= 12;
+			    E_CS_Status.Pou_Runing:
+					_InitStep:= 90;
+			    E_CS_Status.Pou_Run_Pause:
+					_InitStep:= 90;
+			    E_CS_Status.Pou_Run_Down:
+					_InitStep:= 50;
+	
+			END_CASE
+	10:
+		RB_KR_SysIO.qDRIVES_ON:= TRUE;
+		_InitStep:= 5;
+
+	11:
+	
+		RB_KR_SysIO.qEXT_START:= TRUE;
+		_InitStep:= 5;
+		wRetry	:= wRetry + 1 ;
+	12:
+		RB_KR_SysIO.qEXT_START:= TRUE;
+		RB_KR_SysIO.qCONF_MESS:= TRUE;
+		_InitStep:= 5;
+	50:
+		Initialization:=TRUE;		
+		
+
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="IO_Mapp" Id="{8d5eb0f9-2821-4344-83b8-feb79095e09d}">
+      <Implementation>
+        <ST><![CDATA[bOffline :=  state<>0 ;
+
+
+aryEIPOutput[0].0:= RB_KR_SysIO.qDRIVES_ON	 ;  
+aryEIPOutput[0].1:= RB_KR_SysIO.qDRIVES_OFF	  ;
+aryEIPOutput[0].2:= RB_KR_SysIO.qMOVE_ENABLE;
+aryEIPOutput[0].3:= RB_KR_SysIO.qCONF_MESS	 ;
+aryEIPOutput[0].4:= RB_KR_SysIO.qEXT_START	 ;
+//90為測試模式 
+aryEIPOutput[0].5:= RB_KR_SysIO.qPgno.0;		     
+aryEIPOutput[0].6:= RB_KR_SysIO.qPgno.1;	
+aryEIPOutput[0].7:= RB_KR_SysIO.qPgno.2;
+aryEIPOutput[1].0:= RB_KR_SysIO.qPgno.3;
+aryEIPOutput[1].1:= RB_KR_SysIO.qPgno.4;
+aryEIPOutput[1].2:= RB_KR_SysIO.qPgno.5;
+aryEIPOutput[1].3:= RB_KR_SysIO.qPgno.6;
+aryEIPOutput[1].4:= RB_KR_SysIO.qPgno.7;
+					
+
+aryEIPOutput[2].0:=	RB_KR_StackingIO.cmd_bPallet_AllowPut;				//棧板定位	
+aryEIPOutput[2].1:= RB_KR_StackingIO.cmd_bReady;		       
+aryEIPOutput[2].2:=	RB_KR_StackingIO.cmd_bCount0;			      
+aryEIPOutput[2].3:=	RB_KR_StackingIO.cmd_bFence;	
+		       
+MEMCPY(ADR(aryEIPOutput[3]),ADR(RB_KR_StackingIO.cmd_wSize_length),2);
+MEMCPY(ADR(aryEIPOutput[5]),ADR(RB_KR_StackingIO.cmd_wSize_width),2);
+MEMCPY(ADR(aryEIPOutput[7]),ADR(RB_KR_StackingIO.cmd_wSize_height),2);
+MEMCPY(ADR(aryEIPOutput[9]),ADR(RB_KR_StackingIO.cmd_wLayer_No),1);
+   		     
+aryEIPOutput[10].0	:=  RB_KR_StackingIO.cmd_bPartInPos	;	    		//取香訊號 
+aryEIPOutput[10].1	:=  RB_KR_StackingIO.cmd_bSetting2Box	;   
+
+
+MEMCPY(ADR(aryEIPOutput[11]),ADR(RB_KR_StackingIO.cmd_wIndex),1);
+MEMCPY(ADR(aryEIPOutput[12]),ADR(RB_KR_StackingIO.cmd_Velo),1);
+
+ 
+///////////////////////////////////////////////////////////////
+RB_KR_SysIO.	iEXT_CONTROL		:= aryEIPInput[0].0;
+RB_KR_SysIO.	iCONTROL_READY		:= aryEIPInput[0].1;
+RB_KR_SysIO.	iSTOP_MESS			:= aryEIPInput[0].2;
+RB_KR_SysIO.	iDRIVES_READY		:= aryEIPInput[0].3;
+RB_KR_SysIO.	iPGNO_REQ			:= aryEIPInput[0].4;
+RB_KR_SysIO.	iRobotHomePos		:= aryEIPInput[0].5;
+RB_KR_SysIO.	iRobotRunning		:= aryEIPInput[0].6;
+MEMCPY(ADR(RB_KR_StackingIO.fb_wPartNo),ADR(aryEIPInput[5]),1);
+RB_KR_StackingIO.fb_bPickFinish				:= aryEIPInput[4].0;
+RB_KR_StackingIO.fb_bWorking				:= aryEIPInput[4].1;
+RB_KR_StackingIO.fb_bPalletFinish			:= aryEIPInput[4].2;
+RB_KR_StackingIO.fb_bPalletInPos			:= aryEIPInput[4].3;
+RB_KR_StackingIO.fb_wIndex					:=aryEIPInput[11] ;          
+RB_KR_StackingIO.fb_bError[0]				:=aryEIPInput[6].0;	//曾數異常
+MEMCPY(ADR(RB_KR_StackingIO.fb_wProNo),ADR(aryEIPInput[7]),1);
+
+
+
+
+
+RB_KR_StackingIO.cmd_wSize_height	:= RunParameter.StackingRB_height;
+RB_KR_StackingIO.cmd_wSize_length	:= RunParameter.StackingRB_length;
+RB_KR_StackingIO.cmd_wSize_width	:= RunParameter.StackingRB_width;
+RB_KR_StackingIO.cmd_bSetting2Box	:= RunParameter.stack_bUsed;
+
+
+
+
+
+
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="POU_Run" Id="{311e6d47-34f6-459d-bf8f-e78d6a45b3d3}">
+      <Declaration><![CDATA[METHOD POU_Run : BOOL
+VAR_INPUT
+	Numb		:WORD;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bPOUrun	:= TRUE;
+
+CASE _POUrun OF
+	0:
+		RB_KR_SysIO.qDRIVES_ON:= TRUE;
+		RB_KR_SysIO.qMOVE_ENABLE:= TRUE;
+		RB_KR_StackingIO.cmd_bCount0	:=FALSE;
+		RB_KR_StackingIO.cmd_bPartInPos	:= FALSE;
+		tmrPouRun(IN:= FALSE,PT:=T#1S);	
+
+		CASE eKRStatus OF
+				E_CS_Status.Idle :
+					_POUrun:= 4;
+				E_CS_Status.DriveReady:
+					_POUrun:= 5;
+				E_CS_Status.DriverOn:
+					_POUrun:= 10;
+					IF Numb=0 THEN
+						strTextBox:='Wait To Call';
+						_POUrun:= 90;
+					END_IF
+			    E_CS_Status.ReadyToWork:
+					_POUrun:= 10;
+					IF Numb=0 THEN
+						strTextBox:='Wait To Call';
+						_POUrun:= 90;
+					END_IF
+				E_CS_Status.StopMess:
+						_POUrun:= 6;
+			    E_CS_Status.Pou_Runing:
+					_POUrun:= 90;
+			    E_CS_Status.Pou_Run_Pause:
+					_POUrun:= 90;
+			    E_CS_Status.Pou_Run_Down:
+					_POUrun:= 10;
+					IF Numb=0 THEN
+						strTextBox:='Wait To Call';
+						_POUrun:= 90;
+					END_IF
+	
+			END_CASE
+	4:
+		RB_KR_SysIO.qDRIVES_ON:= TRUE;
+		_POUrun:= 7;
+
+	5:
+	
+		RB_KR_SysIO.qEXT_START:= TRUE;
+		_POUrun:= 7;
+		wRetry	:= wRetry + 1 ;
+	6:
+		RB_KR_SysIO.qEXT_START:= TRUE;
+		RB_KR_SysIO.qCONF_MESS:= TRUE;
+		_POUrun:= 7;
+
+
+	7:
+		tmrPouRun(IN:= TRUE,PT:=T#0.5S);	
+		IF tmrPouRun.Q THEN
+			tmrPouRun(IN:= FALSE);
+			_POUrun:= 0;
+		END_IF			
+	10:
+			tmrPouRun(IN:= TRUE,PT:=T#1S);
+			RB_KR_SysIO.qPGNO:= WORD_TO_BYTE(Numb);
+			RB_KR_SysIO.qEXT_START	:= TRUE;
+			IF RB_KR_SysIO.iRobotRunning THEN
+				strTextBox:='Running';
+				tmrPouRun(IN:= FALSE);
+				_POUrun:= 90;
+			END_IF
+			IF Numb>95 THEN
+				tmrPouRun(IN:= FALSE);
+				strTextBox:='Numb. Out of Range';
+				_POUrun:= 98;
+			END_IF
+			IF tmrPouRun.Q THEN
+				strTextBox:='Star Time Out';
+				_POUrun:= 98;
+				tmrPouRun(IN:= FALSE);
+			END_IF		
+	
+	90://完成
+		POU_Run	:=TRUE;
+	99://fail
+		;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="RB_KR_Stacking">
+      <LineId Id="41" Count="0" />
+      <LineId Id="235" Count="1" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="200" Count="1" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="194" Count="1" />
+      <LineId Id="202" Count="1" />
+      <LineId Id="367" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="209" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="362" Count="2" />
+      <LineId Id="361" Count="0" />
+      <LineId Id="358" Count="0" />
+      <LineId Id="357" Count="0" />
+      <LineId Id="347" Count="0" />
+      <LineId Id="351" Count="0" />
+      <LineId Id="353" Count="1" />
+      <LineId Id="352" Count="0" />
+      <LineId Id="260" Count="2" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="263" Count="0" />
+      <LineId Id="305" Count="1" />
+      <LineId Id="279" Count="1" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="295" Count="1" />
+      <LineId Id="392" Count="1" />
+      <LineId Id="317" Count="0" />
+      <LineId Id="391" Count="0" />
+      <LineId Id="319" Count="1" />
+      <LineId Id="318" Count="0" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="355" Count="1" />
+      <LineId Id="449" Count="1" />
+      <LineId Id="448" Count="0" />
+      <LineId Id="294" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="301" Count="1" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="315" Count="0" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="307" Count="1" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="417" Count="5" />
+      <LineId Id="157" Count="23" />
+      <LineId Id="42" Count="1" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="147" Count="2" />
+      <LineId Id="151" Count="1" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="146" Count="0" />
+    </LineIds>
+    <LineIds Name="RB_KR_Stacking.Capture">
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="20" Count="3" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="RB_KR_Stacking.Initialization">
+      <LineId Id="5" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="22" Count="6" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="39" Count="7" />
+      <LineId Id="51" Count="14" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+    <LineIds Name="RB_KR_Stacking.IO_Mapp">
+      <LineId Id="46" Count="0" />
+      <LineId Id="43" Count="1" />
+      <LineId Id="2" Count="4" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="7" Count="8" />
+      <LineId Id="56" Count="0" />
+      <LineId Id="16" Count="11" />
+      <LineId Id="51" Count="1" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="29" Count="10" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="81" Count="2" />
+      <LineId Id="78" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="74" Count="2" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="66" Count="0" />
+    </LineIds>
+    <LineIds Name="RB_KR_Stacking.POU_Run">
+      <LineId Id="5" Count="0" />
+      <LineId Id="12" Count="3" />
+      <LineId Id="117" Count="3" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="123" Count="3" />
+      <LineId Id="195" Count="1" />
+      <LineId Id="205" Count="2" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="127" Count="5" />
+      <LineId Id="187" Count="1" />
+      <LineId Id="133" Count="9" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="149" Count="0" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="151" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="156" Count="1" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="212" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="201" Count="2" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="166" Count="16" />
+      <LineId Id="161" Count="4" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

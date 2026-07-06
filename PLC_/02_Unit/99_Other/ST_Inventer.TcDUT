@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ST_Inventer" Id="{4af9eb03-2bf2-4149-82b8-1cbe73c21a7f}">
+    <Declaration><![CDATA[TYPE ST_Inventer :			//馬達 
+STRUCT
+	qRun			AT %Q*:BOOL;
+	qSign			AT %Q*:BOOL;
+	qErrorReset		AT %Q*:BOOL;
+	iError			AT %I*:BOOL;	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

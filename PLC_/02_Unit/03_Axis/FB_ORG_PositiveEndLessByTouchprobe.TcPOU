@@ -1,0 +1,265 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="FB_ORG_PositiveEndLessByTouchprobe" Id="{faa075a7-dd9a-48eb-8cfa-3ac468207e94}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ORG_PositiveEndLessByTouchprobe
+VAR_INPUT
+	Axis		:AXIS_REF;
+	Execute		:BOOL;
+	Position	:LREAL;
+	Velocity	:LREAL;
+END_VAR
+VAR_OUTPUT
+	Error	:BOOL;
+	Busy	:BOOL;
+	Done	:BOOL;
+END_VAR
+VAR
+	nStep	:INT;
+	fbTrig	:R_TRIG;
+	fbMC_MoveVelocity: MC_MoveVelocity;
+	MC_TouchProbe: MC_TouchProbe;
+	MC_AbortTrigger: MC_AbortTrigger;
+	TRIGGER_REF	:TRIGGER_REF ;
+	MC_ReadDriveAddress: MC_ReadDriveAddress;
+	MC_Stop: MC_Stop;
+	MC_Home: MC_Home;
+	MC_SetPosition: MC_SetPosition;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbTrig(CLK:=Execute);
+Axis.ReadStatus();
+
+IF fbTrig.Q THEN
+
+	IF Axis.Status.StandStill THEN
+		MC_ReadDriveAddress(Axis:= Axis,Execute:=FALSE);
+		nStep	:=1;
+	ELSE
+		nStep	:= 99;
+	END_IF;	
+END_IF
+		
+CASE nStep OF
+	1:		
+		Busy:= TRUE;
+		MC_ReadDriveAddress(
+			Axis:= Axis, 
+			Execute:=TRUE , 
+			Done=> , 
+			Busy=> , 
+			Error=> , 
+			ErrorID=> , 
+			DriveAddress=> );
+	IF MC_ReadDriveAddress.Done THEN
+		Intial();
+		nStep	:= 5;
+	END_IF
+5:
+			MC_TouchProbe(
+				Axis:= Axis, 
+				TriggerInput:=TRIGGER_REF , 
+				Execute:= TRUE, 
+				WindowOnly:= , 
+				FirstPosition:= , 
+				LastPosition:= , 
+				Done=> , 
+				Busy=> , 
+				CommandAborted=> , 
+				Error=> , 
+				ErrorID=> , 
+				RecordedPosition=> , 
+				RecordedData=> );	
+			fbMC_MoveVelocity(
+				Axis:= Axis, 
+				Execute:= MC_TouchProbe.Busy, 
+				Velocity:= Velocity, 
+				Acceleration:= , 
+				Deceleration:= , 
+				Jerk:= , 
+				Direction:= , 
+				BufferMode:= , 
+				Options:= , 
+				InVelocity=> , 
+				Busy=> , 
+				Active=> , 
+				CommandAborted=> , 
+				Error=> , 
+				ErrorID=> );	
+		
+			MC_Stop(
+				Axis:= Axis, 
+				Execute:=MC_TouchProbe.Done , 
+				Deceleration:= , 
+				Jerk:= , 
+				Options:= , 
+				Done=> , 
+				Busy=> , 
+				Active=> , 
+				CommandAborted=> , 
+				Error=> , 
+				ErrorID=> );
+			IF Axis.Status.MotionState = MC_AXISSTATE_STOPPING THEN	
+				nStep	:= 10;
+				END_IF;
+10:	
+	IF Axis.Status.MotionState = MC_AXISSTATE_STANDSTILL THEN
+		nStep	:= 15;
+	END_IF
+			MC_Stop(
+				Axis:= Axis, 
+				Execute:= FALSE, 
+				Deceleration:= , 
+				Jerk:= , 
+				Options:= , 
+				Done=> , 
+				Busy=> , 
+				Active=> , 
+				CommandAborted=> , 
+				Error=> , 
+				ErrorID=> );
+	15:
+		MC_SetPosition(
+		Axis:= Axis, 
+		Execute:= TRUE, 
+		Position:=Axis.NcToPlc.ActPos - MC_TouchProbe.RecordedPosition ,
+		Mode:= , 
+		Options:= , 
+		Done=> , 
+		Busy=> , 
+		Error=> , 
+		ErrorID=> );
+	IF MC_SetPosition.Done	THEN
+		MC_Home.Execute:=TRUE;
+	END_IF
+	MC_Home(
+		Axis:= Axis, 
+		Execute:= , 
+		Position:=(Axis.NcToPlc.ActPos - MC_TouchProbe.RecordedPosition) - Position, 
+		HomingMode:= MC_ForceCalibration, 
+		BufferMode:= , 
+		Options:= , 
+		bCalibrationCam:= , 
+		Done=> , 
+		Busy=> , 
+		Active=> , 
+		CommandAborted=> , 
+		Error=> , 
+		ErrorID=> );
+	IF MC_Home.Done	THEN
+		nStep:=20;
+	END_IF
+	20:
+	Busy	:=FALSE;
+	Done	:=TRUE;		
+	IF NOT Execute THEN
+		Done	:=FALSE;		
+		nStep	:= 0;
+	END_IF
+END_CASE
+
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="FB_init" Id="{fc414f99-1aaf-4274-8ed2-37a06a6b9003}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Intial" Id="{bb6f6f65-7289-449f-a1bc-8df3f95e5749}">
+      <Declaration><![CDATA[METHOD INTERNAL Intial : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TRIGGER_REF.EncoderID			:= Axis.DriveAddress.NcAxisId;
+TRIGGER_REF.TouchProbe			:= Tc2_MC2.TouchProbe1;
+TRIGGER_REF.SignalSource		:= Tc2_MC2.SignalSource_Default;
+TRIGGER_REF.Mode				:= Tc2_MC2.TOUCHPROBEMODE_SINGLE;
+
+	fbMC_MoveVelocity(Axis:= Axis, Execute:= FALSE);
+	MC_TouchProbe(Axis:= Axis,TriggerInput:=TRIGGER_REF ,Execute:= FALSE);
+	MC_AbortTrigger(Axis:= Axis,TriggerInput:=TRIGGER_REF ,Execute:= FALSE);
+	MC_ReadDriveAddress(Axis:= Axis, Execute:= FALSE);
+	MC_Stop(Axis:= Axis, Execute:= FALSE);
+	MC_Home(Axis:= Axis, Execute:= FALSE);
+	MC_SetPosition(Axis:= Axis, Execute:= FALSE);]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_ORG_PositiveEndLessByTouchprobe">
+      <LineId Id="9" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="291" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="58" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="125" Count="6" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="156" Count="12" />
+      <LineId Id="155" Count="0" />
+      <LineId Id="173" Count="14" />
+      <LineId Id="172" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="253" Count="10" />
+      <LineId Id="252" Count="0" />
+      <LineId Id="316" Count="0" />
+      <LineId Id="188" Count="0" />
+      <LineId Id="317" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="235" Count="2" />
+      <LineId Id="240" Count="11" />
+      <LineId Id="264" Count="0" />
+      <LineId Id="268" Count="8" />
+      <LineId Id="266" Count="0" />
+      <LineId Id="265" Count="0" />
+      <LineId Id="277" Count="1" />
+      <LineId Id="222" Count="12" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="279" Count="1" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="282" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="285" Count="1" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="132" Count="2" />
+      <LineId Id="28" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ORG_PositiveEndLessByTouchprobe.FB_init">
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_ORG_PositiveEndLessByTouchprobe.Intial">
+      <LineId Id="10" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="22" Count="2" />
+      <LineId Id="12" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

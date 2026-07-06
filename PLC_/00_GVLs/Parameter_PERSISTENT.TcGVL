@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <GVL Name="Parameter_PERSISTENT" Id="{cf3dec12-1818-4b99-92f3-1a9c461a56a6}">
+    <Declaration><![CDATA[VAR_GLOBAL PERSISTENT 
+	//Parameter	:ST_Parameter := (ConveyorVelo:=300,RollerVelo:= 300,Roll_LoadInPos := 1300, Roll_LoadOutPos := 2200, Roll_ConveyorLength := 3520, Roll_ModuleSlotQty := 4, Roll_ModuleLength := 150, ConvGap := 50, ConveyorTrasnfeDisdance:= 300)	;
+	//ORG Offset
+	Setting_Dual1_ORG_Offset	:REAL;
+	Setting_Dual2_ORG_Offset	:REAL;
+	Setting_Dual2_ORG_Velo		:REAL;
+	
+	Setting_Unload1_ORG_Offset	:REAL;
+	Setting_Unload2_ORG_Offset	:REAL;
+	Setting_Unload2_ORG_Velo	:REAL;	
+	Setting_Dual_ConveyorLength			:REAL;			//雙伺服輸送帶總長 3657.5
+	Setting_Load_ConveyorLength			:REAL;			//裝箱輸送帶總長 
+	
+	Setting_FanAuto					:BOOL;			//風扇自動 
+	Setting_DualServoCalibration	:BOOL;			//雙伺服輸送校準 
+	///////////////////////////////////////////////////	
+	EventLogger 				: EventLogger;
+	RunParameter				:ST_Parameter 	;
+	//////////////////Loadcell/////////////////////////////////
+	Setting_MaxLoad			:REAL;
+	Setting_RefLoad			:REAL;
+	Setting_LoadPercent		:REAL;
+	///////////////////////////////
+	Counter_Pallet			:WORD;	//已完成棧板
+	Counter_ExitBox			:WORD;	//已出箱 
+	Counter_PackLoadIn		:DWORD;	//已入包裝 
+	Counter_OKBox			:WORD;	//完成裝箱 
+	Counter_NGBox			:WORD;	//NG裝箱 
+	
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

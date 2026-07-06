@@ -1,0 +1,697 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="FB_EL3356_0010" Id="{d7d7f3d2-0059-44e1-85f5-0272e0da6cbb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_EL3356_0010
+VAR_INPUT
+
+	i_tInputFreeze				:TIME:=T#50MS;
+	i_rInputFreezeTreshold		:REAL:=10;
+END_VAR
+VAR_OUTPUT
+		(* Status Flag*)
+	o_obUnderrange				:BOOL;		//低於範圍
+	o_bOverrange				:BOOL;		//超出範圍 
+	o_bDataInvalid				:BOOL;		//資料無效 
+	o_bError					:BOOL;		//Error
+	o_bCalibrationInProgress	:BOOL;		//
+	o_bSteadyState				:BOOL;		//穩定中 
+	o_bTxPDOToggle				:BOOL;		//刷新資料
+	o_bSyncError				:BOOL;		//
+	o_rWeight					:REAL;
+	strStatus					:STRING(100);
+	strSampleMode				:STRING(100);			
+END_VAR
+VAR
+	(* process data OUT*)
+	wControl AT %Q*:WORD;
+	(* process data IN*)
+	wStatus AT %I*:WORD;
+	rValue_REAL AT %I*:REAL;
+	nValue_Supply AT %I*:DINT;		(*only for voltage measurement, change PDO settings"*)
+	nValue_Bridge AT %I*:DINT;		(*only for voltage measurement, change PDO settings"*)
+	stEcSlaveAmsNetAdr AT %I*:ST_AmsAddr;
+	bWcState AT %I*:BOOL;
+	wState AT %I*:WORD;
+
+	
+		(* Control commands *)
+	bStartManualCalib	:BOOL;		//開始校準	-Control 
+	bDisableCalibration	:BOOL;		//停止校準	-Control
+	bSampleMode			:BOOL;		//sampleMode	-Control
+	bTara				:BOOL;		//去皮		-Control
+	//////////
+	sEcSlaveAmsNetAdr:T_AmsNetId;
+	rValue:REAL;
+
+	fbCoE		:ARRAY [0..10] OF  FB_EcCoESdoWrite;
+	wCoeData	:WORD;
+	dwCoeData	:DWORD;
+	bTermError:BOOL;
+	nCntCalibrations:UDINT;
+	sfCalibInProgress:R_TRIG;
+
+	_bInitial		,_bSetLoadcell,_bSetRefLoad,_bSetScaleFactor,_bSetZeroCali,_bSetLoadCali ,_bSetCommand,_bTara		:BOOL;
+	_Initialbuff	,_SetLoadcell,_SetRefLoad	,_SetScaleFactor,_SetZeroCali,_SetLoadCali	,_SetCommand,_Tara		:WORD;
+	
+
+	rValueDiff, rValueL:REAL;
+	bActivateAutoInputFreeze:BOOL;
+	tofInputFreeze:TOF;
+	tInputFreeze:TIME:=T#50MS;
+	tTara	:TON := (PT := TIME#500ms);
+	sfCntInputFreeze:R_TRIG;
+	nCntInputFreeze:UDINT;
+
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[	(*example program for EL3356(-0010)
+	this demo is designed only for load cell connection, not for 2channel voltage measurement*)
+
+	(*get terminal information*)
+o_bOverrange := wStatus.1;
+o_bDataInvalid := wStatus.3;
+o_bError := wStatus.6;
+o_bCalibrationInProgress := wStatus.7;
+o_bSteadyState := wStatus.8;
+o_bSyncError := wStatus.13;
+o_bTxPDOToggle := wStatus.15;
+	(*triggers*)
+	
+//sfZeroCalibration(CLK:=i_bCmd_ZeroCalibration);
+//sfFullCalibration(CLK:=i_bCmd_FullCalibration);
+//sfTara(CLK:=i_bCmd_Tara);
+//sfTaraEEProm(CLK:=i_bCmd_TaraEEProm);
+//sfInitial(CLK:= i_bInitial);
+//sfWriteLoadcellMaxWeight(CLK:= i_bWriteLoadcellMaxWeight);
+//sfbWriteRefWeight(CLK:= i_bWriteRefWeight);
+
+
+	(*value: Integer or Real value*)
+IF (rValue_REAL <> 0) THEN	(*select currently used input data*)
+	rValue := rValue_REAL;
+	rValue := 0;
+END_IF
+
+	(*status*)
+IF bWcState THEN
+	strStatus := 'Wc fail';
+	bTermError := TRUE;
+ELSIF NOT (wState.3) THEN
+	strStatus := 'Slave not in OP';
+	bTermError := TRUE;
+ELSIF o_bDataInvalid THEN
+	strStatus := 'DataInvalid';
+	bTermError := TRUE;
+ELSIF o_bError THEN
+	strStatus := 'Channel Error';
+	bTermError := TRUE;
+ELSIF o_bOverrange THEN
+	strStatus := 'Overrange';
+	bTermError := TRUE;
+ELSE
+	strStatus := 'ok';
+	bTermError := FALSE;
+END_IF
+
+	(*sample mode 0/1*)
+strSampleMode := SEL(bSampleMode, '0', '1');
+
+	(*count calibrations*)
+sfCalibInProgress(CLK:= o_bCalibrationInProgress, Q=> );
+nCntCalibrations := SEL(sfCalibInProgress.Q , nCntCalibrations, nCntCalibrations+ 1);
+
+	(*Coe parameter administration*)
+sEcSlaveAmsNetAdr := F_CreateAmsNetId(nIds:=stEcSlaveAmsNetAdr.netId );
+
+	(*test input freeze
+this lines are for a small demonstration of Input freeze: when difference of loadvalue, compared to last PLC cycle, is over rInputFreezeTreshold
+then InputFreeze is activated by tofInputFreeze for some time. See screenshot in documentation for further explanations*)
+rValueDiff := rValue - rValueL;
+rValueL := rValue;
+tofInputFreeze(IN:= bActivateAutoInputFreeze AND (ABS(rValueDiff) >i_rInputFreezeTreshold) , PT:= tInputFreeze, Q=> , ET=> );
+sfCntInputFreeze(CLK:= tofInputFreeze.Q , Q=> );
+nCntInputFreeze := SEL(sfCntInputFreeze.Q , nCntInputFreeze, nCntInputFreeze+ 1);
+
+(*++++++++++++++ CoE communication ++++++++++++++++++++++*)
+IF NOT _bInitial THEN
+	fbCoE[0](bExecute 	:= FALSE);
+	_Initialbuff	:= 0;
+END_IF
+_bInitial:= FALSE;
+//
+IF NOT _bSetLoadcell THEN
+	fbCoE[1](bExecute 	:= FALSE);
+	_SetLoadcell	:= 0;
+END_IF
+_bSetLoadcell:=FALSE;
+//
+IF NOT _bSetRefLoad THEN
+	fbCoE[2](bExecute 	:= FALSE);
+	_SetRefLoad	:= 0;
+END_IF
+_bSetRefLoad:=FALSE;
+//
+IF NOT _bSetScaleFactor THEN
+	fbCoE[3](bExecute 	:= FALSE);
+	_SetScaleFactor	:= 0;
+END_IF
+_bSetScaleFactor:= FALSE;
+
+//
+IF NOT _bSetZeroCali THEN
+	fbCoE[4](bExecute 	:= FALSE);
+	_SetZeroCali	:= 0;
+END_IF
+_bSetZeroCali	:= FALSE;
+//
+IF NOT _bSetLoadCali THEN
+	fbCoE[5](bExecute 	:= FALSE);
+	_SetLoadCali	:= 0;
+END_IF
+_bSetLoadCali	:= FALSE;
+//
+IF NOT _bSetCommand THEN
+	fbCoE[6](bExecute 	:= FALSE);
+	_SetCommand	:= 0;
+END_IF
+_bSetCommand	:= FALSE;
+
+//
+IF NOT _bTara THEN
+	tTara(IN:=FALSE);
+	_Tara	:= 0;
+	bTara	:= FALSE;
+END_IF
+_bTara:=FALSE;
+	(*output data to terminal*)
+wControl.0 := bStartManualCalib;
+wControl.1 := bDisableCalibration;
+//wControl.2 := i_bInputFreeze OR tofInputFreeze.Q ;
+wControl.3 := bSampleMode;
+wControl.4 := bTara;
+
+o_rWeight:= rValue_REAL;
+//Ext
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <Method Name="GetTara" Id="{067ff3c3-cba2-4eea-bfed-74a522ab6da2}">
+      <Declaration><![CDATA[METHOD GetTara : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bTara	:= TRUE;
+
+CASE _Tara OF
+	0: 
+		bTara	:= TRUE;
+		tTara(IN:= TRUE);
+		IF tTara.Q THEN
+			tTara(IN:= FALSE);
+			_Tara	:= 5;
+		END_IF
+
+	5:
+		GetTara:= TRUE;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialization" Id="{bd1ce88e-9c1e-42b5-94ed-d0c5df17859c}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//修改CoE object 0x1011:01值为1684107116恢复出厂设置
+_bInitial	:= TRUE;
+
+CASE _Initialbuff OF
+	0:
+		dwCoeData := 1684107116; (* Command zerocalibration*)
+		fbCoE[0](
+			sNetId		:= sEcSlaveAmsNetAdr,
+			nSlaveAddr 	:= stEcSlaveAmsNetAdr.port,
+			nSubIndex 	:= 16#01,
+			nIndex 		:= 16#1011,
+			pSrcBuf 	:= ADR(dwCoeData),
+			cbBufLen 	:= SIZEOF(dwCoeData),
+			bExecute 	:= TRUE,
+			tTimeout 	:= T#5S		
+			);
+		IF fbCoE[0].bBusy THEN
+			_Initialbuff	:= 1;
+		END_IF;
+			
+	1:
+		fbCoE[0]();				
+		IF NOT fbCoE[0].bBusy THEN
+			_Initialbuff	:= 2;
+			IF fbCoE[0].bError THEN
+				_Initialbuff	:= 5;
+			END_IF
+		END_IF;	
+	2:
+		Initialization		:= TRUE;
+		fbCoE[0](bExecute 	:= FALSE);
+	5:
+		Initialization		:= TRUE;
+		fbCoE[0](bExecute 	:= FALSE);		
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetLoadCalibration" Id="{d4388e7f-93f1-497d-9c2b-7848ef4cf875}">
+      <Declaration><![CDATA[METHOD SetLoadCalibration : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bSetLoadCali	:= TRUE;
+
+CASE _SetLoadCali OF
+	0:
+		_SetLoadCali	:= 1;
+	
+	1:
+		wCoeData	:= 16#0102;
+		fbCoE[5](
+			sNetId		:= sEcSlaveAmsNetAdr,
+			nSlaveAddr 	:= stEcSlaveAmsNetAdr.port,
+			nSubIndex 	:= 16#01,
+			nIndex 		:= 16#FB00,
+			pSrcBuf 	:= ADR(wCoeData),
+			cbBufLen 	:= SIZEOF(wCoeData),
+			bExecute 	:= TRUE,
+			tTimeout 	:= T#5S		
+			);
+		IF fbCoE[5].bBusy THEN
+			_SetLoadCali	:=2;
+		END_IF;
+			
+	2:
+		fbCoE[5]();				
+		IF NOT fbCoE[5].bBusy THEN
+			_SetLoadCali	:= 3;
+			IF fbCoE[5].bError THEN
+				_SetLoadCali	:= 5;
+			END_IF
+		END_IF;	
+	3:
+		SetLoadCalibration		:= TRUE;
+		fbCoE[5](bExecute 	:= FALSE);
+	5:
+
+		fbCoE[5](bExecute 	:= FALSE);		
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetNomialLoad" Id="{cd943a8c-5225-46dc-a54a-c851e9f1db26}">
+      <Declaration><![CDATA[METHOD SetNomialLoad : BOOL
+VAR_INPUT
+	MaxWeight:REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//8.	0x8000:24 ("额定值") ，本例的传感器为最大称重1kg，那么就输入1000 
+_bSetLoadcell	:= TRUE;
+
+CASE _SetLoadcell OF
+	0:
+		IF MaxWeight = 0.0 THEN
+			_SetLoadcell	:=5;
+			ELSE
+			_SetLoadcell	:= 1;
+		END_IF
+	1:
+		fbCoE[1](
+			sNetId		:= sEcSlaveAmsNetAdr,
+			nSlaveAddr 	:= stEcSlaveAmsNetAdr.port,
+			nSubIndex 	:= 16#24,
+			nIndex 		:= 16#8000,
+			pSrcBuf 	:= ADR(MaxWeight),
+			cbBufLen 	:= SIZEOF(MaxWeight),
+			bExecute 	:= TRUE,
+			tTimeout 	:= T#5S		
+			);
+		IF fbCoE[1].bBusy THEN
+			_SetLoadcell	:=2;
+		END_IF;
+			
+	2:
+		fbCoE[1]();				
+		IF NOT fbCoE[1].bBusy THEN
+			_SetLoadcell	:= 3;
+			IF fbCoE[1].bError THEN
+				_SetLoadcell	:= 5;
+			END_IF
+		END_IF;	
+	3:
+		SetNomialLoad		:= TRUE;
+		fbCoE[1](bExecute 	:= FALSE);
+	5:
+
+		fbCoE[1](bExecute 	:= FALSE);		
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetRefLoad" Id="{2ed8e764-7915-439e-917f-5713e4eaca38}">
+      <Declaration><![CDATA[METHOD SetRefLoad : BOOL
+VAR_INPUT
+	RefLoad:REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//500g的砝码在 0x8000:28 校准负载填写500, (0x8000:24)额定负载填写1000。
+
+_bSetRefLoad	:= TRUE;
+
+CASE _SetRefLoad OF
+	0:
+		IF RefLoad = 0.0 THEN
+			_SetRefLoad	:=5;
+			ELSE
+			_SetRefLoad	:= 1;
+		END_IF
+	1:
+		fbCoE[2](
+			sNetId		:= sEcSlaveAmsNetAdr,
+			nSlaveAddr 	:= stEcSlaveAmsNetAdr.port,
+			nSubIndex 	:= 16#28,
+			nIndex 		:= 16#8000,
+			pSrcBuf 	:= ADR(RefLoad),
+			cbBufLen 	:= SIZEOF(RefLoad),
+			bExecute 	:= TRUE,
+			tTimeout 	:= T#5S		
+			);
+		IF fbCoE[2].bBusy THEN
+			_SetRefLoad	:=2;
+		END_IF;
+			
+	2:
+		fbCoE[2]();				
+		IF NOT fbCoE[2].bBusy THEN
+			_SetRefLoad	:= 3;
+			IF fbCoE[2].bError THEN
+				_SetRefLoad	:= 5;
+			END_IF
+		END_IF;	
+	3:
+		SetRefLoad		:= TRUE;
+		fbCoE[2](bExecute 	:= FALSE);
+	5:
+
+		fbCoE[2](bExecute 	:= FALSE);		
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetScaleFactor" Id="{7818337d-15dd-462e-ad88-007a15a7b932}">
+      <Declaration><![CDATA[METHOD SetScaleFactor : BOOL
+VAR_INPUT
+	ScaleFactor	:REAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//0x8000:27 校准负载填写1單位kg , 1000/g
+
+_bSetScaleFactor	:= TRUE;
+
+CASE _SetScaleFactor OF
+	0:
+		IF ScaleFactor = 0.0 THEN
+			_SetScaleFactor	:=5;
+			ELSE
+			_SetScaleFactor	:= 1;
+		END_IF
+	1:
+		fbCoE[3](
+			sNetId		:= sEcSlaveAmsNetAdr,
+			nSlaveAddr 	:= stEcSlaveAmsNetAdr.port,
+			nSubIndex 	:= 16#27,
+			nIndex 		:= 16#8000,
+			pSrcBuf 	:= ADR(ScaleFactor),
+			cbBufLen 	:= SIZEOF(ScaleFactor),
+			bExecute 	:= TRUE,
+			tTimeout 	:= T#5S		
+			);
+		IF fbCoE[3].bBusy THEN
+			_SetScaleFactor	:=2;
+		END_IF;
+			
+	2:
+		fbCoE[3]();				
+		IF NOT fbCoE[3].bBusy THEN
+			_SetScaleFactor	:= 3;
+			IF fbCoE[3].bError THEN
+				_SetScaleFactor	:= 5;
+			END_IF
+		END_IF;	
+	3:
+		SetScaleFactor		:= TRUE;
+		fbCoE[3](bExecute 	:= FALSE);
+	5:
+
+		fbCoE[3](bExecute 	:= FALSE);		
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetZeroCalibration" Id="{051e7a1d-1421-4657-bbb4-d93b6dd0d6b3}">
+      <Declaration><![CDATA[METHOD SetZeroCalibration : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bSetZeroCali	:= TRUE;
+
+//0x8000:27 校准负载填写1單位kg , 1000/g
+
+CASE _SetZeroCali OF
+	0:
+		_SetZeroCali	:= 1;
+	
+	1:
+		wCoeData	:= 16#0101;
+		fbCoE[4](
+			sNetId		:= sEcSlaveAmsNetAdr,
+			nSlaveAddr 	:= stEcSlaveAmsNetAdr.port,
+			nSubIndex 	:= 16#01,
+			nIndex 		:= 16#FB00,
+			pSrcBuf 	:= ADR(wCoeData),
+			cbBufLen 	:= SIZEOF(wCoeData),
+			bExecute 	:= TRUE,
+			tTimeout 	:= T#5S		
+			);
+		IF fbCoE[4].bBusy THEN
+			_SetZeroCali	:=2;
+		END_IF;
+			
+	2:
+		fbCoE[4]();				
+		IF NOT fbCoE[4].bBusy THEN
+			_SetZeroCali	:= 3;
+			IF fbCoE[4].bError THEN
+				_SetZeroCali	:= 5;
+			END_IF
+		END_IF;	
+	3:
+		SetZeroCalibration		:= TRUE;
+		fbCoE[4](bExecute 	:= FALSE);
+	5:
+
+		fbCoE[4](bExecute 	:= FALSE);		
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="WriteCommand" Id="{6552a2f7-073d-4a84-b097-b93e8d65a96a}">
+      <Declaration><![CDATA[METHOD WriteCommand : BOOL
+VAR_INPUT
+	wInputData	:WORD;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bSetCommand	:= TRUE;
+
+CASE _SetCommand OF
+	0:
+		_SetCommand	:= 1;
+	
+	1:
+		wCoeData	:= wInputData;
+		fbCoE[6](
+			sNetId		:= sEcSlaveAmsNetAdr,
+			nSlaveAddr 	:= stEcSlaveAmsNetAdr.port,
+			nSubIndex 	:= 16#01,
+			nIndex 		:= 16#FB00,
+			pSrcBuf 	:= ADR(wCoeData),
+			cbBufLen 	:= SIZEOF(wCoeData),
+			bExecute 	:= TRUE,
+			tTimeout 	:= T#5S		
+			);
+		IF fbCoE[6].bBusy THEN
+			_SetCommand	:=2;
+		END_IF;
+			
+	2:
+		fbCoE[6]();				
+		IF NOT fbCoE[6].bBusy THEN
+			_SetCommand	:= 3;
+			IF fbCoE[6].bError THEN
+				_SetCommand	:= 5;
+			END_IF
+		END_IF;	
+	3:
+		WriteCommand		:= TRUE;
+		fbCoE[6](bExecute 	:= FALSE);
+	5:
+
+		fbCoE[6](bExecute 	:= FALSE);		
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="FB_EL3356_0010">
+      <LineId Id="29" Count="11" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="41" Count="11" />
+      <LineId Id="56" Count="43" />
+      <LineId Id="503" Count="0" />
+      <LineId Id="810" Count="0" />
+      <LineId Id="505" Count="1" />
+      <LineId Id="500" Count="0" />
+      <LineId Id="502" Count="0" />
+      <LineId Id="508" Count="0" />
+      <LineId Id="809" Count="0" />
+      <LineId Id="514" Count="1" />
+      <LineId Id="511" Count="0" />
+      <LineId Id="582" Count="0" />
+      <LineId Id="587" Count="0" />
+      <LineId Id="808" Count="0" />
+      <LineId Id="588" Count="1" />
+      <LineId Id="583" Count="2" />
+      <LineId Id="807" Count="0" />
+      <LineId Id="590" Count="1" />
+      <LineId Id="513" Count="0" />
+      <LineId Id="156" Count="0" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="657" Count="0" />
+      <LineId Id="806" Count="0" />
+      <LineId Id="658" Count="0" />
+      <LineId Id="655" Count="1" />
+      <LineId Id="659" Count="1" />
+      <LineId Id="805" Count="0" />
+      <LineId Id="661" Count="1" />
+      <LineId Id="654" Count="0" />
+      <LineId Id="666" Count="1" />
+      <LineId Id="804" Count="0" />
+      <LineId Id="668" Count="1" />
+      <LineId Id="664" Count="0" />
+      <LineId Id="670" Count="0" />
+      <LineId Id="665" Count="0" />
+      <LineId Id="671" Count="0" />
+      <LineId Id="740" Count="0" />
+      <LineId Id="672" Count="0" />
+      <LineId Id="675" Count="0" />
+      <LineId Id="673" Count="0" />
+      <LineId Id="663" Count="0" />
+      <LineId Id="187" Count="6" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="338" Count="0" />
+      <LineId Id="343" Count="0" />
+      <LineId Id="342" Count="0" />
+      <LineId Id="339" Count="2" />
+      <LineId Id="337" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.GetTara">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="6" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="19" Count="2" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="16" Count="2" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.Initialization">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="20" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="55" Count="1" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="61" Count="2" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="71" Count="1" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="40" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.SetLoadCalibration">
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="2" />
+      <LineId Id="17" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="20" Count="27" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.SetNomialLoad">
+      <LineId Id="50" Count="4" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="56" Count="28" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.SetRefLoad">
+      <LineId Id="5" Count="0" />
+      <LineId Id="16" Count="39" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.SetScaleFactor">
+      <LineId Id="10" Count="39" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.SetZeroCalibration">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="11" Count="2" />
+      <LineId Id="17" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="20" Count="27" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_EL3356_0010.WriteCommand">
+      <LineId Id="60" Count="35" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

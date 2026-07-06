@@ -1,0 +1,358 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Ass_StackComv" Id="{4b25830c-f5af-4eac-9d4d-de80b24edd39}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Ass_StackComv IMPLEMENTS ITF_AutoStructCommand
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	strText	:STRING;
+	i	:INT;
+	_bProcessScan,_bInitialScan: BOOL;
+	_bHalt , _bError,_bHaltPause: BOOL;
+	nStep,nInitiStep  	: INT;
+	_tmrT0,_tmrT1		:TON;
+	bBoxPass: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT _bInitialScan THEN
+	nInitiStep	:= 0;
+END_IF
+
+_bInitialScan:=FALSE;
+
+
+
+IF NOT _bProcessScan THEN
+	nStep	:= 0;
+END_IF
+
+_bProcessScan:=FALSE;]]></ST>
+    </Implementation>
+    <Property Name="Connect" Id="{a371786e-bcec-4523-a384-a2bef8001a0c}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Connect : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{c2b60847-59a1-4f2e-a761-a78ee112decd}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{0808dff4-5621-418e-a295-4266bc39503a}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="Error" Id="{8e1996c5-689e-41dc-8771-ce949e06e94e}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Error : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{065378a1-67cf-4878-b432-41d5f2355425}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="ErrorClear" Id="{a339a88e-b35e-48af-af47-02390217588e}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD ErrorClear : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{95a8debb-1c67-4616-b911-0721a93f46e6}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD FB_init : BOOL
+VAR_INPUT
+	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
+	bInitRetains	: BOOL;
+	(* if TRUE, the instance afterwards gets moved into the copy code (online change)*)
+	bInCopyCode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HaltStepContiune" Id="{0dc00c82-e09c-4ec0-b9a3-23ac9ba5992d}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD HaltStepContiune : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialization" Id="{68df2561-95fa-4481-b660-382046a2754b}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+	_Testmode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bInitialScan:=TRUE;
+
+CASE nInitiStep OF
+	0:		
+		strText					:= 'ORG : Inital';
+		Motor_Stack.qRun		:=FALSE;
+		Vacm_StackUD			:=FALSE;
+		Cyl_StackUD.qExtendCoil	:=FALSE;
+		Bundling_yPause			:= FALSE;	
+		nInitiStep				:= 5;	
+	5:
+		IF 	Cyl_StackUD.iOriginSensor THEN
+			nInitiStep				:= 10;	
+		END_IF;
+	10:
+			strText:='ORG : Done ';
+			Initialization	:= TRUE;
+	
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="NoEntry" Id="{c2ac9021-b8c3-4fdc-8125-d256457068d6}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY NoEntry : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{f57af2ab-2034-46ea-af7f-472d3b7a0aa4}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Pause" Id="{7c2282fa-2483-4aff-a09f-26d3f1a27dc3}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD Pause : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Process" Id="{6448f121-61fb-4edd-a9d3-84894ee57953}">
+      <Declaration><![CDATA[METHOD Process : BOOL
+VAR_INPUT
+	bHlatMode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bProcessScan	:= TRUE;
+CASE nStep OF 
+	0:
+		Vacm_StackUD			:=FALSE;
+		Cyl_StackUD.qExtendCoil	:=FALSE;
+		Motor_Stack.qRun		:=TRUE;
+		nStep					:= 5;
+		_tmrT0(IN:=FALSE);
+		_tmrT1(IN:=FALSE);
+	5:
+		IF RunParameter.stack_bUsed THEN
+				IF Sen_StackComvStop THEN
+					Motor_Stack.qRun		:=FALSE;
+					nStep					:= 9;
+				END_IF
+			ELSE		
+		
+			;
+		
+		
+		END_IF
+	9:
+		_tmrT0(IN:=TRUE,PT:=T#1S);
+		IF _tmrT0.Q THEN
+			_tmrT0(IN:=FALSE);
+			nStep					:= 10;
+		END_IF		
+		
+	10://堆疊1
+		Cyl_StackUD.qExtendCoil	:= TRUE;
+		_tmrT0(IN:=TRUE,PT:=RunParameter.stack_DelayTime1);
+		IF _tmrT0.Q THEN
+			_tmrT0(IN:=FALSE);
+			nStep					:= 15;
+		END_IF
+	15:
+		Vacm_StackUD			:=TRUE;	
+		_tmrT0(IN:=TRUE,PT:=T#1S);
+		IF _tmrT0.Q THEN
+			_tmrT0(IN:=FALSE);
+			nStep					:= 20;
+		END_IF
+	20:
+		Cyl_StackUD.qExtendCoil	:= FALSE;		
+		IF Cyl_StackUD.iOriginSensor THEN
+			nStep					:= 25;
+		END_IF		
+	25:
+		Motor_Stack.qRun		:=TRUE;
+		IF Sen_StackComvStop THEN
+			Motor_Stack.qRun		:=FALSE;
+			nStep					:= 30;
+		END_IF	
+	30:	
+		_tmrT0(IN:=TRUE,PT:=T#1S);
+		IF _tmrT0.Q THEN
+			_tmrT0(IN:=FALSE);
+			nStep					:= 35;
+		END_IF		
+	
+	35:		
+		Cyl_StackUD.qExtendCoil	:= TRUE;
+		_tmrT0(IN:=TRUE,PT:=RunParameter.stack_DelayTime2);
+		IF _tmrT0.Q THEN
+			_tmrT0(IN:=FALSE);
+			nStep					:= 40;
+		END_IF		
+	40:
+		Cyl_StackUD.qExtendCoil	:= FALSE;
+		Vacm_StackUD			:=FALSE;
+		_tmrT0(IN:=TRUE,PT:=T#0.5S);
+		IF _tmrT0.Q THEN
+			_tmrT0(IN:=FALSE);
+			nStep					:= 45;
+		END_IF						
+	45:
+		Motor_Stack.qRun		:=TRUE;
+		IF NOT Sen_StackComvStop THEN
+			nStep					:=0;
+		END_IF	
+	
+	
+	
+	
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Status" Id="{b2ad1aac-7177-4ef5-aea5-5718cbec52b8}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Status : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{28a7eb0f-71f1-4cfc-85ef-c023d9fa3489}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="Ass_StackComv">
+      <LineId Id="25" Count="9" />
+      <LineId Id="37" Count="1" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.Connect.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.Connect.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.Error.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.ErrorClear">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.FB_init">
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.HaltStepContiune">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.Initialization">
+      <LineId Id="27" Count="2" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="44" Count="2" />
+      <LineId Id="30" Count="2" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="49" Count="1" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="34" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.NoEntry.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.Pause">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.Process">
+      <LineId Id="12" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="41" Count="1" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="32" Count="2" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="77" Count="3" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="81" Count="0" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="46" Count="5" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="62" Count="2" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="82" Count="3" />
+      <LineId Id="66" Count="1" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="88" Count="4" />
+      <LineId Id="68" Count="1" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="95" Count="3" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="101" Count="1" />
+      <LineId Id="104" Count="1" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_StackComv.Status.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

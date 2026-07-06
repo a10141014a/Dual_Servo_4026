@@ -1,0 +1,706 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="AXIS_REF_Ext" Id="{32eaf42d-4ad2-4a2f-948a-ee8f04bd528b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK AXIS_REF_Ext EXTENDS AXIS_REF
+VAR_INPUT
+	EMG					:BOOL;
+	Enable_Positive		:BOOL;
+	Enable_Negative		:BOOL;
+	AxisName			:STRING(50);
+END_VAR
+VAR_OUTPUT
+	strAxisStates		:STRING(50);
+	DI					AT %I* :UDINT;
+	DeviceErrorcode			AT %I* :WORD;
+END_VAR
+VAR
+	stEcSlaveAmsNetAdr 	AT %I* 			:ST_AmsAddr;
+	_IndexCounter						:UDINT;
+	MC_Power							:MC_Power;
+	MC_Jog								:MC_Jog;
+	_bSwich								:BOOL;
+	_bJogFFlag,_bJogBFlag,_bStopFlag,_bResetFlag,_bMoveVelocityFlag,_bSetPosition			:BOOL;			//內部旗標 
+	MC_Stop								:MC_Stop;
+	MC_Reset							:MC_Reset;		
+	MC_ReadParameter					:MC_ReadParameter;
+	MC_ReadDriveAddress					:MC_ReadDriveAddress;
+	MC_MoveVelocity						:MC_MoveVelocity;
+	MC_SetPosition						:MC_SetPosition;
+	MaxVelo								:LREAL;
+	TempVelo							:LREAL;
+	nJogStep,nStopStep,nResetStep,nMoveVelocityStep,nSetPositionStep		:INT;
+	
+	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SUPER^.ReadStatus();
+SUPER^();
+//flagtoString
+AxisStatesToString();
+/////////////////////////////////Power ON///////////////////////////////////
+IF NOT EMG THEN
+	_bSwich:=FALSE;
+END_IF
+MC_Power(
+	Axis:= SUPER^, 
+	Enable:= _bSwich, 
+	Enable_Positive:= Enable_Positive, 
+	Enable_Negative:= Enable_Negative, 
+	Override:= , 
+	BufferMode:= , 
+	Options:= , 
+	Status=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorID=> );
+	
+MC_ReadDriveAddress(
+	Axis:= SUPER^, 
+	Execute:= MC_Power.Status, 
+	Done=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorID=> , 
+	DriveAddress=> );	
+	
+
+///////////////////////////////////////////////////////////////
+NStep();
+
+
+
+]]></ST>
+    </Implementation>
+    <Action Name="AxisStatesToString" Id="{75afc977-fac9-4914-ba48-9b3fbee98525}">
+      <Implementation>
+        <ST><![CDATA[CASE SUPER^.Status.MotionState OF
+    MC_AXISSTATE_UNDEFINED:
+		strAxisStates:='Undefined';
+    MC_AXISSTATE_DISABLED:
+		strAxisStates:='Disable';
+    MC_AXISSTATE_STANDSTILL:
+		strAxisStates:='Standstill';
+    MC_AXISSTATE_ERRORSTOP:
+		strAxisStates:='ErrorStop';
+    MC_AXISSTATE_STOPPING:
+		strAxisStates:='Stopping';
+    MC_AXISSTATE_HOMING:
+		strAxisStates:='Homing';
+    MC_AXISSTATE_DISCRETEMOTION:
+		strAxisStates:='Discretemotion';
+    MC_AXISSTATE_CONTINOUSMOTION:
+		strAxisStates:='Continousmotion';
+    MC_AXISSTATE_SYNCHRONIZEDMOTION	:
+		strAxisStates:='Synchronizedmotion';	
+END_CASE
+]]></ST>
+      </Implementation>
+    </Action>
+    <Property Name="CommandError" Id="{fff79de0-3f0d-493f-b350-dc0661c29af5}">
+      <Declaration><![CDATA[PROPERTY CommandError : BOOL]]></Declaration>
+      <Get Name="Get" Id="{40482807-0ec2-4f85-a612-a6c4bc555d37}">
+        <Declaration><![CDATA[VAR
+END_VAR
+VAR_OUTPUT
+	ErrorID	:	UDINT;
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CommandError:= 	MC_Stop.Error OR MC_Reset.Error OR MC_Jog.Error OR MC_Power.Error OR MC_SetPosition.Error OR MC_MoveVelocity.Error;
+
+ErrorID:=	MC_Stop.ErrorID OR MC_Reset.ErrorID OR MC_Jog.ErrorID OR MC_Power.ErrorID OR MC_SetPosition.ErrorID OR MC_MoveVelocity.ErrorID;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Property Name="Error" Id="{5a1a4e2d-9c31-4c08-a963-a89633d6cf02}">
+      <Declaration><![CDATA[PROPERTY Error : BOOL]]></Declaration>
+      <Get Name="Get" Id="{6959e72b-1603-4476-8751-49b38779cc1e}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Error:= SUPER^.Status.Error	OR  SUPER^.Status.DriveDeviceError;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="JogBackwards" Id="{4371965c-c41a-4c36-9506-740d0e6bc726}">
+      <Declaration><![CDATA[METHOD JogBackwards : BOOL
+VAR_INPUT
+	Velocity: LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bJogBFlag	:= TRUE;
+
+IF NOT MC_Jog.JogForward THEN
+	IF 	Velocity > MaxVelo THEN
+		MC_Jog.Velocity	:= MaxVelo ; 
+		ELSE
+		MC_Jog.Velocity	:=	Velocity;
+	END_IF
+END_IF
+JogBackwards:= SUPER^.Status.ConstantVelocity;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="JogForward" Id="{fe1c87ad-4f62-40d5-ae18-3038a701af3c}">
+      <Declaration><![CDATA[METHOD JogForward : BOOL
+VAR_INPUT
+	Velocity	:LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bJogFFlag	:= TRUE;
+
+IF NOT MC_Jog.JogBackwards THEN
+	IF 	Velocity > MaxVelo THEN
+		MC_Jog.Velocity	:= MaxVelo ; 
+		ELSE
+		MC_Jog.Velocity	:=	Velocity;
+	END_IF
+END_IF
+JogForward:= SUPER^.Status.ConstantVelocity;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="MoveVelocity" Id="{74e4f9de-6438-447f-8fd0-707f0926bd22}">
+      <Declaration><![CDATA[METHOD MoveVelocity : BOOL
+VAR_INPUT
+	Velocity			:LREAL;
+	Direction 			:TC2_MC2.MC_Direction	 ;
+(*MC_Positive_Direction := 1,MC_Shortest_Way ,MC_Negative_Direction,MC_Current_Direction,MC_Undefined_Direction := 128*)	
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bMoveVelocityFlag := TRUE;
+TempVelo	:= Velocity ;
+MC_MoveVelocity.Direction	:=  Direction;
+
+
+MoveVelocity:= MC_MoveVelocity.InVelocity;]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="NStep" Id="{8c16e0d9-aa4f-4123-af8f-dce3d8db2ceb}">
+      <Implementation>
+        <ST><![CDATA[//////////////////////////////JOG//////////////////////////////////////	
+MC_ReadParameter(
+	Axis:= SUPER^, 
+	Enable:=TRUE , 
+	ParameterNumber:= MaxVelocitySystem, 
+	ReadMode:=READMODE_CYCLIC , 
+	Valid=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorID=> , 
+	Value=> MaxVelo);
+////////////////JOG+++//////////////////
+MC_Jog(
+	Axis:= SUPER^, 
+	JogForward:= , 
+	JogBackwards:= , 
+	Mode:= MC_JOGMODE_CONTINOUS, 
+	Position:= , 
+	Velocity:= , 
+	Acceleration:= , 
+	Deceleration:= , 
+	Jerk:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+	
+IF SUPER^.Status.Error THEN
+	nJogStep:=0;
+	_bJogFFlag:=FALSE;
+	_bJogBFlag:=FALSE;
+END_IF	
+	
+CASE nJogStep OF
+	0:
+		IF _bJogFFlag THEN
+			IF SUPER^.Status.StandStill THEN
+				nJogStep:= 10;
+			END_IF;
+		END_IF
+		IF _bJogBFlag THEN
+			IF SUPER^.Status.StandStill THEN
+				nJogStep:= 15;
+			END_IF;
+		END_IF		
+		
+	10:
+		MC_Jog.JogForward:=TRUE;
+		IF NOT _bJogFFlag THEN
+			MC_Jog.JogForward:=FALSE;
+			nJogStep:= 0;
+		END_IF	
+		IF  SUPER^.Status.Stopping THEN
+			MC_Jog.JogForward:=FALSE;
+			nJogStep:= 20;		
+		END_IF
+		
+	15:
+		MC_Jog.JogBackwards:=TRUE;
+		IF NOT _bJogBFlag THEN
+			MC_Jog.JogBackwards:=FALSE;
+			nJogStep:= 0;
+		END_IF				
+		IF  SUPER^.Status.Stopping THEN
+			MC_Jog.JogBackwards:=FALSE;
+			nJogStep:=20;		
+		END_IF	
+	20:
+		IF NOT _bJogBFlag AND NOT _bJogFFlag THEN
+			nJogStep:= 0;
+		END_IF;
+	
+	50:
+END_CASE	
+
+	
+_bJogFFlag:=FALSE;
+_bJogBFlag:=FALSE;
+//********************************************************
+//STOP
+
+MC_Stop(
+	Axis:=SUPER^ , 
+	Execute:= , 
+	Deceleration:= , 
+	Jerk:= , 
+	Options:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+CASE nStopStep OF
+	0:	
+		MC_Stop.Execute:= FALSE;
+		IF _bStopFlag THEN
+			MC_Stop.Execute:= TRUE;
+			nStopStep	:= 10;	
+		END_IF
+	10:
+		IF MC_Stop.Done THEN
+			MC_Stop.Execute:= FALSE;
+			nStopStep	:= 15;		
+		END_IF;		
+		IF MC_Stop.Error THEN
+			MC_Stop.Execute:= FALSE;
+			nStopStep	:= 20;		
+		END_IF;	
+
+		
+	15:		
+		IF NOT _bStopFlag THEN
+			MC_Stop.Execute:= FALSE;
+			nStopStep	:= 0;	
+		END_IF	
+	20:
+		IF NOT _bStopFlag THEN
+			MC_Stop.Execute:= FALSE;
+			nStopStep	:= 0;	
+		END_IF		
+END_CASE;
+
+_bStopFlag:=FALSE;
+////////////////////////////////////////////////////
+MC_Reset(Axis:=SUPER^);
+
+
+CASE nResetStep OF
+	0:	
+		MC_Reset.Execute:= FALSE;
+		IF _bResetFlag THEN
+			MC_Reset.Execute:= TRUE;
+			nResetStep	:= 10;	
+		END_IF
+	10:
+		IF MC_Reset.Done THEN
+			MC_Reset.Execute:= FALSE;
+			nResetStep	:= 15;		
+		END_IF;		
+		IF MC_Reset.Error THEN
+			MC_Reset.Execute:= FALSE;
+			nResetStep	:= 20;		
+		END_IF;	
+
+		
+	15:		
+		IF NOT _bResetFlag THEN
+			nResetStep	:= 0;	
+		END_IF	
+	20:
+		IF NOT _bResetFlag THEN
+			nResetStep	:= 0;	
+		END_IF	
+	
+END_CASE;
+
+
+	
+_bResetFlag	:=FALSE;
+////////////////////////////////////////////////////////////////////	
+MC_MoveVelocity(Axis:= SUPER^);
+IF SUPER^.Status.Error  THEN
+	nMoveVelocityStep	:= 0;
+END_IF
+
+CASE nMoveVelocityStep OF
+	0:	
+		MC_MoveVelocity.Execute:= FALSE;
+		IF _bMoveVelocityFlag AND SUPER^.Status.StandStill AND NOT SUPER^.Status.Error  THEN
+			MC_MoveVelocity.Velocity	:= TempVelo;
+			MC_MoveVelocity.Execute:= TRUE;
+			nMoveVelocityStep	:= 5;
+		END_IF
+	
+	5:
+		IF MC_MoveVelocity.Velocity	<> TempVelo THEN
+			MC_MoveVelocity.Execute:= FALSE;
+			nMoveVelocityStep	:= 6;
+		END_IF
+		IF NOT _bMoveVelocityFlag THEN
+			nMoveVelocityStep	:= 20;
+		END_IF
+	6:
+		IF NOT MC_MoveVelocity.Active THEN
+			MC_MoveVelocity.Velocity	:= TempVelo;
+			MC_MoveVelocity.Execute		:= TRUE;
+			nMoveVelocityStep			:= 5;
+		END_IF;		
+
+	20:
+		IF Stop() THEN
+			nMoveVelocityStep	:= 0;
+		END_IF		
+	
+END_CASE;	
+_bMoveVelocityFlag := FALSE;
+
+//////////////////////////////////////////////////////////////
+MC_SetPosition(Axis:= SUPER^);
+CASE nSetPositionStep OF
+	0:
+		MC_SetPosition.Execute:= FALSE;
+		IF _bSetPosition THEN
+			MC_SetPosition.Execute:= TRUE;
+			nSetPositionStep:= 5;
+		END_IF
+	
+	5:
+		IF MC_SetPosition.Done THEN
+			nSetPositionStep:= 10;
+		END_IF
+		IF MC_SetPosition.Error THEN
+			nSetPositionStep:= 15;
+		END_IF
+	10:
+		IF NOT _bSetPosition THEN
+			MC_SetPosition.Execute:= FALSE;
+			nSetPositionStep:= 0;
+		END_IF
+	15:
+		IF NOT _bSetPosition THEN
+			MC_SetPosition.Execute:= FALSE;
+			nSetPositionStep:= 0;
+		END_IF
+
+END_CASE
+
+
+
+
+
+
+_bSetPosition	:=FALSE;
+]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="Reset" Id="{5d069d86-3ec8-4e54-8284-e7151190a704}">
+      <Declaration><![CDATA[METHOD Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bResetFlag	:=TRUE;
+Reset := nResetStep = 15;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ServoOFF" Id="{a56c4bf4-f3f6-4623-8441-2f08556512bf}">
+      <Declaration><![CDATA[METHOD ServoOFF : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bSwich	:= FALSE;
+ServoOFF	:= SUPER^.Status.Disabled;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ServoOn" Id="{bcad41ad-1d48-4fe7-a7cd-07bdf8658b01}">
+      <Declaration><![CDATA[METHOD ServoOn : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF EMG THEN
+	_bSwich	:= TRUE;
+	ELSE
+	_bSwich	:= FALSE;
+END_IF
+ServoOn := MC_Power.Status;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetPosition" Id="{ae728b18-df04-4a9e-bade-cabf4ce9bbc3}">
+      <Declaration><![CDATA[METHOD SetPosition : BOOL
+VAR_INPUT
+	Position:LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bSetPosition	:=TRUE;
+MC_SetPosition.Position:= Position;
+
+SetPosition	:= MC_SetPosition.Done;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Stop" Id="{c508e04b-7649-4e5d-a07a-20ec63583a85}">
+      <Declaration><![CDATA[METHOD Stop : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bStopFlag	:= TRUE;
+Stop:=  nStopStep=15 ; 
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="AXIS_REF_Ext">
+      <LineId Id="11" Count="0" />
+      <LineId Id="189" Count="1" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="17" Count="10" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="444" Count="6" />
+      <LineId Id="442" Count="1" />
+      <LineId Id="314" Count="1" />
+      <LineId Id="440" Count="0" />
+      <LineId Id="316" Count="2" />
+      <LineId Id="302" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.AxisStatesToString">
+      <LineId Id="1" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="3" Count="0" />
+      <LineId Id="24" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.CommandError.Get">
+      <LineId Id="2" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="8" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.Error.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.JogBackwards">
+      <LineId Id="6" Count="4" />
+      <LineId Id="13" Count="2" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.JogForward">
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="24" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.MoveVelocity">
+      <LineId Id="5" Count="0" />
+      <LineId Id="13" Count="1" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="15" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.NStep">
+      <LineId Id="2" Count="27" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="129" Count="2" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="107" Count="1" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="111" Count="3" />
+      <LineId Id="109" Count="1" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="133" Count="1" />
+      <LineId Id="136" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="120" Count="1" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="138" Count="2" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="178" Count="1" />
+      <LineId Id="182" Count="0" />
+      <LineId Id="181" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="36" Count="18" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="158" Count="0" />
+      <LineId Id="150" Count="1" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="152" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="170" Count="2" />
+      <LineId Id="168" Count="1" />
+      <LineId Id="153" Count="0" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="165" Count="2" />
+      <LineId Id="154" Count="0" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="174" Count="2" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="144" Count="0" />
+      <LineId Id="59" Count="2" />
+      <LineId Id="187" Count="1" />
+      <LineId Id="186" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="189" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="190" Count="16" />
+      <LineId Id="208" Count="3" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="70" Count="1" />
+      <LineId Id="184" Count="1" />
+      <LineId Id="73" Count="4" />
+      <LineId Id="241" Count="2" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="219" Count="0" />
+      <LineId Id="229" Count="1" />
+      <LineId Id="225" Count="1" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="227" Count="1" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="248" Count="0" />
+      <LineId Id="252" Count="1" />
+      <LineId Id="251" Count="0" />
+      <LineId Id="234" Count="0" />
+      <LineId Id="256" Count="0" />
+      <LineId Id="255" Count="0" />
+      <LineId Id="254" Count="0" />
+      <LineId Id="250" Count="0" />
+      <LineId Id="257" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="238" Count="2" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="259" Count="0" />
+      <LineId Id="258" Count="0" />
+      <LineId Id="262" Count="0" />
+      <LineId Id="267" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="277" Count="1" />
+      <LineId Id="272" Count="1" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="282" Count="1" />
+      <LineId Id="289" Count="1" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="291" Count="1" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="293" Count="3" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="297" Count="1" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="263" Count="3" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="260" Count="0" />
+      <LineId Id="1" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.Reset">
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="1" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.ServoOFF">
+      <LineId Id="5" Count="1" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.ServoOn">
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.SetPosition">
+      <LineId Id="12" Count="0" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="AXIS_REF_Ext.Stop">
+      <LineId Id="5" Count="0" />
+      <LineId Id="9" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

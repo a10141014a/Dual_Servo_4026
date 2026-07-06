@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <Task Name="PlcTask" Id="{3d19aaf1-8f3c-4377-ac26-a2ee09f1c97b}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>1000</CycleTime>
+    <Priority>20</Priority>
+    <PouCall>
+      <Name>Device_POU</Name>
+    </PouCall>
+    <PouCall>
+      <Name>MST_POU</Name>
+    </PouCall>
+    <PouCall>
+      <Name>MAIN</Name>
+    </PouCall>
+    <PouCall>
+      <Name>UPS_POU</Name>
+    </PouCall>
+    <TaskFBGuid>{045a86a6-5d05-45b6-8958-b1d86352ee2c}</TaskFBGuid>
+    <Fb_init>{d0b1ab76-8c34-4542-ac8e-d9fc034e2390}</Fb_init>
+    <Fb_exit>{ea995cb4-9d73-44f0-91d5-419e7566c86c}</Fb_exit>
+    <CycleUpdate>{25c333c9-3b3b-43d8-ba33-02f1fc134871}</CycleUpdate>
+    <PostCycleUpdate>{54bed006-243e-4cc4-bbc1-62963e93803a}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

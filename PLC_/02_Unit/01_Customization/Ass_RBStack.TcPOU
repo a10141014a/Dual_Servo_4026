@@ -1,0 +1,484 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Ass_RBStack" Id="{ecfcfd77-7c6f-4850-832d-5d24c8fb40fb}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Ass_RBStack IMPLEMENTS ITF_AutoStructCommand
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	strText	:STRING;
+	i,_CaptureStep	:INT;
+	_bProcessScan,_bInitialScan: BOOL;
+	_bHalt , _bError,_bHaltPause: BOOL;
+	nStep,nInitiStep ,nNGStep,nShackStep,nPalletStep	: INT;
+	_tmrT0,_tmrT1,tmrshock	,tmrNG,tmrPalletTime,tmrAutoPass,tmrStarRetry		:TON;
+	bBoxPass: BOOL;
+	nNextStep: INT;
+	rPalletInPos	:Tc2_Standard.R_TRIG;
+	PalletNumb,PalletSensorNumb,Palletslot			:INT;
+	bAutoPass: BOOL;
+	wRetry:INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT _bInitialScan THEN
+	nInitiStep	:= 0;
+END_IF
+
+_bInitialScan:=FALSE;
+
+
+
+IF NOT _bProcessScan THEN
+	nNextStep	:= 0;
+	nStep		:= 0;
+END_IF
+
+_bProcessScan	:=FALSE;
+
+//
+rPalletInPos(CLK:= RB_KR_StackingIO.fb_bPalletInPos);
+IF rPalletInPos.Q THEN
+	PalletSensorNumb:= PalletSensorNumb + 1;
+END_IF
+
+CASE nPalletStep OF
+	0://
+		IF RB_KR_StackingIO.fb_bPalletInPos THEN
+			Palletslot	:= 0;
+			RB_KR_StackingIO.cmd_wLayer_No	:= INT_TO_BYTE(RunParameter.StackingRB_LayerData[0]);
+			PalletNumb	:= PalletSensorNumb	;
+			nPalletStep:= 5;
+		END_IF
+
+	5://
+		Hmi_bChangePalletDemand	:= FALSE;
+		RB_KR_StackingIO.cmd_bPallet_AllowPut	:= RB_KR_StackingIO.fb_bPalletInPos ;
+				
+		IF  RB_KR_StackingIO.fb_bPalletFinish THEN
+			DoNotLoadingRB	:= TRUE;
+			nPalletStep:= 10;
+			RB_KR_StackingIO.cmd_bPallet_AllowPut	:= FALSE;
+			PalletNumb	:= PalletSensorNumb	;
+			Counter_Pallet	:= Counter_Pallet + 1;
+			Palletslot		:= Palletslot + 1;
+			//check pallet Safe
+			IF RunParameter.StackingRB_LayerData[Palletslot] =0 THEN
+				Palletslot	:= 0;
+			END_IF
+		END_IF
+	10:
+
+		RB_KR_StackingIO.cmd_bCount0	:= TRUE;
+		IF RB_KR_StackingIO.fb_wPartNo = 1 AND NOT RB_KR_StackingIO.fb_bPalletFinish THEN
+			RB_KR_StackingIO.cmd_bCount0	:= FALSE;
+			nPalletStep:= 15;
+		END_IF	
+	15://偵測換版 
+		
+		Hmi_bChangePalletDemand	:= TRUE;
+		IF Hmi_bAutoChangePallet THEN
+			tmrPalletTime(IN:= RB_KR_StackingIO.fb_bPalletInPos AND PalletNumb <> PalletSensorNumb );
+			IF tmrPalletTime.Q THEN
+				PalletNumb	:= PalletSensorNumb	;
+				RB_KR_StackingIO.cmd_wLayer_No	:= INT_TO_BYTE(RunParameter.StackingRB_LayerData[Palletslot]);
+				nPalletStep:= 5;
+			END_IF
+		END_IF
+		IF Hmi_bChangePalletbtn THEN
+			PalletNumb	:= PalletSensorNumb	;
+			RB_KR_StackingIO.cmd_wLayer_No	:= INT_TO_BYTE(RunParameter.StackingRB_LayerData[Palletslot]);
+			nPalletStep:= 5;			
+			Hmi_bChangePalletbtn:=FALSE;
+		END_IF
+
+END_CASE
+
+
+
+
+
+
+]]></ST>
+    </Implementation>
+    <Property Name="Connect" Id="{cec288a2-a886-478b-bcb6-131025b229d2}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Connect : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{323cf91c-6b90-45b5-a73e-cd8064714b6f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{af7a3302-666d-4e6b-a72c-b8c0bbcce7f0}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="Error" Id="{cb4f6050-3e95-4828-a679-e8f230465068}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Error : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{bfae4908-6e5a-48cf-9781-4a6c2d850d87}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="ErrorClear" Id="{aa68f748-6c9e-4af3-935e-5aee248a1d2c}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD ErrorClear : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{40021c47-6967-44b6-bb09-6eb3c4324ddf}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD FB_init : BOOL
+VAR_INPUT
+	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
+	bInitRetains	: BOOL;
+	(* if TRUE, the instance afterwards gets moved into the copy code (online change)*)
+	bInCopyCode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HaltStepContiune" Id="{25982319-b6e3-4915-942d-8c84f4a9ac1a}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD HaltStepContiune : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialization" Id="{5bdb1a4e-0f0d-4fa0-86f0-2e4bd277a615}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+	_Testmode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bInitialScan:=TRUE;
+
+CASE nInitiStep OF
+	0:		
+		strText					:= 'ORG : Inital';
+		Cyl_ExitStopper.qExtendCoil	:=FALSE;
+		Cyl_ExitClip.qExtendCoil	:=FALSE;
+		Roller_Exit.qRun			:=FALSE;	
+		nInitiStep				:= 5;	
+	5:
+		IF 	NOT Sen_ExitLoadIn AND NOT Sen_ExitBoxCheck AND NOT Sen_ExitComvStop THEN
+			nInitiStep				:= 10;	
+		END_IF;
+	10:
+			strText:='ORG : Done ';
+			Initialization	:= TRUE;
+	
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="NoEntry" Id="{fb5ae2dc-d567-4827-b077-8e2618916369}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY NoEntry : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{9b2fc4b5-6566-40b5-8b98-487836f320df}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Pause" Id="{bcd392c4-894f-4dd5-b9dc-d7dcc24e5af0}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD Pause : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Process" Id="{661e149b-7f8e-4e97-bfdc-f58e8340293f}">
+      <Declaration><![CDATA[METHOD Process : BOOL
+VAR_INPUT
+	bHlatMode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bProcessScan:=TRUE;
+
+
+CASE nStep OF
+	0:
+		_tmrT0(IN:=FALSE);
+		_tmrT1(IN:=FALSE);
+		_CaptureStep				:= 0;
+		Roller_Exit.qRun			:= TRUE;
+		Cyl_ExitStopper.qExtendCoil	:=FALSE;
+		IF Sen_ExitLoadIn THEN
+			nStep	:= 5;
+		END_IF
+		IF bAutoPass	THEN
+			nStep	:= 11;
+		END_IF
+		
+	5:
+		_tmrT0(IN:=Sen_ExitBoxCheck,PT:=T#0.2S);
+		IF _tmrT0.Q THEN
+			Cyl_ExitStopper.qExtendCoil:=	TRUE;
+			_tmrT0(IN:=FALSE);
+			Roller_Exit.qRun			:= FALSE;
+			Cyl_ExitClip.qExtendCoil	:= TRUE;
+			nStep	:= 10;
+		END_IF
+	10:
+		_tmrT0(IN:=TRUE,PT:=T#0.2S);	
+		_tmrT1(IN:=Sen_ExitComvStop,PT:=T#0.2S);		
+		IF _tmrT0.Q THEN
+			IF _tmrT1.q THEN
+				_tmrT0(IN:=FALSE);
+				_tmrT1(IN:=FALSE);
+				Cyl_ExitClip.qExtendCoil	:= FALSE;
+				nStep	:= 15;
+			END_IF;		
+		END_IF
+	11:
+		tmrAutoPass(IN:= TRUE,PT:=T#2S);
+		IF tmrAutoPass.Q THEN
+			tmrAutoPass(IN:= FALSE);
+			nStep	:= 15;
+		END_IF
+	15://通知手臂
+		tmrStarRetry(IN:=NOT tmrStarRetry.Q  ,PT:=T#0.5S);
+		IF tmrStarRetry.Q THEN
+			IF RB_KR_SysIO.iEXT_CONTROL AND NOT DoNotLoadingRB THEN
+				IF RB_KR_SysIO.iPGNO_REQ THEN
+					tmrStarRetry.IN := TRUE;
+					RB_KR_SysIO.qEXT_START:= TRUE;
+				END_IF
+				IF NOT RB_KR_SysIO.iPGNO_REQ AND NOT RB_KR_SysIO.iRobotRunning THEN
+					tmrStarRetry.IN 	:= TRUE;
+					RB_KR_SysIO.qEXT_START:= TRUE;
+				END_IF		
+			END_IF;	
+		END_IF
+		
+
+		
+		CASE _CaptureStep OF	
+		0:
+			RB_KR_StackingIO.cmd_bPartInPos	:= TRUE;
+			_CaptureStep	:= 5;
+			
+		5:
+			IF RB_KR_StackingIO.fb_bPickFinish THEN
+				RB_KR_StackingIO.cmd_bPartInPos	:= FALSE;
+				_CaptureStep	:= 10;
+			END_IF
+	
+		10:
+			IF NOT RB_KR_StackingIO.fb_bPickFinish THEN
+				_CaptureStep	:= 15;
+			END_IF		
+		15:
+			_CaptureStep	:= 0;
+			nStep			:= 20;
+		END_CASE;	
+
+		
+	20:
+		
+		IF NOT Sen_ExitLoadIn AND NOT Sen_ExitBoxCheck AND NOT Sen_ExitComvStop THEN
+			nStep	:= 0;
+		END_IF
+	
+	
+	
+	
+
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ResetPallet" Id="{32089d40-b173-455c-a329-5594d5aee024}">
+      <Declaration><![CDATA[METHOD ResetPallet : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[nPalletStep	:= 0;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Status" Id="{a216ffc3-ffa7-420e-85d4-fd126285279e}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Status : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{72729394-c5d6-4dc4-8c58-fb1c2d8c848e}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="Ass_RBStack">
+      <LineId Id="25" Count="12" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="85" Count="2" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="76" Count="1" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="73" Count="1" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="92" Count="1" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="124" Count="2" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="161" Count="1" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="160" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="159" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="105" Count="1" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="119" Count="1" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="136" Count="1" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="60" Count="5" />
+      <LineId Id="53" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.Connect.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.Connect.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.Error.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.ErrorClear">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.FB_init">
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.HaltStepContiune">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.Initialization">
+      <LineId Id="22" Count="4" />
+      <LineId Id="40" Count="2" />
+      <LineId Id="31" Count="8" />
+      <LineId Id="11" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.NoEntry.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.Pause">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.Process">
+      <LineId Id="70" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="31" Count="1" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="93" Count="2" />
+      <LineId Id="19" Count="1" />
+      <LineId Id="33" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="34" Count="1" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="38" Count="1" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="41" Count="1" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="150" Count="7" />
+      <LineId Id="107" Count="1" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="140" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="125" Count="14" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="123" Count="1" />
+      <LineId Id="120" Count="1" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="60" Count="1" />
+      <LineId Id="48" Count="2" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.ResetPallet">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_RBStack.Status.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

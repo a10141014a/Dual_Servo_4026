@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="E_CS_Status" Id="{d7ecf668-c873-4ad4-b273-fa44e78bd863}">
+    <Declaration><![CDATA[{attribute 'strict'}
+TYPE E_CS_Status :
+(
+    Offline := 0,
+	Idle,
+	DriveReady,
+    ReadyToWork,
+    Pou_Runing,
+    Pou_Run_Pause,
+    Pou_Run_Down,
+	EStop,
+    Error,
+	LessHome,
+	StopMess,
+	LocalControl,
+	DriverOn
+);
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

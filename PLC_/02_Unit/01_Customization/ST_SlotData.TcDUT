@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ST_SlotData" Id="{0f6ad00e-5407-459e-8a7f-c1b75805c91b}">
+    <Declaration><![CDATA[TYPE ST_SlotData :
+STRUCT
+	ScanIn:BOOL;
+	LoadIn:BOOL;
+	LatchPosition :LREAL;
+	GearInPosition:LREAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

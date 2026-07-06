@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <DUT Name="ST_Cylinder" Id="{21cac146-6e2e-42bd-869d-06cd506514dc}">
+    <Declaration><![CDATA[TYPE ST_Cylinder :
+STRUCT
+    // --- 硬體輸出 ---
+    qExtendCoil        AT %Q* : BOOL;  // 氣缸伸出線圈
+    qRetractCoil       AT %Q* : BOOL;  // 氣缸收回線圈
+
+    // --- 硬體輸入 ---
+    iOriginSensor      AT %I* : BOOL;  // 原點感測
+    iEndSensor         AT %I* : BOOL;  // 末端感測
+
+    // --- 軟體旗標 ---
+    bOriginConfirmed        : BOOL;  // 原點信號已確認（延時/除抖後）
+    bEndConfirmed           : BOOL;  // 末端信號已確認（延時/除抖後）
+    bError                  : BOOL;  // 通用錯誤旗標
+	bReset					: BOOL;
+	eCylFault				: E_CylFault; //異常狀態
+	
+	// --- 名稱 ---	{attribute 'TcEncoding':='UTF-8'}
+	strName					: WSTRING(32);
+	// --- 參數 ---
+	stCylinderPara     		: ST_CylinderParameter;  
+	
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

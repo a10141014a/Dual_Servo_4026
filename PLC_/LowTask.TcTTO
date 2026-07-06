@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <Task Name="LowTask" Id="{b9ef0593-86f8-43a6-9524-ceb375cf5f40}">
+    <!--CycleTime in micro seconds.-->
+    <CycleTime>10000</CycleTime>
+    <Priority>2</Priority>
+    <PouCall>
+      <Name>Recipe_POU</Name>
+    </PouCall>
+    <TaskFBGuid>{4ddcd709-7171-4add-86d0-241dc53a9d35}</TaskFBGuid>
+    <Fb_init>{a2b3aed2-a66f-4e2f-8aa2-11af2c8e481d}</Fb_init>
+    <Fb_exit>{a2b72aa2-9cb1-4bed-97b4-350634fd62f4}</Fb_exit>
+    <CycleUpdate>{fe7383c0-40a0-466f-81a1-9a1dbba44914}</CycleUpdate>
+    <PostCycleUpdate>{6c663ba9-6c79-4bd6-82a8-b8bef35e527e}</PostCycleUpdate>
+  </Task>
+</TcPlcObject>

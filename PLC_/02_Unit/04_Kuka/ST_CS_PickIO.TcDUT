@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="ST_CS_PickIO" Id="{aea5ea9d-659f-4471-92df-ce1feb6de078}">
+    <Declaration><![CDATA[TYPE ST_CS_PickIO :
+STRUCT
+    // PLC -> KRC
+ 	cmd_bBoxInPos			:BOOL;		//紙箱到定位      
+	cmd_bPartInPos			:BOOL;		//part到定位
+	cmd_wLayer				:BYTE;
+	cmd_wIndex				:BYTE;
+	cmd_Velo				: BYTE;
+    // KRC -> PLC
+  	fb_bPacking			:BOOL;		//取料中      
+	fb_bPackFinish		:BOOL;		//取料完成
+	fb_putting			:BOOL;		//裝箱中
+	fb_PutFinish		:BOOL;		//裝箱完成
+	fb_PackLayer		:BYTE;		//已裝填層
+	fb_Velo				:BYTE;
+	fb_wIndex			:BYTE;
+END_STRUCT               		
+END_TYPE                 	
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

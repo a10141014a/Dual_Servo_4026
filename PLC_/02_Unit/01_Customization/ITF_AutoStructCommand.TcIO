@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <Itf Name="ITF_AutoStructCommand" Id="{50094617-8a33-40db-8fe0-6b5f4573bb55}">
+    <Declaration><![CDATA[INTERFACE ITF_AutoStructCommand
+]]></Declaration>
+    <Property Name="Connect" Id="{96de4d5a-759b-431e-89f8-6aec36ea2ef7}">
+      <Declaration><![CDATA[PROPERTY Connect : String(50)]]></Declaration>
+      <Get Name="Get" Id="{37e08c77-94e0-4f9e-8afc-81f872cfbfa2}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+      <Set Name="Set" Id="{22f93a74-3782-46a0-b33d-8d5361f3a555}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Set>
+    </Property>
+    <Property Name="Error" Id="{33c807c2-98a2-47ab-9d0a-e17d4899fe09}">
+      <Declaration><![CDATA[PROPERTY Error : BOOL]]></Declaration>
+      <Get Name="Get" Id="{008099b1-37d5-4cda-819e-3df27be2515d}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Method Name="ErrorClear" Id="{23cbff6e-02ff-425b-a4bf-485ff535cad9}">
+      <Declaration><![CDATA[METHOD ErrorClear : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="FB_init" Id="{2f417aaf-5c67-46a9-8a73-59b1143c43b4}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="HaltStepContiune" Id="{694d5575-5e40-46a3-b62d-efb0b44def6b}">
+      <Declaration><![CDATA[METHOD HaltStepContiune : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="Initialization" Id="{901fff7e-347a-476f-a2ae-3c276b2a61e3}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+	_Testmode	:BOOL;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Property Name="NoEntry" Id="{4ee6eb86-7e84-44b8-a4ff-cf9f9ec60f29}">
+      <Declaration><![CDATA[PROPERTY NoEntry : BOOL	//不允許進入 ]]></Declaration>
+      <Get Name="Get" Id="{2ee615cc-e1f2-45d6-8b66-fc3b444a25ca}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+    <Method Name="Pause" Id="{ab1cf2db-915d-447b-85e6-ce6e7d72cf6d}">
+      <Declaration><![CDATA[METHOD Pause : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+    </Method>
+    <Method Name="Process" Id="{97fe5338-3003-4b5d-bcfa-48b4d5d246f6}">
+      <Declaration><![CDATA[METHOD Process : BOOL
+VAR_INPUT
+	bHlatMode	:BOOL;
+END_VAR
+]]></Declaration>
+    </Method>
+    <Property Name="Status" Id="{42473ac0-2151-4c46-949a-b74ee7f04eb4}">
+      <Declaration><![CDATA[PROPERTY Status : STRING(50)]]></Declaration>
+      <Get Name="Get" Id="{4bd8df53-b551-4441-9b1a-ccaba4465320}">
+        <Declaration><![CDATA[]]></Declaration>
+      </Get>
+    </Property>
+  </Itf>
+</TcPlcObject>

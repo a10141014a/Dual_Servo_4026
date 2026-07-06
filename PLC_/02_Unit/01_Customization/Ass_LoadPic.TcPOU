@@ -1,0 +1,551 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Ass_LoadPic" Id="{41058aa1-f0d8-4eea-8392-b9cb2c6e1dc2}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Ass_LoadPic IMPLEMENTS ITF_AutoStructCommand
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	strText	:STRING;
+	i	:INT;
+	_bProcessScan,_bInitialScan		: BOOL;
+	_bHalt , _bError,_bHaltPause	: BOOL;
+	nStep,nInitiStep ,nNextStep 	: INT;
+	fbHomeInside,fbHomeOutside		:MC_Home	;
+	fbMC_GearIn						: MC_GearIn;
+	fbMC_GearOut					: MC_GearOut;
+	fbMC_AbsLoad1,fbMC_AbsLoad2		:MC_MoveAbsolute;
+	_tmrT0							: TON;
+	temp:DWORD;
+	bReady: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT _bInitialScan AND NOT _bProcessScan  THEN
+	fbHomeInside.Execute:=FALSE;
+	fbHomeOutside.Execute:=FALSE;
+END_IF
+
+
+IF NOT _bInitialScan THEN
+	nInitiStep	:= 0;
+END_IF
+
+_bInitialScan:=FALSE;
+
+
+
+IF NOT _bProcessScan THEN
+	nNextStep	:= 0;
+	nStep		:= 0;
+END_IF
+
+_bProcessScan	:=FALSE;
+
+
+
+
+
+
+fbHomeInside(Axis:= Axis_load1,Position:= Setting_Unload1_ORG_Offset*-1,bCalibrationCam:= NOT Sen_AxisLoad1ORG);
+fbHomeOutside(Axis:= Axis_load2,Position:= Setting_Unload2_ORG_Offset*-1,bCalibrationCam:= NOT Sen_AxisLoad2ORG);]]></ST>
+    </Implementation>
+    <Method Name="_Clearfb" Id="{aad993d0-491f-4baf-a2f6-4ec83f321454}">
+      <Declaration><![CDATA[METHOD _Clearfb : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[	fbMC_GearIn(Master:=Axis_load1,Slave:=Axis_load2,Execute:=FALSE);
+	fbMC_GearOut(Slave:=Axis_load2,Execute:=FALSE);
+	fbHomeInside(Axis:= Axis_load1,bCalibrationCam:= FALSE,Execute:=FALSE);
+	fbHomeOutside(Axis:= Axis_load2,bCalibrationCam:= FALSE,Execute:=FALSE);
+	_tmrT0(IN:=FALSE);
+	nInitiStep:=0;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Connect" Id="{dd733115-1bb2-4f8e-bc53-dbef49f5e4af}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Connect : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{019cfa34-437d-40b0-9773-6999e0db6284}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CASE nStep OF
+ 10:
+	Connect	:= 'Seal In';
+20:
+	Connect	:= 'LoadIng';
+ 25:
+	Connect	:= 'Seal In';	
+	ELSE	
+	Connect	:= '';		
+END_CASE]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{e35af6d6-9509-4a31-8e28-168b58415986}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="Error" Id="{fe8e8953-d44b-430e-9c1e-c530422ebf25}">
+      <Declaration><![CDATA[PROPERTY Error : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{1b99a44c-f662-40f2-9427-9b26fd181fb8}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Error := _bError;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="ErrorClear" Id="{d8421e47-9747-4b75-8f39-7f46711a51da}">
+      <Declaration><![CDATA[METHOD ErrorClear : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bError	:= FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{3c67647f-4069-4f92-affe-311c7be04a50}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD FB_init : BOOL
+VAR_INPUT
+	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
+	bInitRetains	: BOOL;
+	(* if TRUE, the instance afterwards gets moved into the copy code (online change)*)
+	bInCopyCode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HaltStepContiune" Id="{ef121d40-ba23-4ebf-abc0-02af33e485ba}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD HaltStepContiune : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialization" Id="{105550df-bf40-45a4-afe8-08ca51d11f31}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+	_Testmode	:BOOL;
+END_VAR
+VAR
+	bConfig: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bInitialScan	:= TRUE;
+
+CASE nInitiStep OF
+	0:
+		RB_CS_PickIO.cmd_bBoxInPos	:=FALSE;
+		fbMC_AbsLoad1(Axis:= Axis_load1,Velocity:= 100,Execute:= FALSE);
+		fbMC_AbsLoad2(Axis:= Axis_load2,Velocity:= 100,Execute:= FALSE);
+		fbHomeInside.Execute:=FALSE;
+		fbHomeOutside.Execute:=FALSE;
+		fbMC_GearOut(Slave:= Axis_load2,Execute:=FALSE);
+		_tmrT0(IN:=FALSE);
+		Cyl_UnloadDef.qExtendCoil	:= FALSE;
+		strText:='ORG : Initial ';
+		IF AssRoller.Initialization() THEN
+			nInitiStep := 1;
+		END_IF
+	1:
+		_tmrT0(IN:= NOT _tmrT0.Q ,PT:= T#1S);
+		CASE Axis_load1.Status.MotionState OF
+			MC_AXISSTATE_DISABLED:
+			 	Axis_load1.ServoOn();
+			MC_AXISSTATE_ERRORSTOP:
+				Axis_load1.Reset();
+			MC_AXISSTATE_STOPPING:
+				Axis_load1.Stop();
+			MC_AXISSTATE_SYNCHRONIZEDMOTION:
+			;
+		END_CASE;		
+		CASE Axis_load2.Status.MotionState OF
+			MC_AXISSTATE_DISABLED:
+			 	Axis_load2.ServoOn();
+			MC_AXISSTATE_ERRORSTOP:
+				Axis_load2.Reset();
+			MC_AXISSTATE_STOPPING:
+				Axis_load2.Stop();
+			MC_AXISSTATE_SYNCHRONIZEDMOTION:
+				fbMC_GearOut(Slave:= Axis_load2,Execute:=TRUE);
+		END_CASE;			
+		
+		IF  Axis_load1.Status.MotionState=MC_AXISSTATE_STANDSTILL AND Axis_load2.Status.MotionState=MC_AXISSTATE_STANDSTILL THEN
+			_tmrT0(IN:=FALSE);
+			nInitiStep	:=5 ;
+		END_IF
+		IF _tmrT0.Q THEN
+			_tmrT0(IN:=FALSE);
+			nInitiStep	:= 5;		
+		END_IF
+	5:
+		bConfig			:=TRUE;
+		IF NOT Axis_load1.Status.StandStill THEN
+			bConfig			:=FALSE;
+			EventLogger.eEventType		:= 4;
+			EventLogger.strEventText	:= 'RightAxis Error ';	
+			EventLogger();					
+		END_IF
+		IF NOT Axis_load2.Status.StandStill THEN
+			bConfig			:=FALSE;
+			EventLogger.eEventType		:= 4;
+			EventLogger.strEventText	:= 'LefthtAxis Error';	
+			EventLogger();					
+		END_IF
+		
+		IF bConfig THEN
+			IF NOT OP.xAutoMode THEN
+				EventLogger.eEventType		:= 2;
+				EventLogger.strEventText	:= 'LoadIn servo ORG Runing ';	
+				EventLogger();
+			END_IF;
+			_tmrT0(IN:= FALSE);
+			nInitiStep:= 10 ;
+			strText:='ORG : Runing ';
+			ELSE
+			EventLogger.eEventType		:= 4;
+			EventLogger.strEventText	:= 'Exceptions Cause interruptions!! ';	
+			EventLogger();
+			OP.xAutoRuning	:=FALSE;
+			nInitiStep := nInitiStep +100;	
+			strText:='ORG : Failed  ';
+		END_IF			
+		
+	10:
+		fbHomeInside.Execute:=TRUE;
+		fbHomeOutside.Execute:=TRUE;
+		fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= fbHomeInside.Done );
+		fbMC_AbsLoad2(Axis:= Axis_load2,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:=  fbHomeOutside.Done);
+	
+		IF fbMC_AbsLoad1.Done AND fbMC_AbsLoad2.Done THEN
+			fbHomeInside.Execute:=FALSE;
+			fbHomeOutside.Execute:=FALSE;
+			fbMC_AbsLoad1(Axis:= Axis_load1,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
+			fbMC_AbsLoad2(Axis:= Axis_load2,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
+			strText:='ORG : Done ';
+			nInitiStep	:= 20 ;
+		END_IF
+	20:
+		Initialization := TRUE;
+
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="NoEntry" Id="{8ec65748-586b-4750-9ce0-856e1544908c}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY NoEntry : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{11ed35a8-a5c5-40d1-8ef2-a6a43ee5c9d3}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Pause" Id="{1c396a50-1f9f-419e-87a9-cb9845eeb508}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD Pause : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Process" Id="{a69da40f-2129-4cc7-975f-fe74944e7f4d}">
+      <Declaration><![CDATA[METHOD Process : BOOL
+VAR_INPUT
+	bHlatMode	: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bProcessScan	:= TRUE;
+//判斷 
+
+IF _bError THEN
+	strText	:= 'OpenBox:Error ';
+	strText	:= CONCAT(Status,INT_TO_STRING(nStep));
+END_IF;
+//半自動模式
+IF NOT bHlatMode  THEN
+	nStep:= nNextStep;	
+END_IF;
+
+_bHaltPause	:= nStep<> nNextStep;
+IF _bError OR _bHaltPause THEN
+	RETURN;
+END_IF
+
+//主程序 
+IF NOT _bHaltPause THEN
+	CASE nStep OF
+		0:
+			fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= FALSE);
+			fbMC_AbsLoad2(Axis:= Axis_load2,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= FALSE);
+			fbHomeInside(Axis:= Axis_load1,Execute:=FALSE);
+			fbHomeOutside(Axis:= Axis_load2,Execute:=FALSE);
+			_tmrT0(IN:=FALSE);			
+			nNextStep:= 5;
+		
+		5:
+			fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);
+			fbMC_AbsLoad2(Axis:= Axis_load2,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);		
+			IF fbMC_AbsLoad1.Done AND fbMC_AbsLoad2.Done THEN
+				fbMC_AbsLoad1(Axis:= Axis_load1,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
+				fbMC_AbsLoad2(Axis:= Axis_load2,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
+				nNextStep	:= 10 ;
+			END_IF		
+		10:
+			IF OP.xAutoMode THEN
+				IF M_Sealing2.Connect='LoadPic In' THEN	
+					nNextStep	:= 11 ;
+				END_IF;
+			END_IF
+			
+			IF NOT OP.xAutoMode THEN
+				IF Sen_BeltLoadOut THEN
+					nNextStep	:= 11 ;
+				END_IF;			
+			END_IF
+
+		11:
+			_tmrT0(IN:= NOT Sen_BeltLoadOut ,pt:= T#0.5S);
+			IF _tmrT0.Q THEN
+				_tmrT0(IN:=FALSE);
+				nNextStep	:= 15 ;
+			END_IF
+			
+		15:
+			fbMC_AbsLoad1(Axis:= Axis_load1,Position:= RunParameter.Load_RBLoadin,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);
+			fbMC_AbsLoad2(Axis:= Axis_load2,Position:= RunParameter.Load_RBLoadin,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);	
+			IF fbMC_AbsLoad1.Done AND fbMC_AbsLoad2.Done  THEN
+				fbMC_AbsLoad1(Axis:= Axis_load1,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
+				fbMC_AbsLoad2(Axis:= Axis_load2,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
+				Cyl_UnloadDef.qExtendCoil	:= TRUE;
+				nNextStep	:= 16 ;
+			END_IF				
+		16:
+			IF Cyl_UnloadDef.iEndSensor  THEN
+				nNextStep	:= 20 ;
+			END_IF	
+			
+		20:	// 允許手臂loadin
+			IF RB_CS.LoadingDone() THEN
+				bReady	:= M_Sealing2.Connect = 'Ready';
+				_tmrT0(IN:=FALSE);
+				nNextStep	:= 25 ;
+			END_IF	
+		25:
+			Cyl_UnloadDef.qExtendCoil	:= FALSE;
+			IF Roller_LoadcellUD.iLowPos AND Cyl_UnloadDef.iOriginSensor THEN
+				nNextStep	:= 30 ;
+			END_IF
+		30:	
+			
+			IF Initialization(FALSE) THEN
+				nNextStep	:= 0 ;
+				IF bReady THEN
+					nNextStep	:= 15 ;
+				END_IF
+			END_IF
+		
+		
+			
+		
+	END_CASE;
+END_IF;
+		
+Process	:= nStep =50;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Status" Id="{15589aae-c7ea-459f-af14-8a5808d9a3c9}">
+      <Declaration><![CDATA[PROPERTY Status : STRING(50)]]></Declaration>
+      <Get Name="Get" Id="{9224472d-2189-4887-95ae-35748dfdad8b}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="Ass_LoadPic">
+      <LineId Id="92" Count="2" />
+      <LineId Id="89" Count="2" />
+      <LineId Id="48" Count="12" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="86" Count="2" />
+      <LineId Id="80" Count="3" />
+      <LineId Id="79" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic._Clearfb">
+      <LineId Id="20" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="24" Count="3" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.Connect.Get">
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="16" Count="1" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.Connect.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.Error.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.ErrorClear">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.FB_init">
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.HaltStepContiune">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.Initialization">
+      <LineId Id="12" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="174" Count="2" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="119" Count="0" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="80" Count="0" />
+      <LineId Id="83" Count="1" />
+      <LineId Id="81" Count="1" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="95" Count="8" />
+      <LineId Id="93" Count="1" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="120" Count="2" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="126" Count="12" />
+      <LineId Id="145" Count="1" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="147" Count="2" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="150" Count="6" />
+      <LineId Id="185" Count="0" />
+      <LineId Id="159" Count="1" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="36" Count="1" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="172" Count="1" />
+      <LineId Id="112" Count="1" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="18" Count="0" />
+      <LineId Id="14" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.NoEntry.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.Pause">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.Process">
+      <LineId Id="13" Count="19" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="46" Count="0" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="47" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="50" Count="0" />
+      <LineId Id="54" Count="4" />
+      <LineId Id="51" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="120" Count="1" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="59" Count="1" />
+      <LineId Id="71" Count="0" />
+      <LineId Id="62" Count="1" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="66" Count="3" />
+      <LineId Id="99" Count="0" />
+      <LineId Id="41" Count="1" />
+      <LineId Id="146" Count="0" />
+      <LineId Id="150" Count="0" />
+      <LineId Id="144" Count="1" />
+      <LineId Id="141" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="103" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="108" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="93" Count="1" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="76" Count="1" />
+      <LineId Id="136" Count="1" />
+      <LineId Id="135" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="132" Count="2" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="33" Count="2" />
+      <LineId Id="79" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_LoadPic.Status.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

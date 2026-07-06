@@ -1,0 +1,121 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <GVL Name="HardwareIO" Id="{ab16b357-f6f7-4329-9ff6-e369f2c6481d}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	(*EtherCAT Link Status*)
+	MainFiledBus		AT%I*		:ARRAY [0..20] OF UINT;
+	
+	
+	
+	(*DO*)	
+	EL2889	AT%Q*	:ARRAY [1..3,1..16]OF BOOL;
+	(*DI*)
+	EL1889	AT%I*	:ARRAY [1..4,1..16]OF BOOL;
+	(*RB*)
+	RB_CS				:RB_KR_PickPlace;
+	RB_CS_SysIO			:ST_CS_sysIO;
+	RB_CS_PickIO		:ST_CS_PickIO;
+
+	RB_KR_SysIO			:ST_KR_sysIO := (qDRIVES_OFF := TRUE, qMOVE_ENABLE := TRUE);	
+	RB_KR_StackingIO	:ST_KR_stackingIO;
+	RB_KR				:RB_KR_Stacking;
+
+	(*伺服馬達 *)
+	Axis_DualServo1	 						:AXIS_REF_EXT;	//雙伺服-左 
+	Axis_DualServo2							:AXIS_REF_EXT;	//雙伺服-右	
+	Axis_FlyIn								:AXIS_REF_EXT;	//入料輸送-飛入 
+	Axis_BoxPullOut							:AXIS_REF_EXT;	//拉紙箱伺服 
+	Axis_load1								:AXIS_REF_EXT;	//推出紙箱-右 
+	Axis_load2								:AXIS_REF_EXT;	//推出紙箱-左  
+	
+	(*一般傳動 *)
+	Motor_LoadIn							:ST_Inventer;	//入口托速馬達  
+	Motor_Blower							:ST_Inventer;	//鼓風機 
+	Motor_LoadPurge1,Motor_LoadPurge2		:ST_Inventer;	//入口排放馬達    
+ 
+	Roller_Purge							:ST_Inventer;	//排出滾輪  
+	Roller_Exit								:ST_Inventer;	//出口滾輪 
+	
+	//紙箱入料 
+	Cyl_BoxSidePitch						:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1s0ms, tOriginTimeout := TIME#1s0ms));
+	Cyl_BoxSideBottom						:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1s0ms, tOriginTimeout := TIME#1s0ms));
+	Sen_BoxsideFeed							AT%I*	:BOOL;
+	Sen_BoxsideStorageMaterial				AT%I*	:BOOL;
+	//取紙箱馬達  
+	Cyl_AxisBoxCatch						:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#3S0MS, tOriginTimeout := TIME#5S0MS));	//取箱汽缸 
+	Sen_AxisBoxCatchVacumm			AT%I*	:BOOL;
+	Vacm_AxisCatchBox				AT%Q*	:BOOL;
+	Sen_AxisBoxORG					AT%I*	:BOOL;
+	Cyl_Axis90								:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1S0MS, tOriginTimeout := TIME#1S0MS));	//90度 
+	Sen_Axis90Vacumm				AT%I*	:BOOL;
+	Vacm_Axis90						AT%Q*	:BOOL;
+	Cyl_AxisBottom							:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1S0MS, tOriginTimeout := TIME#1S0MS));	//底部壓和 
+	
+	//封箱底 
+	Motor_BoxSealBottom_L					:ST_Inventer;	//封箱底馬達-L 
+	Motor_BoxSealBottom_R					:ST_Inventer;	//封箱底馬達-R 
+	Cyl_BeltBottom							:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1S0MS, tOriginTimeout := TIME#1S0MS));	//皮帶底部壓和 
+	Cyl_BeltBottomSup						:ST_Cylinder;	//皮帶底部壓和邊角 沒感測器  
+	Sen_BeltLoadIn					AT%I*	:BOOL;	
+	Sen_BeltLoadOut					AT%I*	:BOOL;
+	//UNLOAD紙箱區域  
+	Cyl_UnloadDef						:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#2s0ms, tOriginTimeout := TIME#2s0ms));	//上方定型汽缸
+	Sen_UnloadLoadIn					AT%I*	:BOOL;
+	Sen_UnloadLoadPos					AT%I*	:BOOL;
+	Sen_AxisLoad1ORG					AT%I*	:BOOL;
+	Sen_AxisLoad2ORG					AT%I*	:BOOL;
+
+	//轉彎區域 NG 
+	Sen_TFLoadIn					AT%I*	:BOOL;
+	Sen_NGLoadOut					AT%I*	:BOOL;
+	Roller_LoadcellIn						:ST_Inventer;	//滾輪秤重進入  
+	Roller_LoadcellOut						:ST_Inventer;	//滾輪秤重橫向皮帶  
+	Roller_LoadcellUD						:ST_InventerUD;	//滾輪秤重航向頂上	
+	AssRoller								:FB_RollRightAngle;
+	
+	
+	Cyl_NGPurge							:ST_Cylinder:= (stCylinderPara := (tEndTimeout := TIME#1s0ms, bOriginNoSensor := TRUE, tOriginDebounceTime := TIME#500ms));	//NG推出汽缸   
+	Swtich_PassFeet						AT%I*	:BOOL;
+	Cyl_ShockStop							:ST_Cylinder := (stCylinderPara := (bEndNoSensor := TRUE, tEndDebounceTime := TIME#500ms, tOriginTimeout := TIME#1s0ms));	//震動出口stooper   
+	Sen_ShockPos						AT%I*	:BOOL;
+	Motor_shock								:ST_Inventer;	//震動馬達 
+	
+	//疊箱 
+	Cyl_StackUD								:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#2s0ms, tOriginTimeout := TIME#2s0ms));	//疊箱  
+	Sen_StackUDVacumm				AT%I*	:BOOL;
+	Sen_StackComvStop				AT%I*	:BOOL;
+	Vacm_StackUD					AT%Q*	:BOOL;
+	Motor_Stack								:ST_Inventer;	//疊箱馬達
+	
+	//出口區域 
+	Sen_ExitLoadIn				AT%I*	:BOOL;	
+	Sen_ExitComvStop			AT%I*	:BOOL;	
+	Sen_ExitBoxCheck			AT%I*	:BOOL;	
+	Cyl_ExitClip						:ST_Cylinder;
+	Cyl_ExitStopper						:ST_Cylinder;
+	
+	//高速入料 
+	Cyl_FlyIn_Pass				AT%Q*		:BOOL;
+	
+	//捆包機 
+	Bundling_ErrorSignal			AT%I*	:BOOL;	
+	Bundling_yPause					AT%Q*	:BOOL;	
+
+	(*其他 *)
+	PB_Start			AT%I*	:BOOL;
+	PB_Stop				AT%I*	:BOOL;
+	PB_EMG				AT%I*	:BOOL;
+	Light_Green			AT%Q*	:BOOL;
+	Light_Red			AT%Q*	:BOOL;
+	Light_Yellow			AT%Q*	:BOOL;
+	Light_BZ			AT%Q*	:BOOL;
+	ElectronicBoxLight	AT%Q*	:BOOL;
+	WindowsSafe			AT%I*	:ARRAY [1..6] OF BOOL;
+	Air_Signal			AT%I*	:BOOL;	
+	TemperatureHigh			AT%I*	:BOOL;	
+	TemperatureFans			AT%Q*	:BOOL;
+	
+	LoadCell		:FB_EL3356_0010;//秤重單元 
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>

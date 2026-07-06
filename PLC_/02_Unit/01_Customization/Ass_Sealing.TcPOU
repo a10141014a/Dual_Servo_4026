@@ -1,0 +1,398 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Ass_Sealing" Id="{25f63225-dbc9-4b1e-b86a-0e068b049cd3}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Ass_Sealing IMPLEMENTS ITF_AutoStructCommand
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	i	:INT;
+	_bProcessScan,_bInitialScan: BOOL;
+	_bHalt , _bError,_bHaltPause: BOOL;
+	strText	:STRING;
+	nStep,nInitiStep ,nNextStep 	: INT;
+	_tmrT0			:TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT _bInitialScan THEN
+	nInitiStep	:= 0;
+END_IF
+
+_bInitialScan:=FALSE;
+
+
+
+IF NOT _bProcessScan THEN
+	nNextStep	:= 0;
+	nStep		:= 0;
+END_IF
+
+_bProcessScan	:=FALSE;]]></ST>
+    </Implementation>
+    <Property Name="Connect" Id="{83bd3ff5-c6e3-4a8c-8bba-d49023e80782}">
+      <Declaration><![CDATA[PROPERTY Connect : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{5d7475ec-f8cf-40fd-aa0d-db8e368e47ed}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CASE nStep OF
+	5:
+	Connect	:= 'OpenBox In';
+	20:
+	Connect	:= 'Ready'; 
+	50:
+	Connect	:= 'LoadPic In';
+	ELSE	
+	Connect	:= '';		
+END_CASE]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{927d6ae5-1a73-4a7f-9841-6b22e665c0dd}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="Error" Id="{c4e7731e-732d-489c-9847-7d733a800e09}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Error : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{ef07e930-46de-449d-b1ba-f8123ef084cf}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="ErrorClear" Id="{4351c64a-5973-412f-9c2a-d62ab6ea446f}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD ErrorClear : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{49c9e524-43f7-4b09-8037-50637c554f51}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD FB_init : BOOL
+VAR_INPUT
+	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
+	bInitRetains	: BOOL;
+	(* if TRUE, the instance afterwards gets moved into the copy code (online change)*)
+	bInCopyCode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HaltStepContiune" Id="{e067c393-fc75-436b-a825-48fad1a93c84}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD HaltStepContiune : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialization" Id="{c0f7d7e1-8a43-4b52-b274-e8f58634f2e0}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+	_Testmode	: BOOL;
+END_VAR
+
+VAR
+	bConfig: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bInitialScan:=TRUE;
+
+CASE nInitiStep OF
+	0:		
+		_tmrT0(IN:=FALSE);
+		strText:='ORG : Initial ';
+		Motor_BoxSealBottom_L.qRun		:=FALSE;
+		Motor_BoxSealBottom_R.qRun		:=FALSE;
+		Cyl_BeltBottomSup.qExtendCoil	:=FALSE;		
+		nInitiStep						:= 5;
+	5:
+	bConfig			:=TRUE;
+	IF Sen_BeltLoadIn OR Sen_BeltLoadOut THEN
+		bConfig			:=FALSE;
+		EventLogger.eEventType		:= 4;
+		EventLogger.strEventText	:= 'Sensor Error ';	
+		EventLogger();					
+	END_IF		
+	IF NOT Motor_BoxSealBottom_R.iError OR NOT Motor_BoxSealBottom_L.iError  THEN
+		bConfig			:=FALSE;
+		EventLogger.eEventType		:= 4;
+		EventLogger.strEventText	:= 'INV. Motor Error ';	
+		EventLogger();					
+	END_IF	
+	
+	IF bConfig THEN
+		strText:='ORG : Done ';
+		nInitiStep	:= 20;
+		ELSE
+		strText:='ORG : Failed ';
+		nInitiStep	:= 50;
+	END_IF
+	
+	
+	
+	
+	
+
+20:
+	Initialization	:= TRUE;
+
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="NoEntry" Id="{7f044b28-0411-4954-86f6-f74c7f97a387}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY NoEntry : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{805ef038-e4f3-4be4-8390-1e1ba28c3bb3}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Pause" Id="{3248126b-b242-4316-ae47-c6ac4ef43604}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD Pause : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Process" Id="{bf7874d8-aa7d-4a83-9850-3952fbf34226}">
+      <Declaration><![CDATA[METHOD Process : BOOL
+VAR_INPUT
+	bHlatMode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+
+_bProcessScan	:= TRUE;
+//判斷 
+
+IF _bError THEN
+	strText	:= 'OpenBox:Error ';
+	strText	:= CONCAT(Status,INT_TO_STRING(nStep));
+END_IF;
+//半自動模式
+IF NOT bHlatMode  THEN
+	nStep:= nNextStep;	
+END_IF;
+
+_bHaltPause	:= nStep<> nNextStep;
+IF _bError OR _bHaltPause THEN
+	RETURN;
+END_IF
+
+//主程序 
+IF NOT _bHaltPause THEN
+	CASE nStep OF
+		0:
+			_tmrT0(IN:=FALSE);
+			Motor_BoxSealBottom_L.qRun		:=TRUE;
+			Motor_BoxSealBottom_R.qRun		:=TRUE;
+			nNextStep						:= 5;
+			strText							:= 'Waiting for load';
+		5:
+			IF Sen_BeltLoadIn THEN
+				Cyl_BeltBottomSup.qExtendCoil	:=TRUE;
+				strText							:= 'load In';
+				nNextStep						:= 10;
+			END_IF;	
+		10:
+			IF NOT Sen_BeltLoadIn THEN
+				//Cyl_BeltBottomSup.qExtendCoil	:=FALSE;
+				;
+			END_IF;		
+	
+			IF Sen_BeltLoadOut THEN
+				Cyl_BeltBottomSup.qExtendCoil	:=FALSE;
+				strText						:= 'load Out';
+				nNextStep					:= 15;
+			END_IF;		
+		15:
+			_tmrT0(IN:=Sen_BeltLoadOut,PT:=T#0.5S);
+			IF _tmrT0.Q THEN
+				_tmrT0(IN:=FALSE);
+				IF OP.xAutoMode THEN
+					nNextStep					:= 20;
+					ELSE
+					nNextStep					:= 50;
+				END_IF;
+			END_IF
+		20:
+				IF M_LoadPic3.Connect= 'Seal In' THEN
+					nNextStep					:= 21;
+					ELSE
+					Motor_BoxSealBottom_L.qRun		:=FALSE;
+					Motor_BoxSealBottom_R.qRun		:=FALSE;
+				END_IF
+		21:
+				_tmrT0(IN:=NOT Sen_BeltLoadOut,PT:=T#0.5S);
+				Motor_BoxSealBottom_L.qRun		:=TRUE;
+				Motor_BoxSealBottom_R.qRun		:=TRUE;		
+				IF 	_tmrT0.Q THEN
+					_tmrT0(IN:=FALSE);
+					nNextStep					:= 50;
+				END_IF
+		50:
+				nNextStep					:= 0;
+	END_CASE
+END_IF;
+
+Process	:= nStep =50;
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Status" Id="{3522a825-d2b8-46c3-9396-824ffc70819e}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Status : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{ddbe10c8-e747-4091-b45b-68c48cded3b1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="Ass_Sealing">
+      <LineId Id="23" Count="12" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.Connect.Get">
+      <LineId Id="10" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="12" Count="2" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.Connect.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.Error.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.ErrorClear">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.FB_init">
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.HaltStepContiune">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.Initialization">
+      <LineId Id="17" Count="0" />
+      <LineId Id="24" Count="1" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="32" Count="0" />
+      <LineId Id="31" Count="0" />
+      <LineId Id="35" Count="1" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="48" Count="0" />
+      <LineId Id="40" Count="4" />
+      <LineId Id="38" Count="0" />
+      <LineId Id="53" Count="4" />
+      <LineId Id="49" Count="0" />
+      <LineId Id="58" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="50" Count="2" />
+      <LineId Id="28" Count="1" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="26" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.NoEntry.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.Pause">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.Process">
+      <LineId Id="10" Count="1" />
+      <LineId Id="13" Count="19" />
+      <LineId Id="111" Count="0" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="110" Count="0" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="113" Count="0" />
+      <LineId Id="120" Count="0" />
+      <LineId Id="112" Count="0" />
+      <LineId Id="114" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="117" Count="0" />
+      <LineId Id="116" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="140" Count="1" />
+      <LineId Id="148" Count="0" />
+      <LineId Id="139" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="126" Count="1" />
+      <LineId Id="118" Count="0" />
+      <LineId Id="122" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="130" Count="1" />
+      <LineId Id="163" Count="0" />
+      <LineId Id="133" Count="0" />
+      <LineId Id="164" Count="0" />
+      <LineId Id="166" Count="0" />
+      <LineId Id="165" Count="0" />
+      <LineId Id="132" Count="0" />
+      <LineId Id="159" Count="1" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="161" Count="0" />
+      <LineId Id="167" Count="1" />
+      <LineId Id="162" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="171" Count="1" />
+      <LineId Id="174" Count="1" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="153" Count="1" />
+      <LineId Id="106" Count="3" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_Sealing.Status.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,701 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <RecipeManager Name="RecipeManager" Id="{77552c89-139b-4baa-b800-bbd8f5c8e7b0}">
+    <XmlArchive>
+      <Data>
+        <o xml:space="preserve" t="RecipeManObject">
+          <o n="LMGuids" t="LanguageModelGuidHelper">
+            <d n="NamesAndGuids" t="Hashtable" ckt="String" cvt="Guid">
+              <v>GVL_RECIPEMANAGEMENT_3300</v>
+              <v>49623cdc-955e-43b8-b2f7-5ccc5caee396</v>
+              <v>RECIPEFACTORY</v>
+              <v>19b34af4-5148-4cc1-b1b7-1c7256a68c43</v>
+              <v>RECIPEFACTORYCREATERECIPE</v>
+              <v>453c9001-0314-466f-a431-3e6c47acb5fb</v>
+              <v>RECIPEFACTORYFB_INIT</v>
+              <v>763fe173-f42a-48a1-838c-1060854891ef</v>
+              <v>RECIPEFACTORYFREERECIPE</v>
+              <v>109f7ff8-417b-4ffc-8a0a-37ad34e19c3d</v>
+              <v>RECIPEMANAGEMENTINIT</v>
+              <v>3def9106-ce8f-47a9-82a7-374fe018b402</v>
+              <v>RECIPEMANAGEMENTINITFB_INIT</v>
+              <v>fe38847b-1a3d-445a-a59e-e8a6b43ee888</v>
+              <v>RECIPEMANAGEMENTINITFB_REINIT</v>
+              <v>4d340cc9-d1ff-41e4-bf55-28f44c91e39c</v>
+              <v>RECIPEMANAGEMENTINITINITIALIZE</v>
+              <v>bdf5b806-01fc-4c9d-9678-fb77bb022b17</v>
+            </d>
+          </o>
+          <o n="StorageSettings" t="RecipeManagerStorageSettings">
+            <v n="StorageType">1U</v>
+            <v n="LoadType">1U</v>
+            <v n="WriteType">0U</v>
+            <v n="FileExtension">".txtrecipe"</v>
+            <v n="FilePath">"C:\REP"</v>
+            <v n="TokenSeparator">":="</v>
+            <v n="ColumnList">"0|1"</v>
+            <v n="AutoSaveRecipes">true</v>
+          </o>
+          <v n="RecipesInPlc">true</v>
+          <v n="RecipesInPlcAssigned">false</v>
+        </o>
+      </Data>
+      <TypeList>
+        <Type n="Boolean">System.Boolean</Type>
+        <Type n="Guid">System.Guid</Type>
+        <Type n="Hashtable">System.Collections.Hashtable</Type>
+        <Type n="LanguageModelGuidHelper">{3bce4913-f2c1-4b54-84e8-6d7ec1809176}</Type>
+        <Type n="RecipeManagerStorageSettings">{9af4bea6-fc90-45e0-8fd7-eb50506b56da}</Type>
+        <Type n="RecipeManObject">{09ecc42e-586d-4a08-932f-5bdcac20bb55}</Type>
+        <Type n="String">System.String</Type>
+        <Type n="UInt32">System.UInt32</Type>
+      </TypeList>
+    </XmlArchive>
+    <RecipeDefinition Name="Recipes" Id="{57707795-f2bd-445d-a4ce-21c5a70c75ad}">
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="RecipeDefinitionObject">
+            <v n="UniqueIdGenerator">"223"</v>
+            <o n="Recipes" t="RecipeList">
+              <l n="Recipes" t="ArrayList" />
+            </o>
+            <o n="RecipeVariables" t="RecipeVariableList">
+              <l n="Variables" t="ArrayList" cet="RecipeVariable">
+                <o>
+                  <v n="VarName">"Edit_Parameter.strName"</v>
+                  <v n="VarType" t="TypeClass">String</v>
+                  <v n="VarTypeAsString">"STRING(50)"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">165</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"STRING(50)"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Unboxing_PullOut"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">166</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Unboxing_LoadOut"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">167</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Unboxing_Velo"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">168</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Unboxing_DelayTime[0]"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">169</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Unboxing_DelayTime[1]"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">170</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Unboxing_DelayTime[2]"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">171</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[0]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">172</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[1]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">173</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[2]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">174</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[3]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">175</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[4]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">176</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[5]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">177</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[6]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">178</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[7]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">179</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[8]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">180</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInQty[9]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">181</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadInPos"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">182</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadOutPos"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">183</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_LoadOutSecPos"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">184</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_ModuleSlotQty"</v>
+                  <v n="VarType" t="TypeClass">UInt</v>
+                  <v n="VarTypeAsString">"UINT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">185</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"UINT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_ModulePitchLength"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">186</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_Length"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">187</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_Velo"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">188</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_Gap"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">189</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Dual_TwiceClip"</v>
+                  <v n="VarType" t="TypeClass">Bool</v>
+                  <v n="VarTypeAsString">"BOOL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">190</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BOOL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Fly_Disdance"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">191</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Fly_Velo"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">192</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Fly_DelayTime"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">193</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Load_Sdandby"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">194</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Load_RBLoadin"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">195</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Load_LoadOut"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">196</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Load_Velo"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">197</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Load_RBPrgNo"</v>
+                  <v n="VarType" t="TypeClass">Byte</v>
+                  <v n="VarTypeAsString">"BYTE"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">198</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BYTE"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Load_Type"</v>
+                  <v n="VarType" t="TypeClass">UInt</v>
+                  <v n="VarTypeAsString">"UINT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">199</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"UINT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.Load_RBVelo"</v>
+                  <v n="VarType" t="TypeClass">Byte</v>
+                  <v n="VarTypeAsString">"BYTE"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">200</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BYTE"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingPicQuantity"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">201</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingBoxQuantity"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">202</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingWeight"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">203</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingWeightLowLimit"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <o n="Boundaries" t="RecipeVariableBoundaries">
+                    <v n="Type" t="TypeClass">Real</v>
+                    <v n="LowerBound">""</v>
+                    <v n="UpperBound">""</v>
+                  </o>
+                  <v n="Id">204</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingCheck"</v>
+                  <v n="VarType" t="TypeClass">Bool</v>
+                  <v n="VarTypeAsString">"BOOL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">205</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BOOL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingBarcode"</v>
+                  <v n="VarType" t="TypeClass">Bool</v>
+                  <v n="VarTypeAsString">"BOOL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">206</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BOOL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingHaltAuto"</v>
+                  <v n="VarType" t="TypeClass">Bool</v>
+                  <v n="VarTypeAsString">"BOOL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">207</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BOOL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.shock_HighTime"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">208</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.shock_DelayTime"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">209</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.stack_bUsed"</v>
+                  <v n="VarType" t="TypeClass">Bool</v>
+                  <v n="VarTypeAsString">"BOOL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">210</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BOOL"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.stack_DelayTime1"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">211</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.stack_DelayTime2"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">212</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_DelayTime1"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">213</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_DelayTime2"</v>
+                  <v n="VarType" t="TypeClass">Time</v>
+                  <v n="VarTypeAsString">"TIME"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">214</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"TIME"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_LayerData[0]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">215</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_LayerData[1]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">216</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_LayerData[2]"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">217</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_RBPrgNo"</v>
+                  <v n="VarType" t="TypeClass">Byte</v>
+                  <v n="VarTypeAsString">"BYTE"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">218</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BYTE"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_length"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">219</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_width"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">220</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_height"</v>
+                  <v n="VarType" t="TypeClass">Int</v>
+                  <v n="VarTypeAsString">"INT"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">221</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"INT"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.StackingRB_RBVelo"</v>
+                  <v n="VarType" t="TypeClass">Byte</v>
+                  <v n="VarTypeAsString">"BYTE"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">222</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"BYTE"</v>
+                </o>
+                <o>
+                  <v n="VarName">"Edit_Parameter.PackagingWeightUpLimit"</v>
+                  <v n="VarType" t="TypeClass">Real</v>
+                  <v n="VarTypeAsString">"REAL"</v>
+                  <v n="Name">""</v>
+                  <n n="Boundaries" />
+                  <v n="Id">223</v>
+                  <v n="Comment">""</v>
+                  <v n="VarUserDefTypeAsString">"REAL"</v>
+                </o>
+              </l>
+            </o>
+            <o n="LMGuids" t="LanguageModelGuidHelper">
+              <d n="NamesAndGuids" t="Hashtable" ckt="String" cvt="Guid">
+                <v>FILLDESCRIPTION</v>
+                <v>35e7e47c-bf4f-4f16-8e6b-4be5644d1e46</v>
+                <v>NAME</v>
+                <v>361976c8-6da4-4c45-ac7d-6f9c63e3475e</v>
+                <v>NAMESET</v>
+                <v>e605d667-63dd-4c43-a3f9-4c8aed21f846</v>
+                <v>PRVFILLDATASERVERSTRUCTURES</v>
+                <v>e925fdc1-65d8-4adb-bcf2-87f536bba38d</v>
+                <v>READ</v>
+                <v>7e3bfda4-480e-4f8d-a0b9-279428416bc4</v>
+                <v>REC_DS_PRG__9F1391D230B64ECB93FAF3CBE1FBBEAA</v>
+                <v>44fa403a-6500-49af-8828-b35674b700a5</v>
+                <v>UPDATEFROMDESCRIPTION</v>
+                <v>0b4c5027-8785-407f-9828-fe4cbb7a1a5f</v>
+                <v>VALUESINIT</v>
+                <v>1f4efb07-381f-4cb1-b7bb-239df48d95bc</v>
+                <v>WRITE</v>
+                <v>b2f7d5a1-6ff1-4e52-bc53-578085616d4f</v>
+              </d>
+            </o>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="ArrayList">System.Collections.ArrayList</Type>
+          <Type n="Guid">System.Guid</Type>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="Int32">System.Int32</Type>
+          <Type n="LanguageModelGuidHelper">{3bce4913-f2c1-4b54-84e8-6d7ec1809176}</Type>
+          <Type n="RecipeDefinitionObject">{6b3dfb6a-1865-4356-a39b-1fe0ef89651c}</Type>
+          <Type n="RecipeList">{361612e3-b6f9-4397-98a8-756875b9e479}</Type>
+          <Type n="RecipeVariable">{53eb36d9-3360-453b-901e-ca88bd8f0cba}</Type>
+          <Type n="RecipeVariableBoundaries">{27f9af88-23e7-4a13-82aa-c97c4e06a71a}</Type>
+          <Type n="RecipeVariableList">{97841042-ff4f-47b5-923e-538f1387df5a}</Type>
+          <Type n="String">System.String</Type>
+          <Type n="TypeClass">{16f7aa24-038f-444e-9d81-b001bc091d35}</Type>
+        </TypeList>
+      </XmlArchive>
+    </RecipeDefinition>
+  </RecipeManager>
+</TcPlcObject>

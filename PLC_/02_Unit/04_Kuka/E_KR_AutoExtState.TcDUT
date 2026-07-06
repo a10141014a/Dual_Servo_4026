@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <DUT Name="E_KR_AutoExtState" Id="{bd7e0e08-0eed-4ada-a2a4-61f0381499e5}">
+    <Declaration><![CDATA[{attribute 'strict'}
+TYPE E_KR_AutoExtState :
+(
+    Idle := 0,
+
+    CheckReady,
+    MoveEnableOn,
+    DrivesOnPulse,
+    WaitDrivesReady,
+
+    WaitPgnoReq,
+    RetryDrivesOnPulse,
+
+    SetProgramNo,
+    ExtStartPulse,
+    WaitProgramActive,
+
+    Running,
+    Finish,
+
+    Error
+);
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

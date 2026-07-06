@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="UPS_POU" Id="{43515595-734a-4eb1-8f5d-9e825680d84b}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM UPS_POU
+VAR
+	fbS_UPS_BAPI:FB_S_UPS_BAPI;
+	bPowerFailDetect  : BOOL; (* TRUE while powerfailure is detected *)
+    eState            : E_S_UPS_State; (* current ups state *)
+    nCapacity         : BYTE; (* actual capacity of UPS *)
+    bBusy             : BOOL; (* TRUE: function block is busy *)
+    bError            : BOOL; (* FALSE: function block has error *)
+    nErrID            : UDINT; (* FB error ID *)
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbS_UPS_BAPI(
+	sNetID:= '', 
+	iPLCPort:= 851, 
+	tTimeout:= DEFAULT_ADS_TIMEOUT, 
+	eUpsMode:= eSUPS_WrPersistData_Shutdown, 
+	ePersistentMode:= SPDM_2PASS , 
+	tRecoverTime:= T#10S, 
+	bPowerFailDetect=> bPowerFailDetect, 
+	eState=> eState, 
+	nCapacity=> nCapacity, 
+	bBusy=> bBusy, 
+	bError=> bError, 
+	nErrID=> nErrID);
+	
+	]]></ST>
+    </Implementation>
+    <LineIds Name="UPS_POU">
+      <LineId Id="7" Count="11" />
+      <LineId Id="5" Count="0" />
+      <LineId Id="19" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

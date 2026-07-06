@@ -1,0 +1,328 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="MainControl" Id="{3d241d5b-f045-49eb-89f8-8fec391d8179}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK MainControl
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	MC_Stop:ARRAY [1..6] OF MC_Stop;	
+	_bStop			:BOOL;
+	i	 			:INT;
+	fbMC_UngroupAllAxes	: MC_UngroupAllAxes;
+	fbMC_GroupDisable	: MC_GroupDisable;
+	fbAddAxis			: ARRAY[1..2] OF MC_AddAxisToGroup;
+	fbMC_GroupEnable	: MC_GroupEnable;	
+	_bDual_Release		:BOOL;
+	nReleaseStep		:INT;
+	_bReset				:BOOL;
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MC_Stop[1](Axis:= Axis_FlyIn);
+MC_Stop[2](Axis:= Axis_DualServo1);
+MC_Stop[3](Axis:= Axis_DualServo2);
+MC_Stop[4](Axis:= Axis_BoxPullOut);
+MC_Stop[5](Axis:= Axis_load1);
+MC_Stop[6](Axis:= Axis_load2);
+
+FOR i := 1TO 6 DO
+	IF MC_Stop[i].Done OR MC_Stop[i].Error THEN
+		MC_Stop[i].Execute	:= FALSE;
+	END_IF
+END_FOR;
+
+
+
+_bStop :=FALSE;
+
+
+IF Setting_FanAuto THEN
+	Fan();
+END_IF
+
+
+//
+
+fbAddAxis[1](AxesGroup:=DualGroupRef, Axis := Axis_DualServo1);
+fbAddAxis[2](AxesGroup:=DualGroupRef, Axis := Axis_DualServo2);
+fbMC_GroupDisable(AxesGroup:=DualGroupRef);
+IF fbMC_GroupDisable.Done OR fbMC_GroupDisable.Error THEN
+	fbMC_GroupDisable.Execute:= FALSE;
+END_IF
+
+
+
+_bDual_Release	:=FALSE;
+//RESET
+
+
+
+
+
+
+_bReset:= FALSE;]]></ST>
+    </Implementation>
+    <Method Name="Dual_Release" Id="{80763109-2c8e-4ed2-8019-de3a2f374eed}">
+      <Declaration><![CDATA[METHOD Dual_Release : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bDual_Release	:= TRUE;
+
+CASE nReleaseStep OF
+	0:
+		IF Axis_DualServo1.Status.DiscreteMotion THEN
+			fbAddAxis[1].Execute:=TRUE;
+			fbAddAxis[2].Execute:=TRUE;
+		END_IF
+
+
+
+	
+
+
+
+END_CASE
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ErrorReset" Id="{63673f85-0cbc-4989-9cee-803152aa428c}">
+      <Declaration><![CDATA[METHOD ErrorReset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Cyl_AxisBoxCatch.bReset	:= TRUE;
+Cyl_BoxSideBottom.bReset	:= TRUE;
+Cyl_Axis90.bReset		:= TRUE;
+Cyl_AxisBottom.bReset	:= TRUE;
+Cyl_UnloadDef.bReset	:= TRUE;
+
+IF Axis_DualServo1.Status.Error THEN
+	Axis_DualServo1.Reset();
+END_IF
+IF Axis_DualServo2.Status.Error THEN
+	Axis_DualServo2.Reset();
+END_IF
+IF Axis_BoxPullOut.Status.Error THEN
+	Axis_BoxPullOut.Reset();
+END_IF
+IF Axis_load1.Status.Error THEN
+	Axis_load1.Reset();
+END_IF
+IF Axis_load2.Status.Error THEN
+	Axis_load2.Reset();
+END_IF
+IF Axis_FlyIn.Status.Error THEN
+	Axis_FlyIn.Reset();
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Fan" Id="{dea1780e-79bf-48d9-baad-bdd634136ac4}">
+      <Declaration><![CDATA[METHOD Fan : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[TemperatureFans:=TemperatureHigh;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ResetAllAxes" Id="{248652be-dde1-4160-ab78-634823b3cae4}">
+      <Declaration><![CDATA[METHOD ResetAllAxes : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Axis_DualServo1.Reset();
+Axis_DualServo2.Reset();
+Axis_FlyIn.Reset();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SoftStopAxis" Id="{2f2d5a2b-cf8e-45f5-93bc-6670e158120f}">
+      <Declaration><![CDATA[METHOD SoftStopAxis : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF Axis_BoxPullOut.Status.Moving THEN
+	Axis_BoxPullOut.Stop();
+END_IF
+IF Axis_DualServo1.Status.Moving THEN
+	Axis_DualServo1.Stop();
+END_IF
+IF Axis_DualServo2.Status.Moving THEN
+	Axis_DualServo2.Stop();
+END_IF
+IF Axis_FlyIn.Status.Moving THEN
+	Axis_FlyIn.Stop();
+END_IF
+IF Axis_load1.Status.Moving THEN
+	Axis_load1.Stop();
+END_IF
+IF Axis_load2.Status.Moving THEN
+	Axis_load2.Stop();
+END_IF
+IF DualGroupRef.NcToPlc.CA.common.GroupStatus.State = mcGroupStateMoving THEN
+	fbMC_GroupDisable(AxesGroup:= DualGroupRef,Execute:= TRUE);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StopAir" Id="{eba058e7-63f7-49df-9b88-0d6445d2c3db}">
+      <Declaration><![CDATA[METHOD StopAir : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+Cyl_BoxSidePitch	.qExtendCoil	:= FALSE;
+Cyl_BoxSideBottom	.qExtendCoil	:= FALSE;
+Cyl_AxisBoxCatch	.qExtendCoil	:= FALSE;
+Vacm_AxisCatchBox					:= FALSE;					
+Cyl_Axis90			.qExtendCoil	:= FALSE;		
+Vacm_Axis90							:= FALSE;	
+Cyl_AxisBottom		.qExtendCoil	:= FALSE;	
+Cyl_BeltBottom		.qExtendCoil	:= FALSE;	
+Cyl_BeltBottomSup	.qExtendCoil	:= FALSE;	
+Cyl_UnloadDef		.qExtendCoil	:= FALSE;	
+Cyl_NGPurge			.qExtendCoil	:= FALSE;	
+Cyl_ShockStop		.qExtendCoil	:= FALSE;	
+Cyl_StackUD			.qExtendCoil	:= FALSE;	
+Cyl_ExitClip		.qExtendCoil	:= FALSE;	
+Cyl_ExitStopper		.qExtendCoil	:= FALSE;	
+Cyl_FlyIn_Pass						:= FALSE;	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StopAllAxes" Id="{64824813-54eb-4cce-b87a-b078b15420c6}">
+      <Declaration><![CDATA[METHOD StopAllAxes : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bStop	:= TRUE;
+
+FOR i := 1TO 6 DO
+	MC_Stop[i].Execute	:= TRUE;
+END_FOR;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StopMotor" Id="{f6af56a6-a6c9-48a1-9bb5-9b0a40530767}">
+      <Declaration><![CDATA[METHOD StopMotor : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Motor_LoadIn.qRun			:=FALSE;						
+Motor_Blower.qRun			:=FALSE;							
+Motor_LoadPurge1.qRun		:=FALSE;	
+Motor_LoadPurge2.qRun		:=FALSE;	
+Motor_BoxSealBottom_L.qRun	:=FALSE;
+Motor_BoxSealBottom_R.qRun	:=FALSE;
+Roller_Purge.qRun			:=FALSE;							
+Roller_Exit.qRun			:=FALSE;		
+Motor_shock.qRun			:=FALSE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <LineIds Name="MainControl">
+      <LineId Id="9" Count="0" />
+      <LineId Id="16" Count="4" />
+      <LineId Id="30" Count="0" />
+      <LineId Id="26" Count="3" />
+      <LineId Id="23" Count="2" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="45" Count="1" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="47" Count="1" />
+      <LineId Id="63" Count="1" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="70" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="121" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="122" Count="1" />
+      <LineId Id="75" Count="1" />
+      <LineId Id="73" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="97" Count="5" />
+      <LineId Id="96" Count="0" />
+    </LineIds>
+    <LineIds Name="MainControl.Dual_Release">
+      <LineId Id="5" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="24" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="18" Count="2" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="MainControl.ErrorReset">
+      <LineId Id="5" Count="4" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="20" Count="1" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="23" Count="1" />
+      <LineId Id="22" Count="0" />
+      <LineId Id="26" Count="1" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="29" Count="1" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="32" Count="1" />
+      <LineId Id="31" Count="0" />
+    </LineIds>
+    <LineIds Name="MainControl.Fan">
+      <LineId Id="5" Count="0" />
+    </LineIds>
+    <LineIds Name="MainControl.ResetAllAxes">
+      <LineId Id="5" Count="2" />
+    </LineIds>
+    <LineIds Name="MainControl.SoftStopAxis">
+      <LineId Id="5" Count="2" />
+      <LineId Id="9" Count="1" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="12" Count="1" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="15" Count="1" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="18" Count="1" />
+      <LineId Id="17" Count="0" />
+      <LineId Id="21" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="23" Count="0" />
+      <LineId Id="27" Count="1" />
+    </LineIds>
+    <LineIds Name="MainControl.StopAir">
+      <LineId Id="5" Count="2" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="11" Count="1" />
+      <LineId Id="14" Count="10" />
+    </LineIds>
+    <LineIds Name="MainControl.StopAllAxes">
+      <LineId Id="5" Count="0" />
+      <LineId Id="7" Count="1" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="6" Count="0" />
+    </LineIds>
+    <LineIds Name="MainControl.StopMotor">
+      <LineId Id="5" Count="2" />
+      <LineId Id="11" Count="2" />
+      <LineId Id="8" Count="0" />
+      <LineId Id="10" Count="0" />
+      <LineId Id="17" Count="1" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

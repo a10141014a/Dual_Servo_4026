@@ -1,0 +1,227 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="FB_AxisGeneral" Id="{68052f65-95b3-4ec3-8085-1ba291c91bb5}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_AxisGeneral
+VAR_INPUT
+	i_homecam		:BOOL;
+	HmiPanel		:REFERENCE TO ST_HMIAxieControl;
+	Axis 			:REFERENCE TO AXIS_REF_EXT;
+END_VAR
+
+VAR_OUTPUT
+END_VAR
+
+VAR
+	fbReset: MC_Reset;
+	fbJog: MC_Jog := (Mode := E_JOGMODE.MC_JOGMODE_CONTINOUS);
+
+	fbStop: MC_Stop;
+	fbMC_MoveAbsolute: MC_MoveAbsolute;
+	fbMC_MoveRelative: MC_MoveRelative;
+	fbMC_Home: MC_Home;
+	strTemp	:WSTRING(50);
+	ErrorTriger	:R_TRIG;
+	nStep	:INT;
+	tmrDef	:TON;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[General_ACT();
+StatusMapp();
+
+CASE nStep OF
+	0:
+		IF HmiPanel.bServoSwitch THEN
+			IF Axis.Status.StandStill THEN
+				nStep	:=  10;
+				ELSE	
+				nStep	:=  5 ;
+			END_IF
+		END_IF
+	5: //servo On
+		IF Axis.ServoOn() THEN
+			nStep	:=  20;
+		END_IF
+	10:
+		IF Axis.ServoOFF() THEN
+			nStep	:=  20;
+		END_IF	
+	20:
+		HmiPanel.bServoSwitch	:= FALSE;
+		nStep	:= 0;
+END_CASE
+//防呆跳回 
+tmrDef(IN:= nStep <> 0 , PT:= T#1S);
+IF tmrDef.Q THEN
+	nStep	:= 20;
+END_IF]]></ST>
+    </Implementation>
+    <Action Name="General_ACT" Id="{831d9723-5cd4-432b-acc2-8a313a83ce6b}">
+      <Implementation>
+        <ST><![CDATA[fbReset(
+	Axis:=Axis , 
+	Execute:= HmiPanel.bReset, 
+	Done=> , 
+	Busy=> , 
+	Error=> , 
+	ErrorID=> );
+	
+fbJog(
+	Axis:= Axis , 
+	JogForward:= HmiPanel.bJogF, 
+	JogBackwards:=HmiPanel.bJogB , 
+	Mode:= MC_JOGMODE_CONTINOUS, 
+	Position:= , 
+	Velocity:= HmiPanel.CommandVelo, 
+	Acceleration:= , 
+	Deceleration:= , 
+	Jerk:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );	
+
+fbStop(
+	Axis:= Axis, 
+	Execute:= HmiPanel.bSTOP , 
+	Deceleration:= , 
+	Jerk:= , 
+	Options:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+
+fbMC_MoveAbsolute(
+	Axis:= AXIS, 
+	Execute:= HmiPanel.bAbsPos, 
+	Position:= HmiPanel.CommandAddres, 
+	Velocity:= HmiPanel.CommandVelo, 
+	Acceleration:= , 
+	Deceleration:= , 
+	Jerk:= , 
+	BufferMode:= , 
+	Options:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+	
+fbMC_MoveRelative(
+	Axis:= Axis, 
+	Execute:= HmiPanel.bINCPos, 
+	Distance:= HmiPanel.CommandAddres, 
+	Velocity:= HmiPanel.CommandVelo, 
+	Acceleration:= , 
+	Deceleration:= , 
+	Jerk:= , 
+	BufferMode:= , 
+	Options:= , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );
+	
+fbMC_Home(
+	Axis:=Axis , 
+	Execute:=HmiPanel.bORG , 
+	Position:= , 
+	HomingMode:= , 
+	BufferMode:= , 
+	Options:= , 
+	bCalibrationCam:=i_homecam , 
+	Done=> , 
+	Busy=> , 
+	Active=> , 
+	CommandAborted=> , 
+	Error=> , 
+	ErrorID=> );	
+
+
+IF fbStop.Done THEN
+	HmiPanel.bStop	:=FALSE;
+END_IF
+IF fbMC_MoveRelative.Done THEN
+	HmiPanel.bINCPos	:=FALSE;
+END_IF
+IF fbMC_MoveAbsolute.Done THEN
+	HmiPanel.CommandAddres	:= 0;
+	HmiPanel.bAbsPos	:=FALSE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="StatusMapp" Id="{a92f752e-b22e-4de1-9deb-331874e058e6}">
+      <Implementation>
+        <ST><![CDATA[	HmiPanel.moniDI						:= Axis.DI;
+	HmiPanel.moniDeviceErrorCode		:= Axis.DeviceErrorcode;
+	HmiPanel.bMoniReady					:= Axis.Status.StandStill;
+	HmiPanel.bMoniDeviceError			:= Axis.Status.DriveDeviceError;
+	HmiPanel.bMoniHomed					:= Axis.Status.Homed;
+	HmiPanel.bMoniConpled				:= Axis.Status.Coupled;
+	HmiPanel.bMoniControlLoopClosed		:= Axis.Status.ControlLoopClosed;
+	HmiPanel.strStatus					:= Axis.strAxisStates;]]></ST>
+      </Implementation>
+    </Action>
+    <LineIds Name="FB_AxisGeneral">
+      <LineId Id="155" Count="0" />
+      <LineId Id="311" Count="1" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="279" Count="1" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="283" Count="0" />
+      <LineId Id="290" Count="0" />
+      <LineId Id="292" Count="0" />
+      <LineId Id="282" Count="0" />
+      <LineId Id="294" Count="1" />
+      <LineId Id="293" Count="0" />
+      <LineId Id="296" Count="1" />
+      <LineId Id="302" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="310" Count="0" />
+      <LineId Id="305" Count="1" />
+      <LineId Id="308" Count="1" />
+    </LineIds>
+    <LineIds Name="FB_AxisGeneral.General_ACT">
+      <LineId Id="16" Count="7" />
+      <LineId Id="44" Count="28" />
+      <LineId Id="101" Count="0" />
+      <LineId Id="106" Count="14" />
+      <LineId Id="104" Count="0" />
+      <LineId Id="121" Count="15" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="142" Count="0" />
+      <LineId Id="144" Count="12" />
+      <LineId Id="143" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="138" Count="3" />
+      <LineId Id="165" Count="1" />
+      <LineId Id="137" Count="0" />
+      <LineId Id="168" Count="0" />
+      <LineId Id="170" Count="0" />
+      <LineId Id="169" Count="0" />
+      <LineId Id="167" Count="0" />
+      <LineId Id="175" Count="0" />
+    </LineIds>
+    <LineIds Name="FB_AxisGeneral.StatusMapp">
+      <LineId Id="2" Count="0" />
+      <LineId Id="4" Count="0" />
+      <LineId Id="1" Count="0" />
+      <LineId Id="8" Count="4" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

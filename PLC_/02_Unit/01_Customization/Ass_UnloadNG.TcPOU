@@ -1,0 +1,592 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="Ass_UnloadNG" Id="{bd20b21e-c1a4-4f4a-a1c0-5aa3b9f16856}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK Ass_UnloadNG IMPLEMENTS ITF_AutoStructCommand
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+	SamplingWeight	:REAL;
+END_VAR
+VAR
+	strText,strNGText,strShackText 	:STRING;
+	i	:INT;
+	_bProcessScan,_bInitialScan: BOOL;
+	_bHalt , _bError,_bHaltPause: BOOL;
+	nStep,nInitiStep ,nNGStep,nShackStep 	: INT;
+	_tmrT0,tmrLoadcell,tmrshock	,tmrNG		:TON;
+	bBoxPass: BOOL;
+	tmrClear: TON;
+	UpperWeight,LowerWeight	:REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF NOT _bInitialScan AND NOT _bProcessScan THEN
+	strText:=strNGText:=strShackText	:='';
+END_IF
+
+
+IF NOT _bInitialScan THEN
+	nInitiStep	:= 0;
+END_IF
+
+_bInitialScan:=FALSE;
+
+
+
+IF NOT _bProcessScan THEN
+	nShackStep	:= 0;
+	nNGStep		:= 0;
+	nStep		:= 0;
+END_IF
+
+_bProcessScan	:=FALSE;
+
+]]></ST>
+    </Implementation>
+    <Property Name="Connect" Id="{7225ef76-d320-4fde-b0b3-07f6324857c3}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY Connect : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{0f06e400-442d-4c8e-8f47-be25bc937442}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{57347063-56a4-46db-bfbe-6d877c2c7926}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="Error" Id="{d7b9b006-e839-4929-8fdc-7010c3300995}">
+      <Declaration><![CDATA[PROPERTY Error : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{2e11e90e-71a3-468d-a838-7f96fa2308b3}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="ErrorClear" Id="{9e2dccef-ea8c-4272-a85c-282b842d5368}">
+      <Declaration><![CDATA[METHOD ErrorClear : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bError	:= FALSE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{30c9c290-32c6-4a77-84b3-c0d393f44a22}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD FB_init : BOOL
+VAR_INPUT
+	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
+	bInitRetains	: BOOL;
+	(* if TRUE, the instance afterwards gets moved into the copy code (online change)*)
+	bInCopyCode	: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HaltStepContiune" Id="{0d812bd6-7f5d-43aa-82ad-0ec04ed19982}">
+      <Declaration><![CDATA[METHOD HaltStepContiune : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[HaltStepContiune	:=TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Initialization" Id="{590597e0-2263-4555-812b-e1b41a0161a3}">
+      <Declaration><![CDATA[METHOD Initialization : BOOL
+VAR_INPUT
+	_Testmode	: BOOL;
+END_VAR
+
+VAR
+	bConfig: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+_tmrT0(IN:=TRUE,PT:=T#0.2S);
+LoadCell.i_bCmd_Tara:= NOT _tmrT0.Q  ;
+Initialization	:= AssRoller.Initialization() AND _tmrT0.Q ;
+SamplingWeight	:=0;
+Cyl_NGPurge.qExtendCoil	:= FALSE;
+Roller_Purge.qRun:= FALSE;
+Motor_shock.qRun	:= FALSE;
+Motor_shock.qSign	:= FALSE;
+Cyl_ShockStop.qExtendCoil:= FALSE;
+*)
+
+_bInitialScan:=TRUE;
+
+CASE nInitiStep OF
+	0:		
+		LoadCell.GetTara();
+		_tmrT0(IN:=FALSE);
+		strText:='ORG : Initial ';
+		Cyl_NGPurge.qExtendCoil		:= FALSE;
+		Roller_Purge.qRun			:= FALSE;
+		Motor_shock.qRun			:= FALSE;
+		Motor_shock.qSign			:= FALSE;
+		Cyl_ShockStop.qExtendCoil	:= FALSE;		
+		nInitiStep						:= 5;
+	5:
+		bConfig			:=TRUE;
+		IF Sen_TFLoadIn THEN
+			bConfig			:=FALSE;
+			EventLogger.eEventType		:= 3;
+			EventLogger.strEventText	:= 'TF Sensor Error ';	
+			EventLogger();					
+		END_IF		
+			
+		IF bConfig THEN
+			nInitiStep	:= 10;
+			strText:='ORG : Runing ';
+			ELSE
+			strText:='ORG : Failed ';
+			nInitiStep	:= 50;
+		END_IF	
+	10:
+		IF AssRoller.Initialization() THEN
+			strText		:='ORG : Done ';
+			nInitiStep	:= 20;
+		END_IF;		
+	20:
+		Initialization	:= TRUE;
+	
+END_CASE;
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="NoEntry" Id="{6976b88a-7ea7-42c4-925d-1fa73aaa0fbb}">
+      <Declaration><![CDATA[{warning 'add property implementation'}
+PROPERTY NoEntry : BOOL
+]]></Declaration>
+      <Get Name="Get" Id="{122c4eba-99f8-44e6-94a8-463d6fbe8b8d}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Pause" Id="{a877b4d4-c843-4482-9061-6c3f8d9f1f13}">
+      <Declaration><![CDATA[{warning 'add method implementation '}
+METHOD Pause : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Process" Id="{30f199c4-bbb5-40fe-ab57-f5f98610f032}">
+      <Declaration><![CDATA[METHOD Process : BOOL
+VAR_INPUT
+	bHlatMode	: BOOL;
+END_VAR
+
+VAR
+	bStoppedComv: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bProcessScan:= TRUE;
+//判斷 
+
+CASE nStep OF
+	0:
+		tmrLoadcell(IN:= FALSE);
+		_tmrT0(IN:=FALSE);
+		AssRoller.Roller();
+		strText:= 'Waiting';
+		IF Sen_TFLoadIn THEN
+			nStep := 5;
+		END_IF
+	5:
+		strText:= 'Loadind and Stop';
+		AssRoller.Roller();
+		IF NOT Sen_TFLoadIn THEN
+			SamplingWeight	:= 0;
+			nStep := 10;
+		END_IF	
+	10:		
+		strText:= 'Weight Check!';
+		tmrLoadcell(IN:= TRUE,PT:=T#1S);
+		UpperWeight	:= RunParameter.PackagingWeight + RunParameter.PackagingWeightUpLimit ;
+		LowerWeight := RunParameter.PackagingWeight - RunParameter.PackagingWeightLowLimit ;
+		IF tmrLoadcell.Q THEN
+			tmrLoadcell(IN:= FALSE,PT:=T#1S);
+			SamplingWeight	:= 	LoadCell.o_rWeight;
+			IF SamplingWeight >= LowerWeight AND
+				SamplingWeight <= UpperWeight THEN
+				strText:= 'Weight Pass!';
+				bBoxPass:= TRUE;
+				ELSE
+				EventLogger.eEventType		:= 2;
+				EventLogger.strEventText	:= 'Box Over Weight ';	
+				EventLogger.strEventText	:=	CONCAT(EventLogger.strEventText,LEFT(REAL_TO_STRING(SamplingWeight),3));
+				EventLogger();
+				strText:= 'Box NG';
+				bBoxPass:= FALSE;
+			END_IF
+			nStep := 15;
+		END_IF
+	
+	15:
+		
+		IF nNGstep = 0 THEN
+			nNGstep	:= 5;
+			IF RunParameter.PackagingCheck THEN
+				bStoppedComv	:= TRUE;
+			END_IF
+			AssRoller.Belt();
+			IF Sen_NGLoadOut THEN
+				nStep := 0;
+			END_IF;
+		END_IF
+		
+		
+		
+		
+END_CASE;
+
+CASE nNGstep OF
+	0:
+		strNGText	:= 'Wait BOX';
+		tmrNG(IN:=FALSE,PT:=T#2S);
+		Roller_Purge.qRun:= TRUE;
+		IF Sen_NGLoadOut THEN
+			strNGText	:= 'Active Loading';
+			nNGstep := 20;
+			CASE nStep OF
+				0..10:
+				strNGText	:= 'Up Loading';
+				nNGstep := 50;
+			END_CASE
+		END_IF
+	5:
+		strNGText	:= 'TF Loading';
+		AssRoller.Belt();
+	
+		IF Sen_NGLoadOut THEN
+			nStep := 0;
+			nNGstep	:= 6;
+		END_IF
+	6:
+			IF bBoxPass THEN
+				strNGText	:= 'TF LoadIn Stop';
+				Roller_Purge.qRun:= FALSE;
+				nStep := 0;
+				IF nShackStep = 1 THEN
+					strNGText	:= 'Go Shack';
+					Roller_Purge.qRun:= TRUE;
+					nNGstep	:= 10;
+				END_IF;
+				ELSE
+				EventLogger.eEventType		:= 2;
+				EventLogger.strEventText	:= 'NG Perge!';		
+				EventLogger();		
+				strNGText	:= 'TF NG Perge';
+				nNGstep	:= 30;
+				Roller_Purge.qRun:= FALSE;
+			END_IF		
+
+		
+	10:
+		IF Sen_ShockPos THEN
+			strNGText	:= 'Shack ORG';
+			nNGstep	:= 0;
+		END_IF
+	
+	
+	30://重量Error
+		Cyl_NGPurge.qExtendCoil	:= TRUE;
+		tmrNG(IN:=TRUE,PT:=T#2S);
+		IF tmrNG.Q THEN
+			tmrNG(IN:=FALSE);
+			nStep := 0;
+			Cyl_NGPurge.qExtendCoil	:= FALSE;
+			nNGstep := 0;
+		END_IF		
+		
+		
+		
+	50://手動投入	
+		strNGText	:= '50 Man. ';
+		IF Sen_ShockPos THEN
+			nNGstep	:= 0;
+		END_IF	
+END_CASE;	
+CASE nShackStep OF
+	0:
+		tmrshock(IN:=FALSE);
+		nShackStep	:= 1;
+	1:
+		strShackText:='Wait Box';
+		Cyl_ShockStop.qExtendCoil:= TRUE;
+		tmrshock(IN:=Sen_ShockPos , PT:= RunParameter.shock_DelayTime);	
+		Motor_shock.qRun	:= TRUE;
+		Motor_shock.qSign	:= TRUE;
+		IF tmrshock.q THEN
+			strShackText:='Loading Box';
+			tmrshock(IN:=FALSE);
+			nShackStep	:= 5;
+		END_IF
+	5:
+		strShackText:='Shack Box';
+		Motor_shock.qSign	:= FALSE;
+		tmrshock(IN:= TRUE, PT:= RunParameter.shock_HighTime);
+		IF tmrshock.Q THEN
+			tmrshock(IN:= FALSE);
+			Motor_shock.qSign	:= TRUE;
+			Cyl_ShockStop.qExtendCoil:= FALSE;
+			nShackStep	:= 10;
+		END_IF
+	10:
+		strShackText:='Load Out Box';
+		tmrshock(IN:= NOT Sen_ShockPos , PT:= T#3S);				
+
+		IF tmrshock.Q THEN
+			Cyl_ShockStop.qExtendCoil:= TRUE;
+			tmrshock(IN:= FALSE);
+			nShackStep	:= 0;
+		END_IF
+		
+		
+END_CASE;		
+	
+		]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Status" Id="{54765cf9-d21f-45b1-92d3-fce37714c6cc}">
+      <Declaration><![CDATA[PROPERTY Status : STRING(50)
+]]></Declaration>
+      <Get Name="Get" Id="{f5aa3595-cea0-42a9-bce6-727859e4b572}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Status:= strText;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <LineIds Name="Ass_UnloadNG">
+      <LineId Id="128" Count="2" />
+      <LineId Id="126" Count="1" />
+      <LineId Id="93" Count="8" />
+      <LineId Id="106" Count="1" />
+      <LineId Id="103" Count="2" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.Connect.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.Connect.Set">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.Error.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.ErrorClear">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.FB_init">
+      <LineId Id="10" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.HaltStepContiune">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.Initialization">
+      <LineId Id="35" Count="0" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="15" Count="0" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="25" Count="1" />
+      <LineId Id="28" Count="0" />
+      <LineId Id="27" Count="0" />
+      <LineId Id="29" Count="0" />
+      <LineId Id="41" Count="1" />
+      <LineId Id="44" Count="3" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="48" Count="1" />
+      <LineId Id="64" Count="3" />
+      <LineId Id="52" Count="1" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="68" Count="6" />
+      <LineId Id="81" Count="1" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="85" Count="2" />
+      <LineId Id="54" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="92" Count="1" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="56" Count="2" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.NoEntry.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.Pause">
+      <LineId Id="4" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.Process">
+      <LineId Id="15" Count="1" />
+      <LineId Id="33" Count="1" />
+      <LineId Id="7" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="127" Count="0" />
+      <LineId Id="39" Count="0" />
+      <LineId Id="59" Count="0" />
+      <LineId Id="63" Count="2" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="268" Count="0" />
+      <LineId Id="82" Count="0" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="72" Count="0" />
+      <LineId Id="269" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="252" Count="1" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="84" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="270" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="290" Count="2" />
+      <LineId Id="289" Count="0" />
+      <LineId Id="271" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="85" Count="0" />
+      <LineId Id="80" Count="1" />
+      <LineId Id="272" Count="0" />
+      <LineId Id="237" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="258" Count="2" />
+      <LineId Id="236" Count="0" />
+      <LineId Id="238" Count="1" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="74" Count="0" />
+      <LineId Id="69" Count="2" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="35" Count="0" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="37" Count="0" />
+      <LineId Id="57" Count="0" />
+      <LineId Id="280" Count="0" />
+      <LineId Id="215" Count="0" />
+      <LineId Id="106" Count="0" />
+      <LineId Id="102" Count="0" />
+      <LineId Id="273" Count="0" />
+      <LineId Id="227" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="228" Count="0" />
+      <LineId Id="274" Count="0" />
+      <LineId Id="230" Count="0" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="75" Count="0" />
+      <LineId Id="275" Count="0" />
+      <LineId Id="110" Count="1" />
+      <LineId Id="97" Count="0" />
+      <LineId Id="216" Count="0" />
+      <LineId Id="173" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="98" Count="0" />
+      <LineId Id="175" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="176" Count="0" />
+      <LineId Id="217" Count="0" />
+      <LineId Id="222" Count="0" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="224" Count="0" />
+      <LineId Id="177" Count="0" />
+      <LineId Id="223" Count="0" />
+      <LineId Id="178" Count="0" />
+      <LineId Id="282" Count="1" />
+      <LineId Id="281" Count="0" />
+      <LineId Id="276" Count="0" />
+      <LineId Id="183" Count="0" />
+      <LineId Id="179" Count="0" />
+      <LineId Id="174" Count="0" />
+      <LineId Id="221" Count="0" />
+      <LineId Id="220" Count="0" />
+      <LineId Id="107" Count="0" />
+      <LineId Id="184" Count="0" />
+      <LineId Id="279" Count="0" />
+      <LineId Id="185" Count="1" />
+      <LineId Id="105" Count="0" />
+      <LineId Id="120" Count="2" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="130" Count="0" />
+      <LineId Id="218" Count="0" />
+      <LineId Id="128" Count="0" />
+      <LineId Id="131" Count="0" />
+      <LineId Id="129" Count="0" />
+      <LineId Id="180" Count="2" />
+      <LineId Id="134" Count="0" />
+      <LineId Id="284" Count="0" />
+      <LineId Id="232" Count="1" />
+      <LineId Id="231" Count="0" />
+      <LineId Id="55" Count="0" />
+      <LineId Id="135" Count="1" />
+      <LineId Id="192" Count="0" />
+      <LineId Id="211" Count="1" />
+      <LineId Id="285" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="189" Count="1" />
+      <LineId Id="187" Count="0" />
+      <LineId Id="286" Count="0" />
+      <LineId Id="214" Count="0" />
+      <LineId Id="188" Count="0" />
+      <LineId Id="167" Count="1" />
+      <LineId Id="287" Count="0" />
+      <LineId Id="196" Count="0" />
+      <LineId Id="193" Count="0" />
+      <LineId Id="195" Count="0" />
+      <LineId Id="200" Count="0" />
+      <LineId Id="197" Count="0" />
+      <LineId Id="199" Count="0" />
+      <LineId Id="201" Count="0" />
+      <LineId Id="198" Count="0" />
+      <LineId Id="194" Count="0" />
+      <LineId Id="288" Count="0" />
+      <LineId Id="202" Count="0" />
+      <LineId Id="204" Count="0" />
+      <LineId Id="206" Count="0" />
+      <LineId Id="247" Count="0" />
+      <LineId Id="207" Count="0" />
+      <LineId Id="210" Count="0" />
+      <LineId Id="205" Count="0" />
+      <LineId Id="203" Count="0" />
+      <LineId Id="191" Count="0" />
+      <LineId Id="53" Count="1" />
+      <LineId Id="38" Count="0" />
+    </LineIds>
+    <LineIds Name="Ass_UnloadNG.Status.Get">
+      <LineId Id="2" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+  <POU Name="F_TrimRightSpace" Id="{16d7ff96-f89e-4e5a-8f9c-2ea2dac80d83}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION F_TrimRightSpace : STRING
+VAR_INPUT
+	 strIn : STRING;
+END_VAR
+VAR
+	  nLen : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[F_TrimRightSpace := strIn;
+
+	nLen := LEN(F_TrimRightSpace);
+	
+	WHILE (nLen > 0) AND MID(F_TrimRightSpace,1,nLen)=' ' DO
+		nLen := nLen - 1;
+	END_WHILE
+	F_TrimRightSpace := LEFT(F_TrimRightSpace, nLen);
+]]></ST>
+    </Implementation>
+    <LineIds Name="F_TrimRightSpace">
+      <LineId Id="10" Count="0" />
+      <LineId Id="25" Count="6" />
+      <LineId Id="7" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+  <POU Name="EventLogger" Id="{1aba1ebd-9bd9-47c4-9870-a817908ee061}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC EventLogger
+VAR_INPUT
+	eEventType : E_eventType ;
+	nEventIdentity : UDINT ;
+	strEventText	: STRING(255);
+END_VAR
+
+VAR
+	EventBuffer : ARRAY [1..Max_Size_OF_Buffer] OF ST_Event;
+	CurrentEventBufferIndex : INT:= 0;
+	i 						: INT;
+END_VAR
+
+VAR CONSTANT
+	Max_Size_OF_Buffer : INT := 100;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[FOR i :=  Max_Size_OF_Buffer TO 2 BY -1 DO 
+	EventBuffer[i]:= EventBuffer[i-1];
+END_FOR
+EventBuffer[1].eEventType := eEventType;
+EventBuffer[1].nEventIdentity	:= nEventIdentity;
+EventBuffer[1].strEventText	:= strEventText;
+UpdateEventTimeWithSystemTime(stEvent := EventBuffer[1]);
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="EventLogger">
+      <LineId Id="29" Count="1" />
+      <LineId Id="41" Count="0" />
+      <LineId Id="35" Count="4" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
