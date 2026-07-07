@@ -105,9 +105,9 @@ IF RB_CS_SysIO.iESTOP_ON THEN
 	RB_CS_SysIO.qSTART	:=FALSE;
 	eCSStatus:=E_CS_Status.EStop;	
 END_IF
-//IF NOT RB_CS_SysIO.iEXT_CONTROL THEN
-//	eCSStatus:=E_CS_Status.LocalControl;	
-//END_IF
+IF NOT RB_CS_SysIO.iEXT_CONTROL THEN
+	eCSStatus:=E_CS_Status.LocalControl;	
+END_IF
 //
 IF state<> 0 THEN
 	eCSStatus:=E_CS_Status.Offline;

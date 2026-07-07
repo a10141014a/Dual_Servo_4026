@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.15">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <POU Name="Spacil_FC" Id="{35f2ca77-a05a-4003-a50b-0a82cc719b28}" SpecialFunc="None">
     <Declaration><![CDATA[{attribute 'hide_all_locals'}
 FUNCTION_BLOCK Spacil_FC
@@ -16,7 +16,7 @@ VAR_OUTPUT
 	SM411	:BOOL;			// 0.2 Sec blinking
 	SM412	:BOOL;			// 1.0 Sec blinking
 	SM413	:BOOL;			// 2.0 Sec blinking
-	CpuUsage           :UDINT;
+	CpuUsage          	 :UDINT;
 END_VAR
 VAR
 	_aryTmr			:ARRAY [0..10] OF TON;
@@ -129,51 +129,5 @@ END_VAR
  wBuffer[mark]	:= _CurrentCounter;]]></ST>
       </Implementation>
     </Method>
-    <LineIds Name="Spacil_FC">
-      <LineId Id="103" Count="3" />
-      <LineId Id="31" Count="0" />
-      <LineId Id="177" Count="0" />
-      <LineId Id="37" Count="0" />
-      <LineId Id="43" Count="0" />
-      <LineId Id="142" Count="0" />
-      <LineId Id="39" Count="0" />
-      <LineId Id="44" Count="3" />
-      <LineId Id="40" Count="0" />
-      <LineId Id="49" Count="0" />
-      <LineId Id="147" Count="2" />
-      <LineId Id="51" Count="4" />
-      <LineId Id="48" Count="0" />
-      <LineId Id="143" Count="0" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="144" Count="0" />
-      <LineId Id="56" Count="5" />
-      <LineId Id="32" Count="0" />
-      <LineId Id="64" Count="0" />
-      <LineId Id="145" Count="1" />
-      <LineId Id="65" Count="5" />
-      <LineId Id="63" Count="0" />
-      <LineId Id="72" Count="0" />
-      <LineId Id="110" Count="0" />
-      <LineId Id="112" Count="0" />
-    </LineIds>
-    <LineIds Name="Spacil_FC.GetOvertime">
-      <LineId Id="7" Count="0" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="16" Count="1" />
-      <LineId Id="12" Count="0" />
-      <LineId Id="20" Count="2" />
-      <LineId Id="18" Count="1" />
-      <LineId Id="8" Count="0" />
-      <LineId Id="15" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="5" Count="0" />
-    </LineIds>
-    <LineIds Name="Spacil_FC.GetOvertime_Clear">
-      <LineId Id="5" Count="0" />
-    </LineIds>
-    <LineIds Name="Spacil_FC.GetOvertime_Renew">
-      <LineId Id="30" Count="0" />
-      <LineId Id="5" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>

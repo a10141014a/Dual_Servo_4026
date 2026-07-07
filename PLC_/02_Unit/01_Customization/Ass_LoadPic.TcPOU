@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <POU Name="Ass_LoadPic" Id="{41058aa1-f0d8-4eea-8392-b9cb2c6e1dc2}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK Ass_LoadPic IMPLEMENTS ITF_AutoStructCommand
 VAR_INPUT
@@ -12,11 +12,13 @@ VAR
 	_bProcessScan,_bInitialScan		: BOOL;
 	_bHalt , _bError,_bHaltPause	: BOOL;
 	nStep,nInitiStep ,nNextStep 	: INT;
-	fbHomeInside,fbHomeOutside		:MC_Home	;
+	fbHomeInside,fbHomeOutside		: MC_Home;
 	fbMC_GearIn						: MC_GearIn;
 	fbMC_GearOut					: MC_GearOut;
-	fbMC_AbsLoad1,fbMC_AbsLoad2		:MC_MoveAbsolute;
-	_tmrT0							: TON;
+	fbMC_AbsLoad1,fbMC_AbsLoad2		: MC_MoveAbsolute;
+	fbMC_Mode1	,fbMC_Mode2			:MC_MoveModulo;
+	fbMC_INC1,fbMC_INC2	:MC_MoveRelative;
+	_tmrT0,tmrStopper							: TON;
 	temp:DWORD;
 	bReady: BOOL;
 END_VAR
@@ -288,13 +290,23 @@ _bHaltPause	:= nStep<> nNextStep;
 IF _bError OR _bHaltPause THEN
 	RETURN;
 END_IF
+fbMC_INC1(Axis:= Axis_load1,Distance:= 1005,Velocity:= RunParameter.Load_Velo);
+fbMC_INC2(Axis:= Axis_load2,Distance:= 1005,Velocity:= RunParameter.Load_Velo);
+fbMC_Mode1(Axis:= Axis_load1,Velocity:= fbMC_AbsLoad1.Velocity,Direction:= MC_Positive_Direction);
+fbMC_Mode2(Axis:= Axis_load2,Velocity:= fbMC_AbsLoad1.Velocity,Direction:= MC_Positive_Direction);
+fbMC_AbsLoad1(Axis:= Axis_load1,Position:= RunParameter.Load_RBLoadin,Velocity:= RunParameter.Load_Velo);
+fbMC_AbsLoad2(Axis:= Axis_load2,Position:= RunParameter.Load_RBLoadin,Velocity:= RunParameter.Load_Velo);	
 
 //主程序 
 IF NOT _bHaltPause THEN
 	CASE nStep OF
 		0:
-			fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= FALSE);
-			fbMC_AbsLoad2(Axis:= Axis_load2,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= FALSE);
+			fbMC_AbsLoad1.Execute:=FALSE;
+			fbMC_AbsLoad2.Execute:=FALSE;
+			fbMC_INC1.Execute:=FALSE;
+			fbMC_INC2.Execute:= FALSE;
+			fbMC_Mode1.Execute:= FALSE;
+			fbMC_Mode2.Execute:= FALSE;
 			fbHomeInside(Axis:= Axis_load1,Execute:=FALSE);
 			fbHomeOutside(Axis:= Axis_load2,Execute:=FALSE);
 			_tmrT0(IN:=FALSE);			
@@ -329,14 +341,19 @@ IF NOT _bHaltPause THEN
 			END_IF
 			
 		15:
-			fbMC_AbsLoad1(Axis:= Axis_load1,Position:= RunParameter.Load_RBLoadin,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);
-			fbMC_AbsLoad2(Axis:= Axis_load2,Position:= RunParameter.Load_RBLoadin,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);	
-			IF fbMC_AbsLoad1.Done AND fbMC_AbsLoad2.Done  THEN
-				fbMC_AbsLoad1(Axis:= Axis_load1,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
-				fbMC_AbsLoad2(Axis:= Axis_load2,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
-				Cyl_UnloadDef.qExtendCoil	:= TRUE;
-				nNextStep	:= 16 ;
-			END_IF				
+			Cyl_UnloadDef.qExtendCoil	:= TRUE;
+			fbMC_Mode1.Execute:= TRUE;
+			fbMC_Mode1.Position	:= Parameter_PERSISTENT.RunParameter.Load_RBLoadin;
+			fbMC_Mode2.Execute:= TRUE;
+			fbMC_Mode2.Position	:= Parameter_PERSISTENT.RunParameter.Load_RBLoadin;	
+			IF fbMC_Mode1.Done AND fbMC_Mode2.Done THEN
+				fbMC_Mode1.Execute:= FALSE;
+				fbMC_Mode2.Execute:= FALSE;	
+				nNextStep	:= 16 ;			
+			END_IF
+
+
+	
 		16:
 			IF Cyl_UnloadDef.iEndSensor  THEN
 				nNextStep	:= 20 ;
@@ -351,17 +368,46 @@ IF NOT _bHaltPause THEN
 		25:
 			Cyl_UnloadDef.qExtendCoil	:= FALSE;
 			IF Roller_LoadcellUD.iLowPos AND Cyl_UnloadDef.iOriginSensor THEN
-				nNextStep	:= 30 ;
+				IF bReady THEN
+					nNextStep	:= 30 ;
+					ELSE
+					nNextStep	:= 31 ;
+				END_IF;	
 			END_IF
 		30:	
+			tmrStopper(IN:= NOT Sen_UnloadLoadPos ,PT := T#0.5S);
+			IF tmrStopper.q THEN
+				Cyl_UnloadDef.qExtendCoil	:= TRUE;
+			END_IF
+			fbMC_INC1.Execute:= TRUE;
+			fbMC_INC2.Execute:= TRUE;	
+			IF fbMC_INC2.Done AND fbMC_INC1.Done THEN
+				fbMC_INC1.Execute:= FALSE;
+				fbMC_INC2.Execute:= FALSE;	
+				bReady	:=FALSE;
+				Cyl_UnloadDef.qExtendCoil	:= TRUE;
+				tmrStopper(IN:=FALSE);
+				nNextStep	:= 16 ;
+			END_IF;
+		31:	
+			fbMC_Mode1.Execute:= TRUE;
+			fbMC_Mode1.Position	:= 0;
+			fbMC_Mode2.Execute:= TRUE;
+			fbMC_Mode2.Position	:= 0;	
+			IF fbMC_Mode1.Done AND fbMC_Mode2.Done THEN
+				fbMC_Mode1.Execute:= FALSE;
+				fbMC_Mode2.Execute:= FALSE;	
+				nNextStep	:= 10 ;			
+			END_IF
 			
+			(*
 			IF Initialization(FALSE) THEN
 				nNextStep	:= 0 ;
 				IF bReady THEN
 					nNextStep	:= 15 ;
 				END_IF
 			END_IF
-		
+		*)
 		
 			
 		
@@ -382,170 +428,5 @@ END_VAR
         </Implementation>
       </Get>
     </Property>
-    <LineIds Name="Ass_LoadPic">
-      <LineId Id="92" Count="2" />
-      <LineId Id="89" Count="2" />
-      <LineId Id="48" Count="12" />
-      <LineId Id="27" Count="0" />
-      <LineId Id="86" Count="2" />
-      <LineId Id="80" Count="3" />
-      <LineId Id="79" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic._Clearfb">
-      <LineId Id="20" Count="0" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="24" Count="3" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.Connect.Get">
-      <LineId Id="9" Count="0" />
-      <LineId Id="11" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="18" Count="1" />
-      <LineId Id="16" Count="1" />
-      <LineId Id="12" Count="1" />
-      <LineId Id="7" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.Connect.Set">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.Error.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.ErrorClear">
-      <LineId Id="4" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.FB_init">
-      <LineId Id="10" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.HaltStepContiune">
-      <LineId Id="4" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.Initialization">
-      <LineId Id="12" Count="0" />
-      <LineId Id="106" Count="0" />
-      <LineId Id="4" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="192" Count="0" />
-      <LineId Id="63" Count="1" />
-      <LineId Id="53" Count="1" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="118" Count="0" />
-      <LineId Id="104" Count="0" />
-      <LineId Id="117" Count="0" />
-      <LineId Id="174" Count="2" />
-      <LineId Id="105" Count="0" />
-      <LineId Id="119" Count="0" />
-      <LineId Id="71" Count="0" />
-      <LineId Id="77" Count="0" />
-      <LineId Id="80" Count="0" />
-      <LineId Id="83" Count="1" />
-      <LineId Id="81" Count="1" />
-      <LineId Id="89" Count="0" />
-      <LineId Id="91" Count="0" />
-      <LineId Id="76" Count="0" />
-      <LineId Id="95" Count="8" />
-      <LineId Id="93" Count="1" />
-      <LineId Id="73" Count="0" />
-      <LineId Id="87" Count="0" />
-      <LineId Id="123" Count="0" />
-      <LineId Id="88" Count="0" />
-      <LineId Id="120" Count="2" />
-      <LineId Id="85" Count="0" />
-      <LineId Id="124" Count="0" />
-      <LineId Id="126" Count="12" />
-      <LineId Id="145" Count="1" />
-      <LineId Id="183" Count="0" />
-      <LineId Id="147" Count="2" />
-      <LineId Id="184" Count="0" />
-      <LineId Id="150" Count="6" />
-      <LineId Id="185" Count="0" />
-      <LineId Id="159" Count="1" />
-      <LineId Id="125" Count="0" />
-      <LineId Id="38" Count="0" />
-      <LineId Id="20" Count="0" />
-      <LineId Id="32" Count="0" />
-      <LineId Id="46" Count="0" />
-      <LineId Id="51" Count="0" />
-      <LineId Id="36" Count="1" />
-      <LineId Id="65" Count="0" />
-      <LineId Id="172" Count="1" />
-      <LineId Id="112" Count="1" />
-      <LineId Id="66" Count="0" />
-      <LineId Id="164" Count="0" />
-      <LineId Id="67" Count="0" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="165" Count="0" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="14" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.NoEntry.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.Pause">
-      <LineId Id="4" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.Process">
-      <LineId Id="13" Count="19" />
-      <LineId Id="7" Count="0" />
-      <LineId Id="46" Count="0" />
-      <LineId Id="38" Count="0" />
-      <LineId Id="49" Count="0" />
-      <LineId Id="47" Count="0" />
-      <LineId Id="61" Count="0" />
-      <LineId Id="48" Count="0" />
-      <LineId Id="37" Count="0" />
-      <LineId Id="39" Count="0" />
-      <LineId Id="50" Count="0" />
-      <LineId Id="54" Count="4" />
-      <LineId Id="51" Count="0" />
-      <LineId Id="83" Count="0" />
-      <LineId Id="115" Count="0" />
-      <LineId Id="112" Count="0" />
-      <LineId Id="114" Count="0" />
-      <LineId Id="123" Count="0" />
-      <LineId Id="113" Count="0" />
-      <LineId Id="122" Count="0" />
-      <LineId Id="117" Count="0" />
-      <LineId Id="120" Count="1" />
-      <LineId Id="118" Count="0" />
-      <LineId Id="116" Count="0" />
-      <LineId Id="85" Count="0" />
-      <LineId Id="52" Count="0" />
-      <LineId Id="59" Count="1" />
-      <LineId Id="71" Count="0" />
-      <LineId Id="62" Count="1" />
-      <LineId Id="53" Count="0" />
-      <LineId Id="40" Count="0" />
-      <LineId Id="65" Count="0" />
-      <LineId Id="64" Count="0" />
-      <LineId Id="66" Count="3" />
-      <LineId Id="99" Count="0" />
-      <LineId Id="41" Count="1" />
-      <LineId Id="146" Count="0" />
-      <LineId Id="150" Count="0" />
-      <LineId Id="144" Count="1" />
-      <LineId Id="141" Count="0" />
-      <LineId Id="105" Count="0" />
-      <LineId Id="127" Count="0" />
-      <LineId Id="106" Count="1" />
-      <LineId Id="103" Count="0" />
-      <LineId Id="75" Count="0" />
-      <LineId Id="108" Count="0" />
-      <LineId Id="91" Count="0" />
-      <LineId Id="93" Count="1" />
-      <LineId Id="92" Count="0" />
-      <LineId Id="128" Count="0" />
-      <LineId Id="76" Count="1" />
-      <LineId Id="136" Count="1" />
-      <LineId Id="135" Count="0" />
-      <LineId Id="78" Count="0" />
-      <LineId Id="132" Count="2" />
-      <LineId Id="45" Count="0" />
-      <LineId Id="33" Count="2" />
-      <LineId Id="79" Count="0" />
-    </LineIds>
-    <LineIds Name="Ass_LoadPic.Status.Get">
-      <LineId Id="2" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>

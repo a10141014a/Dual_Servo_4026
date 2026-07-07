@@ -53,6 +53,7 @@ VAR
 	wSlot: INT;
 	bPause: BOOL;
 	fRampTime: REAL;
+
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -525,10 +526,9 @@ MC_TouchProbeFly(Axis:= Axis_FlyIn, TriggerInput:=TouchTriggerFly);
 MC_TouchProbeDual1(	Axis:= Axis_DualServo1,TriggerInput:=TouchTriggerDual1); 
 MC_TouchProbeDual2(	Axis:= Axis_DualServo2,TriggerInput:=TouchTriggerDual2);
 fbMC_MoveAbsoluteCA_Left(Axis:= Axis_DualServo1,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length ,Direction:=mcDirectionPositive);
-fbMC_MoveAbsoluteCA_Right(Axis:= Axis_DualServo2,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length,Direction:=mcDirectionPositive);
-fbMC_GearInPosCA_Left(Master	:= Axis_FlyIn,Slave:= Axis_DualServo1,SyncMode	:= mcSyncModePositive,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length);
-fbMC_GearInPosCA_Right(Master	:= Axis_FlyIn,Slave:= Axis_DualServo2,SyncMode	:= mcSyncModePositive,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length);
-//
+fbMC_MoveAbsoluteCA_Right(Axis:= Axis_DualServo2,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length,Direction:=mcDirectionPositive
+							, Acceleration:= fbMC_MoveAbsoluteCA_Left.Acceleration ,Deceleration:= fbMC_MoveAbsoluteCA_Left.Deceleration);
+
 
 //
 IF MC_TouchProbeDual1.Error  THEN
@@ -622,7 +622,7 @@ CASE  nStep OF
 			Hmi_bDualFeedTest	:=FALSE;
 		END_IF
 		
-		tmrAuto(IN:=Hmi_bDualAutoTest AND NOT tmrAuto.Q ,PT:=Hmi_bDualAutoTestTime );
+		tmrAuto(IN:=Hmi_bDualAutoTest AND NOT tmrAuto.Q AND Motor_LoadIn.qRun,PT:=Hmi_bDualAutoTestTime );
 		
 		IF  tmrAuto.q AND ConvQty < 1 THEN
 			ResInData(Axis_FlyIn.NcToPlc.ActPos);		
@@ -714,32 +714,60 @@ CASE nLeftStep OF
 		IF fbMC_MoveAbsoluteCA_Left.Done THEN
 			strLeftText:='P2 Pos Call RB';	
 			fbMC_MoveAbsoluteCA_Left.Execute	:= FALSE;
+			nLeftStep	:= 24;
+			RB_CS_PickIO.cmd_bPartInPos	:= TRUE;
+
+		END_IF		
+	24://RB輸出通知 
+		IF RB_CS_PickIO.fb_bPackFinish	THEN
+			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
 			nLeftStep	:= 25;
 		END_IF		
-		
-	25://RB輸出通知
+			IF Hmi_bPickFeedTest THEN
+				RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+				Hmi_bPickFeedTest			:=FALSE;
+				nLeftStep					:= 29;	
+			END_IF
+	25:
+		IF NOT RB_CS_PickIO.fb_bPackFinish	THEN
+			nLeftStep	:= 29;
+		END_IF	
 
-		IF RB_CS.PickUp() THEN
+	
+	29://RB輸出通知
+
 			IF NOT RunParameter.Dual_TwiceClip THEN
 				nLeftStep		:= 1;
 				ELSE
 				strLeftText:='P3 moving';
-				nLeftStep		:= 26;
+				nLeftStep		:= 30;
 				fbMC_MoveAbsoluteCA_Left.Execute	:=TRUE;
 				fbMC_MoveAbsoluteCA_Left.Position	:= RunParameter.Dual_LoadOutSecPos;
 			END_IF;	
-		END_IF
-	26:
+
+	30:
 	
 		IF fbMC_MoveAbsoluteCA_Left.Done THEN
-			strLeftText:='P3 Pos Call RB';
+			strRightText:='P3 Pos Call RB';
 			fbMC_MoveAbsoluteCA_Left.Execute	:= FALSE;
-			nLeftStep	:=27;
+			RB_CS_PickIO.cmd_bPartInPos	:= TRUE;
+			nLeftStep	:=31;
 		END_IF			
-	27:
-		IF RB_CS.PickUp() THEN
-			nLeftStep		:= 1;
-		END_IF				
+		
+	31:
+		IF Hmi_bPickFeedTest THEN
+			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+			Hmi_bPickFeedTest			:=FALSE;
+			nLeftStep					:= 1;	
+		END_IF	
+		IF RB_CS_PickIO.fb_bPackFinish	THEN
+			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+			nLeftStep	:= 32;
+		END_IF			
+	32:	
+		IF NOT RB_CS_PickIO.fb_bPackFinish	THEN
+			nLeftStep	:= 1;
+		END_IF		
 	
 END_CASE
 
@@ -795,7 +823,7 @@ CASE nRightStep OF
 
 		END_IF	
 
-	20://裝完 
+	20://裝完
 		IF Axis_DualServo2.Status.NotMoving THEN
 			strRightText:='P2 Coupled';
 			ELSE
@@ -806,44 +834,102 @@ CASE nRightStep OF
 		IF fbMC_MoveAbsoluteCA_Right.Done THEN
 			strRightText:='P2 Pos Call RB';	
 			fbMC_MoveAbsoluteCA_Right.Execute	:= FALSE;
+			RB_CS_PickIO.cmd_bPartInPos	:= TRUE;
+			nRightStep	:= 24;
+		END_IF		
+	24://RB輸出通知 
+		IF RB_CS_PickIO.fb_bPackFinish	THEN
+			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
 			nRightStep	:= 25;
 		END_IF		
-		
-	25://RB輸出通知
-		IF RB_CS.PickUp() THEN
+			IF Hmi_bPickFeedTest THEN
+				RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+				Hmi_bPickFeedTest			:=FALSE;
+				nRightStep					:= 29;	
+			END_IF
+	25:
+		IF NOT RB_CS_PickIO.fb_bPackFinish	THEN
+			nRightStep	:= 29;
+		END_IF		
+	
+				
+	29:
 			IF NOT RunParameter.Dual_TwiceClip THEN
 				nRightStep		:= 1;
 				ELSE
 				strRightText:='P3 moving';
-				nRightStep		:= 26;
+				nRightStep		:= 30;
 				fbMC_MoveAbsoluteCA_Right.Execute	:=TRUE;
 				fbMC_MoveAbsoluteCA_Right.Position	:= RunParameter.Dual_LoadOutSecPos;
+			
 			END_IF;	
-		END_IF
-	26:
+	30:
 	
 		IF fbMC_MoveAbsoluteCA_Right.Done THEN
 			strRightText:='P3 Pos Call RB';
 			fbMC_MoveAbsoluteCA_Right.Execute	:= FALSE;
-			nRightStep	:=27;
+			RB_CS_PickIO.cmd_bPartInPos	:= TRUE;
+			nRightStep	:=31;
 		END_IF			
-	27:
-		IF RB_CS.PickUp() THEN
-			nRightStep		:= 1;
-		END_IF				
-			
+	31:
+		IF Hmi_bPickFeedTest THEN
+			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+			Hmi_bPickFeedTest			:=FALSE;
+			nRightStep					:= 1;	
+		END_IF	
+		IF RB_CS_PickIO.fb_bPackFinish	THEN
+			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
+			nRightStep	:= 32;
+		END_IF			
+	32:	
+		IF NOT RB_CS_PickIO.fb_bPackFinish	THEN
+			nRightStep	:= 1;
+		END_IF		
+
 END_CASE
 
 CASE nStopStep OF
 	0:
-		Motor_LoadIn.qRun	:=  NOT bPause;
-		IF fbMC_MoveAbsoluteCA_Left.Busy AND Axis_DualServo1.Status.NotMoving THEN
-			;
-		END_IF; 
+		Motor_LoadIn.qRun	:= TRUE;
+		Cyl_FlyIn_Pass		:= TRUE;
+		(*
+		IF nLeftStep < 20 THEN
+			IF fbMC_MoveAbsoluteCA_Left.Busy AND Axis_DualServo1.Status.NotMoving THEN
+				Motor_LoadIn.qRun	:= FALSE;
+				Cyl_FlyIn_Pass		:= FALSE;
+			END_IF; 
+			IF nRightStep < 5 THEN
+				Motor_LoadIn.qRun	:= FALSE;
+				Cyl_FlyIn_Pass		:= FALSE;
+			END_IF
+			IF nRightStep = 10 THEN
+				Motor_LoadIn.qRun	:= TRUE;
+				Cyl_FlyIn_Pass		:= TRUE;
+			END_IF				
+			
+		END_IF;
 		
-
+		IF nRightStep < 20 THEN
+			IF fbMC_MoveAbsoluteCA_Right.Busy AND Axis_DualServo2.Status.NotMoving THEN
+				Motor_LoadIn.qRun	:= FALSE;
+				Cyl_FlyIn_Pass		:= FALSE;
+			END_IF; 
+			IF nLeftStep < 5 THEN
+				Motor_LoadIn.qRun	:= FALSE;
+				Cyl_FlyIn_Pass		:= FALSE;
+			END_IF
+			IF nLeftStep = 10 THEN
+				Motor_LoadIn.qRun	:= TRUE;
+				Cyl_FlyIn_Pass		:= TRUE;
+			END_IF			
+		END_IF
+	//IF nLeftStep < 20 AND nRightStep < 20 THEN
+	//	Motor_LoadIn.qRun	:= TRUE;
+	//	Cyl_FlyIn_Pass		:= TRUE;
+	//END_IF
+*)
 END_CASE
-Cyl_FlyIn_Pass		:= NOT Motor_LoadIn.qRun;
+//_label1 : ;
 ]]></ST>
       </Implementation>
     </Method>

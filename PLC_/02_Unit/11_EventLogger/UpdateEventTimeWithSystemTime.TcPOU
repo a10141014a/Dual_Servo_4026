@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <POU Name="UpdateEventTimeWithSystemTime" Id="{68eb53f8-bbbd-4b65-9c4f-3dd21164492c}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION UpdateEventTimeWithSystemTime  
 VAR_INPUT
@@ -7,9 +7,9 @@ VAR_INPUT
 END_VAR
 	
 VAR
-	fbLocalSystemTime:FB_LocalSystemTime := (bEnable := TRUE);
-	fbGETSYSTEMTIME : GETSYSTEMTIME;
-	stT_FILETIME:T_FILETIME;
+	fbLocalSystemTime	:FB_LocalSystemTime := (bEnable := TRUE);
+	fbGETSYSTEMTIME 	:GETSYSTEMTIME;
+	stT_FILETIME		:T_FILETIME;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -17,10 +17,5 @@ END_VAR
 
 stEvent.dtTimeStamp:= SF.systemTime;]]></ST>
     </Implementation>
-    <LineIds Name="UpdateEventTimeWithSystemTime">
-      <LineId Id="41" Count="0" />
-      <LineId Id="40" Count="0" />
-      <LineId Id="26" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>
