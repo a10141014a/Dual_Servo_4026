@@ -122,6 +122,9 @@
     <Compile Include="02_Unit\99_Other\FB_EL3356_0010.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="02_Unit\99_Other\FB_RecordValue.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="02_Unit\99_Other\F_TrimRightSpace.TcPOU">
       <SubType>Code</SubType>
     </Compile>

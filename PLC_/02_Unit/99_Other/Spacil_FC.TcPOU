@@ -39,41 +39,25 @@ SM401	:= FALSE;
 _aryTmr[0](IN:= TRUE , PT:= T#50MS);
 IF _aryTmr[0].q  THEN
 	_aryTmr[0](IN:= FALSE);
-	IF SM410 THEN
-		SM410	:= FALSE;
-	ELSE
-		SM410	:= TRUE;
-	END_IF
+	SM410	:= NOT SM410;
 END_IF
 //SM411 0.2s
 _aryTmr[1](IN:= TRUE , PT:= T#100MS);
 IF _aryTmr[1].q  THEN
 	_aryTmr[1](IN:= FALSE);
-	IF SM411 THEN
-		SM411	:= FALSE;
-	ELSE
-		SM411	:= TRUE;
-	END_IF
+	SM411	:= NOT SM411;
 END_IF
 //SM412 1.0s
 _aryTmr[2](IN:= TRUE , PT:= T#500MS);
 IF _aryTmr[2].q  THEN
 	_aryTmr[2](IN:= FALSE);
-	IF SM412 THEN
-		SM412	:= FALSE;
-	ELSE
-		SM412	:= TRUE;
-	END_IF
+	SM412	:= NOT SM412;
 END_IF
 //sm413 2.0s
 _aryTmr[3](IN:= TRUE , PT:= T#1S);
 IF _aryTmr[3].q  THEN
 	_aryTmr[3](IN:= FALSE);
-	IF SM413 THEN
-		SM413	:= FALSE;
-	ELSE
-		SM413	:= TRUE;
-	END_IF
+	SM413	:= NOT SM413;
 END_IF
 fbLocalSystemTime();
 SystemTime:= SYSTEMTIME_TO_DT(fbLocalSystemTime.systemTime);

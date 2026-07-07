@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <POU Name="FB_RecordValue" Id="{43532e2a-7bcc-4fae-9ce2-8f1c24dbad4d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_RecordValue
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
