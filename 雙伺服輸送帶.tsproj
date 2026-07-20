@@ -1678,86 +1678,6 @@ and will return to Group State Standby when the situation permits.
 			</SubItem>
 		</DataType>
 		<DataType>
-			<Name GUID="{EB1F033C-2651-4B56-9F0C-CB33B288FCFC}" Namespace="MC" TcBaseType="true">CDT_MCTOPLC_GROUP_CM</Name>
-			<BitSize>1536</BitSize>
-			<SubItem>
-				<Name>Common</Name>
-				<Type GUID="{F40562BB-DCFF-4B18-8E31-192F15F03476}" Namespace="MC">MCTOPLC_GROUP_COMMON_PART</Type>
-				<BitSize>512</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>PathVelo</Name>
-				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
-				<BitSize>64</BitSize>
-				<BitOffs>512</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>InvokeId</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000008}">UDINT</Type>
-				<BitSize>32</BitSize>
-				<BitOffs>576</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>IsInBlendingSegment</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000010}">BIT</Type>
-				<BitSize>1</BitSize>
-				<BitOffs>608</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>RemainingTimeActiveJob</Name>
-				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
-				<BitSize>64</BitSize>
-				<BitOffs>640</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>RemainingCartesianDistanceActiveJob</Name>
-				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
-				<BitSize>64</BitSize>
-				<BitOffs>704</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>ActiveBlockerId</Name>
-				<Type GUID="{18071995-0000-0000-0000-000000000008}">UDINT</Type>
-				<BitSize>32</BitSize>
-				<BitOffs>768</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>RemainingTimeToSync</Name>
-				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
-				<BitSize>64</BitSize>
-				<BitOffs>832</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>RemainingCartesianDistanceToSync</Name>
-				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
-				<BitSize>64</BitSize>
-				<BitOffs>896</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
-			<Name GUID="{467F4325-10DF-4BC1-88DD-E8240EB4F8E3}" Namespace="MC" TcBaseType="true">CDT_MCTOPLC_GROUP</Name>
-			<BitSize>1536</BitSize>
-			<SubItem>
-				<Name>Common</Name>
-				<Type GUID="{F40562BB-DCFF-4B18-8E31-192F15F03476}" Namespace="MC">MCTOPLC_GROUP_COMMON_PART</Type>
-				<BitSize>512</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>CA</Name>
-				<Type GUID="{260A4C07-588B-43A4-9DE1-0381D61130FD}" Namespace="MC">CDT_MCTOPLC_GROUP_CA</Type>
-				<BitSize>1536</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-			<SubItem>
-				<Name>CM</Name>
-				<Type GUID="{EB1F033C-2651-4B56-9F0C-CB33B288FCFC}" Namespace="MC">CDT_MCTOPLC_GROUP_CM</Type>
-				<BitSize>1536</BitSize>
-				<BitOffs>0</BitOffs>
-			</SubItem>
-		</DataType>
-		<DataType>
 			<Name GUID="{FE916439-5CDC-6803-A210-0DB90FFB2C74}" IecBaseType="true" AutoDeleteType="true">ARRAY [0..20] OF UINT</Name>
 			<BitSize>336</BitSize>
 			<BaseType GUID="{18071995-0000-0000-0000-000000000005}">UINT</BaseType>
@@ -1867,6 +1787,99 @@ and will return to Group State Standby when the situation permits.
 			</ArrayInfo>
 		</DataType>
 		<DataType>
+			<Name GUID="{EB1F033C-2651-4B56-9F0C-CB33B288FCFC}" Namespace="MC" TcBaseType="true">CDT_MCTOPLC_GROUP_CM</Name>
+			<BitSize>1536</BitSize>
+			<SubItem>
+				<Name>Common</Name>
+				<Type GUID="{F40562BB-DCFF-4B18-8E31-192F15F03476}" Namespace="MC">MCTOPLC_GROUP_COMMON_PART</Type>
+				<BitSize>512</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>PathVelo</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
+				<BitSize>64</BitSize>
+				<BitOffs>512</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>InvokeId</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000008}">UDINT</Type>
+				<BitSize>32</BitSize>
+				<BitOffs>576</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>IsInBlendingSegment</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000010}">BIT</Type>
+				<BitSize>1</BitSize>
+				<BitOffs>608</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>RemainingTimeActiveJob</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
+				<BitSize>64</BitSize>
+				<BitOffs>640</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>RemainingCartesianDistanceActiveJob</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
+				<BitSize>64</BitSize>
+				<BitOffs>704</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>ActiveBlockerId</Name>
+				<Type GUID="{18071995-0000-0000-0000-000000000008}">UDINT</Type>
+				<BitSize>32</BitSize>
+				<BitOffs>768</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>RemainingTimeToSync</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
+				<BitSize>64</BitSize>
+				<BitOffs>832</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>RemainingCartesianDistanceToSync</Name>
+				<Type GUID="{18071995-0000-0000-0000-00000000000E}">LREAL</Type>
+				<BitSize>64</BitSize>
+				<BitOffs>896</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{467F4325-10DF-4BC1-88DD-E8240EB4F8E3}" Namespace="MC" TcBaseType="true">CDT_MCTOPLC_GROUP</Name>
+			<BitSize>1536</BitSize>
+			<SubItem>
+				<Name>Common</Name>
+				<Type GUID="{F40562BB-DCFF-4B18-8E31-192F15F03476}" Namespace="MC">MCTOPLC_GROUP_COMMON_PART</Type>
+				<BitSize>512</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>CA</Name>
+				<Type GUID="{260A4C07-588B-43A4-9DE1-0381D61130FD}" Namespace="MC">CDT_MCTOPLC_GROUP_CA</Type>
+				<BitSize>1536</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+			<SubItem>
+				<Name>CM</Name>
+				<Type GUID="{EB1F033C-2651-4B56-9F0C-CB33B288FCFC}" Namespace="MC">CDT_MCTOPLC_GROUP_CM</Type>
+				<BitSize>1536</BitSize>
+				<BitOffs>0</BitOffs>
+			</SubItem>
+		</DataType>
+		<DataType>
+			<Name GUID="{9B743915-CF03-F3D3-1784-EAF29605B3C4}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..3,1..16] OF BOOL</Name>
+			<BitSize>384</BitSize>
+			<BaseType GUID="{18071995-0000-0000-0000-000000000030}">BOOL</BaseType>
+			<ArrayInfo>
+				<LBound>1</LBound>
+				<Elements>3</Elements>
+			</ArrayInfo>
+			<ArrayInfo>
+				<LBound>1</LBound>
+				<Elements>16</Elements>
+			</ArrayInfo>
+		</DataType>
+		<DataType>
 			<Name GUID="{762962EF-0BB3-42E3-80C3-82A3958BB33D}" Namespace="MC" TcBaseType="true">CDT_PLCTOMC_GROUP_CM</Name>
 			<BitSize>1024</BitSize>
 			<SubItem>
@@ -1903,19 +1916,6 @@ and will return to Group State Standby when the situation permits.
 				<BitSize>1024</BitSize>
 				<BitOffs>0</BitOffs>
 			</SubItem>
-		</DataType>
-		<DataType>
-			<Name GUID="{9B743915-CF03-F3D3-1784-EAF29605B3C4}" IecBaseType="true" AutoDeleteType="true">ARRAY [1..3,1..16] OF BOOL</Name>
-			<BitSize>384</BitSize>
-			<BaseType GUID="{18071995-0000-0000-0000-000000000030}">BOOL</BaseType>
-			<ArrayInfo>
-				<LBound>1</LBound>
-				<Elements>3</Elements>
-			</ArrayInfo>
-			<ArrayInfo>
-				<LBound>1</LBound>
-				<Elements>16</Elements>
-			</ArrayInfo>
 		</DataType>
 		<DataType>
 			<Name GUID="{18071995-0000-0000-0000-002000000001}" IecBaseType="true" BitType="true" AutoDeleteType="true" HideSubItems="true">ARRAY [0..0] OF BIT</Name>
@@ -3277,23 +3277,11 @@ and will return to Group State Standby when the situation permits.
 		</Motion>
 		<Plc>
 			<Project GUID="{1C3DB08B-B3FE-41F6-BFE0-480D0E253FD3}" Name="PLC_" PrjFilePath="PLC_\PLC_.plcproj" TmcFilePath="PLC_\PLC_.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x001e" CopyTmcToTarget="true" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{95AC9F48-714A-C361-A20D-9F13D9382D38}" TmcPath="PLC_\PLC_.tmc">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{27ADE449-DFCA-0EC4-A475-E7ABCE97A767}" TmcPath="PLC_\PLC_.tmc">
 					<Name>PLC_ Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="2" ContextId="1" AreaNo="17">
 						<Name>PlcTask Outputs</Name>
-						<Var>
-							<Name>HardwareIO.Vacm_AxisCatchBox</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Vacm_Axis90</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL.DualGroupRef.PlcToNc</Name>
-							<Type GUID="{0E2E3852-A98C-4AF3-81E2-209EE128940C}" Namespace="MC">CDT_PLCTOMC_GROUP</Type>
-						</Var>
 						<Var>
 							<Name>HardwareIO.EL2889</Name>
 							<Comment><![CDATA[DO]]></Comment>
@@ -3325,6 +3313,10 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>HardwareIO.Motor_Blower.qErrorReset</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Vacm_AxisCatchBox</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3444,6 +3436,10 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Vacm_Axis90</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Cyl_AxisBottom.qExtendCoil</Name>
 							<Comment><![CDATA[ 氣缸伸出線圈]]></Comment>
 							<Type>BOOL</Type>
@@ -3544,18 +3540,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Motor_shock.qRun</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Motor_shock.qSign</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Motor_shock.qErrorReset</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.Cyl_NGPurge.qExtendCoil</Name>
 							<Comment><![CDATA[ 氣缸伸出線圈]]></Comment>
 							<Type>BOOL</Type>
@@ -3573,6 +3557,18 @@ and will return to Group State Standby when the situation permits.
 						<Var>
 							<Name>HardwareIO.Cyl_ShockStop.qRetractCoil</Name>
 							<Comment><![CDATA[ 氣缸收回線圈]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Motor_shock.qRun</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Motor_shock.qSign</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Motor_shock.qErrorReset</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3602,11 +3598,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Cyl_FlyIn_Pass</Name>
-							<Comment><![CDATA[高速入料 ]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.Cyl_ExitClip.qExtendCoil</Name>
 							<Comment><![CDATA[ 氣缸伸出線圈]]></Comment>
 							<Type>BOOL</Type>
@@ -3624,6 +3615,11 @@ and will return to Group State Standby when the situation permits.
 						<Var>
 							<Name>HardwareIO.Cyl_ExitStopper.qRetractCoil</Name>
 							<Comment><![CDATA[ 氣缸收回線圈]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Cyl_FlyIn_Pass</Name>
+							<Comment><![CDATA[高速入料 ]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3659,32 +3655,16 @@ and will return to Group State Standby when the situation permits.
 							<Comment><![CDATA[ process data OUT]]></Comment>
 							<Type>WORD</Type>
 						</Var>
+						<Var>
+							<Name>GVL.DualGroupRef.PlcToNc</Name>
+							<Type GUID="{0E2E3852-A98C-4AF3-81E2-209EE128940C}" Namespace="MC">CDT_PLCTOMC_GROUP</Type>
+						</Var>
 					</Vars>
 					<Vars VarGrpType="1" ContextId="1" AreaNo="16">
 						<Name>PlcTask Inputs</Name>
 						<Var>
 							<Name>HardwareIO.Sen_BoxsideFeed</Name>
 							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_BoxsideStorageMaterial</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_AxisBoxCatchVacumm</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_AxisBoxORG</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_Axis90Vacumm</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>GVL.DualGroupRef.NcToPlc</Name>
-							<Type GUID="{467F4325-10DF-4BC1-88DD-E8240EB4F8E3}" Namespace="MC">CDT_MCTOPLC_GROUP</Type>
 						</Var>
 						<Var>
 							<Name>HardwareIO.MainFiledBus</Name>
@@ -3701,11 +3681,11 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_BeltLoadIn</Name>
+							<Name>HardwareIO.Sen_BoxsideStorageMaterial</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_BeltLoadOut</Name>
+							<Name>HardwareIO.Sen_AxisBoxCatchVacumm</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3721,11 +3701,7 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_UnloadLoadIn</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_UnloadLoadPos</Name>
+							<Name>HardwareIO.Sen_AxisBoxORG</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3889,6 +3865,18 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Sen_Axis90Vacumm</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_BeltLoadIn</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_BeltLoadOut</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Cyl_AxisBottom.iOriginSensor</Name>
 							<Comment><![CDATA[ 原點感測]]></Comment>
 							<Type>BOOL</Type>
@@ -3937,6 +3925,14 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Sen_UnloadLoadIn</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_UnloadLoadPos</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Sen_AxisLoad1ORG</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -3976,6 +3972,16 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Cyl_NGPurge.iOriginSensor</Name>
+							<Comment><![CDATA[ 原點感測]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Cyl_NGPurge.iEndSensor</Name>
+							<Comment><![CDATA[ 末端感測]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Swtich_PassFeet</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -3984,17 +3990,11 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Motor_shock.iError</Name>
+							<Name>HardwareIO.Sen_StackUDVacumm</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Cyl_NGPurge.iOriginSensor</Name>
-							<Comment><![CDATA[ 原點感測]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Cyl_NGPurge.iEndSensor</Name>
-							<Comment><![CDATA[ 末端感測]]></Comment>
+							<Name>HardwareIO.Sen_StackComvStop</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -4008,6 +4008,10 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Motor_shock.iError</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Cyl_StackUD.iOriginSensor</Name>
 							<Comment><![CDATA[ 原點感測]]></Comment>
 							<Type>BOOL</Type>
@@ -4015,14 +4019,6 @@ and will return to Group State Standby when the situation permits.
 						<Var>
 							<Name>HardwareIO.Cyl_StackUD.iEndSensor</Name>
 							<Comment><![CDATA[ 末端感測]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_StackUDVacumm</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_StackComvStop</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -4043,11 +4039,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Bundling_ErrorSignal</Name>
-							<Comment><![CDATA[捆包機 ]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.Cyl_ExitClip.iOriginSensor</Name>
 							<Comment><![CDATA[ 原點感測]]></Comment>
 							<Type>BOOL</Type>
@@ -4065,6 +4056,11 @@ and will return to Group State Standby when the situation permits.
 						<Var>
 							<Name>HardwareIO.Cyl_ExitStopper.iEndSensor</Name>
 							<Comment><![CDATA[ 末端感測]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Bundling_ErrorSignal</Name>
+							<Comment><![CDATA[捆包機 ]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -4122,6 +4118,10 @@ and will return to Group State Standby when the situation permits.
 						<Var>
 							<Name>HardwareIO.LoadCell.wState</Name>
 							<Type>WORD</Type>
+						</Var>
+						<Var>
+							<Name>GVL.DualGroupRef.NcToPlc</Name>
+							<Type GUID="{467F4325-10DF-4BC1-88DD-E8240EB4F8E3}" Namespace="MC">CDT_MCTOPLC_GROUP</Type>
 						</Var>
 					</Vars>
 					<UnrestoredVarLinks ImportTime="2025-11-07T14:32:44">
