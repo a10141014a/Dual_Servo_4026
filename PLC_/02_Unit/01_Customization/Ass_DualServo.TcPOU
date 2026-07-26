@@ -245,7 +245,10 @@ CASE nInitiStep OF
 		fbMC_UngroupAllAxes(AxesGroup:= DualGroupRef,Execute:= FALSE);
 		fbAddAxis[1](AxesGroup:=DualGroupRef, Axis := Axis_DualServo1, Execute := FALSE);
 		fbAddAxis[2](AxesGroup:=DualGroupRef, Axis := Axis_DualServo2, Execute := FALSE);
-		fbMC_GroupEnable(AxesGroup:= DualGroupRef, Execute:= FALSE);	
+		fbMC_GroupEnable.Execute:= FALSE;	
+		fbMC_GroupDisable.Execute:= FALSE;
+		fbMC_UngroupAllAxes.Execute:= FALSE;
+
 		_tmrT0(IN:=TRUE,PT:=T#0.1S);
 		nStopStep			:= 0;
 		strText:='ORG : Initial ';
@@ -526,9 +529,10 @@ MC_TouchProbeFly(Axis:= Axis_FlyIn, TriggerInput:=TouchTriggerFly);
 MC_TouchProbeDual1(	Axis:= Axis_DualServo1,TriggerInput:=TouchTriggerDual1); 
 MC_TouchProbeDual2(	Axis:= Axis_DualServo2,TriggerInput:=TouchTriggerDual2);
 fbMC_MoveAbsoluteCA_Left(Axis:= Axis_DualServo1,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length ,Direction:=mcDirectionPositive);
-fbMC_MoveAbsoluteCA_Right(Axis:= Axis_DualServo2,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length,Direction:=mcDirectionPositive
-							, Acceleration:= fbMC_MoveAbsoluteCA_Left.Acceleration ,Deceleration:= fbMC_MoveAbsoluteCA_Left.Deceleration);
-
+fbMC_MoveAbsoluteCA_Right(Axis:= Axis_DualServo2,Gap:= RunParameter.Dual_Gap+RunParameter.Dual_Length,Direction:=mcDirectionPositive);
+fbMC_GroupEnable(AxesGroup:= DualGroupRef);	
+fbMC_GroupDisable(AxesGroup:= DualGroupRef);
+fbMC_UngroupAllAxes(AxesGroup:= DualGroupRef);	
 
 //
 IF MC_TouchProbeDual1.Error  THEN
@@ -642,7 +646,7 @@ CASE  nStep OF
 
 		
 	10:
-
+		;
 END_CASE
 	
 tmrT0();
@@ -661,6 +665,9 @@ CASE nLeftStep OF
 			fbMC_MoveAbsoluteCA_Left.Execute	:=TRUE;
 			fbMC_MoveAbsoluteCA_Left.Position	:= RunParameter.Dual_LoadInPos;
 			fbMC_MoveAbsoluteCA_Left.Velocity	:=RunParameter.Dual_Velo;
+			fbMC_MoveAbsoluteCA_Left.Acceleration	:= 15000;
+			fbMC_MoveAbsoluteCA_Left.Deceleration	:= 15000;
+			fbMC_MoveAbsoluteCA_Left.Jerk			:= 50000;
 			LeftLoadinQty	:=0;
 			nLeftStep		:= 5;
 
@@ -687,16 +694,20 @@ CASE nLeftStep OF
 				strLeftText	:= CONCAT(strLeftText,UINT_TO_STRING(LeftLoadinQty));
 				fbMC_MoveAbsoluteCA_Left.Execute	:= TRUE;
 				fbMC_MoveAbsoluteCA_Left.Position	:= fbMC_MoveAbsoluteCA_Left.Position + RunParameter.Dual_ModulePitchLength;
-				fbMC_MoveAbsoluteCA_Left.Velocity	:= RunParameter.Dual_ModulePitchLength / (fRampTime*0.8);		
+				fbMC_MoveAbsoluteCA_Left.Velocity	:= 1500;
+				//fbMC_MoveAbsoluteCA_Left.Velocity	:= RunParameter.Dual_ModulePitchLength / (fRampTime*0.5);		
 				nLeftStep	:= 5;
 				ELSE
 				wSlot								:= wSlot + 1;
 				IF RunParameter.Dual_LoadInQty[wSlot] = 0 THEN
 					wSlot	:= 0;
 				END_IF
-				fbMC_MoveAbsoluteCA_Left.Execute	:= TRUE;
-				fbMC_MoveAbsoluteCA_Left.Position	:= RunParameter.Dual_LoadOutPos;	
-				fbMC_MoveAbsoluteCA_Left.Velocity	:=RunParameter.Dual_Velo;
+				fbMC_MoveAbsoluteCA_Left.Execute		:= TRUE;
+				fbMC_MoveAbsoluteCA_Left.Position		:= RunParameter.Dual_LoadOutPos;	
+				fbMC_MoveAbsoluteCA_Left.Velocity		:= RunParameter.Dual_Velo;
+				fbMC_MoveAbsoluteCA_Left.Acceleration	:= Parameter_PERSISTENT.Setting_DualServoAcc;
+				fbMC_MoveAbsoluteCA_Left.Deceleration	:= Parameter_PERSISTENT.Setting_DualServoDec;
+				fbMC_MoveAbsoluteCA_Left.Jerk			:= Parameter_PERSISTENT.Setting_DualServoJerk;			
 				strLeftText:='P2 moving';			
 				nLeftStep	:= 20;					
 			END_IF;
@@ -784,6 +795,9 @@ CASE nRightStep OF
 			fbMC_MoveAbsoluteCA_Right.Execute:= TRUE;
 			fbMC_MoveAbsoluteCA_Right.Position	:= RunParameter.Dual_LoadInPos;
 			fbMC_MoveAbsoluteCA_Right.Velocity	:=RunParameter.Dual_Velo;
+			fbMC_MoveAbsoluteCA_Right.Acceleration	:= 15000;
+			fbMC_MoveAbsoluteCA_Right.Deceleration	:= 15000;
+			fbMC_MoveAbsoluteCA_Right.Jerk			:= 50000;
 			RifgtLoadinQty	:=0;
 			nRightStep		:= 5;
 
@@ -807,7 +821,7 @@ CASE nRightStep OF
 			IF RifgtLoadinQty < RunParameter.Dual_LoadInQty[wSlot] THEN
 				fbMC_MoveAbsoluteCA_Right.Execute	:= TRUE;
 				fbMC_MoveAbsoluteCA_Right.Position	:= fbMC_MoveAbsoluteCA_Right.Position + RunParameter.Dual_ModulePitchLength;				
-				fbMC_MoveAbsoluteCA_Right.Velocity	:= RunParameter.Dual_ModulePitchLength / (fRampTime*0.8);		
+				fbMC_MoveAbsoluteCA_Right.Velocity	:= 1500;		
 				nRightStep	:= 5;
 				ELSE
 				wSlot								:= wSlot + 1;
@@ -817,6 +831,9 @@ CASE nRightStep OF
 				fbMC_MoveAbsoluteCA_Right.Execute	:= TRUE;
 				fbMC_MoveAbsoluteCA_Right.Position	:= RunParameter.Dual_LoadOutPos;	
 				fbMC_MoveAbsoluteCA_Right.Velocity		:=RunParameter.Dual_Velo;
+				fbMC_MoveAbsoluteCA_Right.Acceleration	:= Parameter_PERSISTENT.Setting_DualServoAcc;
+				fbMC_MoveAbsoluteCA_Right.Deceleration	:= Parameter_PERSISTENT.Setting_DualServoDec;
+				fbMC_MoveAbsoluteCA_Right.Jerk			:= Parameter_PERSISTENT.Setting_DualServoJerk;
 				strRightText:='P2 moving';
 				nRightStep	:= 20;					
 			END_IF;
@@ -964,6 +981,15 @@ END_IF;
 ]]></ST>
       </Implementation>
     </Method>
+    <Method Name="RingTest" Id="{ef03d1c5-f143-45bc-82e1-6bffa5c89f76}">
+      <Declaration><![CDATA[METHOD RingTest : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
     <Property Name="Status" Id="{27518ed8-e04c-47f5-b017-8ecf03747c3f}">
       <Declaration><![CDATA[PROPERTY Status : STRING(50)]]></Declaration>
       <Get Name="Get" Id="{e69e1cad-09d7-4a63-bbdf-45fffd92ba9f}">
@@ -993,24 +1019,14 @@ END_IF]]></ST>
     <Method Name="UngroupAllAxes" Id="{f8fe0619-623e-49d7-9d86-2152d13e7600}">
       <Declaration><![CDATA[METHOD UngroupAllAxes : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[fbMC_GroupDisable(
-	AxesGroup:= DualGroupRef, 
-	Execute:= TRUE, 
-	Done=> , 
-	Busy=> , 
-	Error=> , 
-	ErrorId=> );	
-
-fbMC_UngroupAllAxes(
-	AxesGroup:= DualGroupRef, 
-	Execute:= TRUE, 
-	Done=> , 
-	Busy=> , 
-	Error=> , 
-	ErrorId=> );	
+        <ST><![CDATA[fbMC_GroupDisable.Execute:= TRUE;
+IF fbMC_GroupDisable.Done THEN
+	fbMC_UngroupAllAxes.Execute:= TRUE;
+END_IF;
+fbMC_GroupEnable.Execute:= FALSE;
 fbAddAxis[1](AxesGroup:=DualGroupRef, Axis := Axis_DualServo1, Execute := FALSE);
 fbAddAxis[2](AxesGroup:=DualGroupRef, Axis := Axis_DualServo2, Execute := FALSE);
-fbMC_GroupEnable(AxesGroup:= DualGroupRef, Execute:= FALSE);	
+
 	
 	
 UngroupAllAxes :=fbMC_UngroupAllAxes.Done AND fbMC_GroupDisable.Done AND DualGroupRef.NcToPlc.CA.Common.GroupAxesCount = 0;]]></ST>

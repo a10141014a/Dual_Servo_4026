@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <POU Name="MST_POU" Id="{bb25d244-c2a1-434f-b4af-71e7caee6e2a}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MST_POU	//Mechanical structure testing
 VAR
@@ -71,12 +71,14 @@ END_IF
 
 //開箱 
 IF M[10] THEN
+	M[12]:=FALSE;
 	M[11]:=M_Openbox1.Initialization(FALSE);
 END_IF;
 IF M[11] THEN
 	M[10]:=FALSE;
 END_IF;
 IF M[12] THEN
+	M[10]:=FALSE;
 	M[11]:=M_Openbox1.Process(M[13]);
 END_IF;
 IF M[14] THEN
@@ -104,12 +106,14 @@ END_IF;
 
 //封箱底  
 IF M[20] THEN
+	M[22]	:=FALSE;
 	M[21]:=M_Sealing2.Initialization(FALSE);
 END_IF;
 IF M[21] THEN
 	M[20]:=FALSE;
 END_IF;
 IF M[22] THEN
+	M[20]	:=FALSE;
 	M[21]:=M_Sealing2.Process(M[23]);
 END_IF;
 IF M[24] THEN
@@ -276,127 +280,5 @@ END_CASE]]></ST>
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Action>
-    <LineIds Name="MST_POU">
-      <LineId Id="462" Count="3" />
-      <LineId Id="460" Count="1" />
-      <LineId Id="458" Count="1" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="123" Count="0" />
-      <LineId Id="794" Count="2" />
-      <LineId Id="124" Count="0" />
-      <LineId Id="149" Count="0" />
-      <LineId Id="132" Count="0" />
-      <LineId Id="150" Count="1" />
-      <LineId Id="266" Count="2" />
-      <LineId Id="164" Count="0" />
-      <LineId Id="155" Count="0" />
-      <LineId Id="165" Count="0" />
-      <LineId Id="172" Count="1" />
-      <LineId Id="175" Count="2" />
-      <LineId Id="174" Count="0" />
-      <LineId Id="178" Count="5" />
-      <LineId Id="157" Count="0" />
-      <LineId Id="298" Count="0" />
-      <LineId Id="294" Count="0" />
-      <LineId Id="232" Count="2" />
-      <LineId Id="522" Count="0" />
-      <LineId Id="524" Count="0" />
-      <LineId Id="521" Count="0" />
-      <LineId Id="296" Count="1" />
-      <LineId Id="295" Count="0" />
-      <LineId Id="300" Count="0" />
-      <LineId Id="302" Count="0" />
-      <LineId Id="301" Count="0" />
-      <LineId Id="299" Count="0" />
-      <LineId Id="235" Count="0" />
-      <LineId Id="303" Count="3" />
-      <LineId Id="798" Count="1" />
-      <LineId Id="797" Count="0" />
-      <LineId Id="526" Count="1" />
-      <LineId Id="525" Count="0" />
-      <LineId Id="307" Count="5" />
-      <LineId Id="204" Count="0" />
-      <LineId Id="338" Count="4" />
-      <LineId Id="801" Count="1" />
-      <LineId Id="800" Count="0" />
-      <LineId Id="343" Count="5" />
-      <LineId Id="337" Count="0" />
-      <LineId Id="374" Count="0" />
-      <LineId Id="376" Count="3" />
-      <LineId Id="804" Count="1" />
-      <LineId Id="803" Count="0" />
-      <LineId Id="380" Count="5" />
-      <LineId Id="375" Count="0" />
-      <LineId Id="410" Count="0" />
-      <LineId Id="373" Count="0" />
-      <LineId Id="412" Count="0" />
-      <LineId Id="414" Count="2" />
-      <LineId Id="807" Count="1" />
-      <LineId Id="806" Count="0" />
-      <LineId Id="417" Count="2" />
-      <LineId Id="423" Count="0" />
-      <LineId Id="433" Count="0" />
-      <LineId Id="424" Count="8" />
-      <LineId Id="411" Count="0" />
-      <LineId Id="491" Count="0" />
-      <LineId Id="490" Count="0" />
-      <LineId Id="492" Count="0" />
-      <LineId Id="494" Count="0" />
-      <LineId Id="493" Count="0" />
-      <LineId Id="667" Count="0" />
-      <LineId Id="809" Count="1" />
-      <LineId Id="668" Count="0" />
-      <LineId Id="698" Count="1" />
-      <LineId Id="703" Count="1" />
-      <LineId Id="732" Count="2" />
-      <LineId Id="700" Count="0" />
-      <LineId Id="764" Count="1" />
-      <LineId Id="763" Count="0" />
-      <LineId Id="701" Count="1" />
-      <LineId Id="556" Count="1" />
-      <LineId Id="555" Count="0" />
-      <LineId Id="621" Count="0" />
-      <LineId Id="559" Count="0" />
-      <LineId Id="587" Count="0" />
-      <LineId Id="566" Count="0" />
-      <LineId Id="622" Count="0" />
-      <LineId Id="569" Count="0" />
-      <LineId Id="564" Count="0" />
-      <LineId Id="586" Count="0" />
-      <LineId Id="565" Count="0" />
-      <LineId Id="623" Count="0" />
-      <LineId Id="571" Count="0" />
-      <LineId Id="585" Count="0" />
-      <LineId Id="574" Count="0" />
-      <LineId Id="624" Count="0" />
-      <LineId Id="576" Count="0" />
-      <LineId Id="584" Count="0" />
-      <LineId Id="580" Count="0" />
-      <LineId Id="625" Count="0" />
-      <LineId Id="579" Count="0" />
-      <LineId Id="589" Count="0" />
-      <LineId Id="588" Count="0" />
-      <LineId Id="626" Count="0" />
-      <LineId Id="591" Count="0" />
-      <LineId Id="629" Count="0" />
-      <LineId Id="628" Count="0" />
-      <LineId Id="639" Count="0" />
-      <LineId Id="630" Count="0" />
-      <LineId Id="632" Count="3" />
-      <LineId Id="631" Count="0" />
-      <LineId Id="563" Count="0" />
-    </LineIds>
-    <LineIds Name="MST_POU.Initial">
-      <LineId Id="2" Count="0" />
-      <LineId Id="1" Count="0" />
-      <LineId Id="7" Count="1" />
-    </LineIds>
-    <LineIds Name="MST_POU.TestDualServoCycleLeng">
-      <LineId Id="2" Count="43" />
-      <LineId Id="1" Count="0" />
-    </LineIds>
-    <LineIds Name="MST_POU.TestLoadCycleLeng">
-      <LineId Id="1" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>
