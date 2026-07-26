@@ -270,7 +270,7 @@ CASE nInitiStep OF
 		MC_AXISSTATE_ERRORSTOP:
 			Axis_DualServo1.Reset();
 		MC_AXISSTATE_DISCRETEMOTION:
-			UngroupAllAxes();
+			Axis_DualServo2.Reset();
 		MC_AXISSTATE_CONTINOUSMOTION:
 			Axis_DualServo1.Stop();
 		MC_AXISSTATE_SYNCHRONIZEDMOTION	:
@@ -287,7 +287,7 @@ CASE nInitiStep OF
 		MC_AXISSTATE_ERRORSTOP:
 			Axis_DualServo2.Reset();
 		MC_AXISSTATE_DISCRETEMOTION:
-			UngroupAllAxes();
+			Axis_DualServo2.Reset();
 		MC_AXISSTATE_CONTINOUSMOTION:
 			Axis_DualServo2.Stop();
 		MC_AXISSTATE_SYNCHRONIZEDMOTION	:
