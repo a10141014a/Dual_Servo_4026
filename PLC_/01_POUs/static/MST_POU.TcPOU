@@ -45,6 +45,16 @@ IF M[0] THEN
 		M[0]	:=FALSE;
 	END_IF
 END_IF
+fbLDF[0](CLK:= M[0]);
+IF fbLDF[0].Q THEN
+	IF Axis_DualServo1.Status.Moving THEN
+		Axis_DualServo1.Reset();
+	END_IF
+	IF Axis_DualServo2.Status.Moving THEN
+		Axis_DualServo2.Reset();
+	END_IF
+END_IF
+
 
 IF M[4] THEN
 	MainControl.SoftStopAxis();
@@ -52,6 +62,13 @@ END_IF
 IF M[5] THEN
 	M_DualServo.Process(FALSE);
 END_IF
+
+fbLDF[5](CLK:= M[5]);
+IF fbLDF[5].Q THEN
+	Motor_LoadIn.qRun:=FALSE;
+	Cyl_FlyIn_Pass:=FALSE;
+END_IF;
+
 
 fbTrigger_Load1(CLK:= Sen_AxisLoad1ORG);
 fbTrigger_Load2(CLK:= Sen_AxisLoad2ORG);

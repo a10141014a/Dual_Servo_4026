@@ -187,8 +187,82 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[_bInit	:= TRUE;
+CASE _Init OF
+	0:
+		tmrInit(IN:=FALSE);
+		IF RB_CS_SysIO.iREADY THEN
+			_Init	:= 5;
+			ELSE
+			RB_CS_SysIO.qENABLE	:= FALSE;
+			_Init	:= 99;	
+		END_IF
+	5:
+		RB_CS_SysIO.qENABLE	:= TRUE;
+		tmrInit(IN:=FALSE,PT:= T#1S);
+		IF RB_CS_SysIO.iENABLED THEN
+			tmrInit(IN:=FALSE);
+			_Init	:= 10;
+		END_IF
+		IF tmrInit.Q THEN
+			tmrInit(IN:=FALSE);
+			_Init	:= 99;
+		END_IF
+	
+	10:
+		IF RB_CS_SysIO.iRUNNING THEN
+			_Init	:= 15;
+			ELSE
+			_Init	:= 30;	
+		END_IF
+	
+	
+		IF RB_CS_SysIO.iHome_Pos THEN
+			tmrInit(IN:=FALSE);
+			_Init	:= 50;
+		END_IF;		
+	15://取消程序
+		RB_CS_SysIO.qRESET	:= TRUE;
+		RB_CS_SysIO.qSTOP	:= TRUE;
+		_Init				:= 16;
+	16:
+		tmrInit(IN:=FALSE,PT:= T#1S);
+		IF NOT RB_CS_SysIO.iRUNNING THEN
+			tmrInit(IN:=FALSE);
+			RB_CS_SysIO.qRESET	:= FALSE;
+			RB_CS_SysIO.qSTOP	:= FALSE;
+			_Init				:= 30;
+		END_IF
+		IF tmrInit.Q THEN
+			tmrInit(IN:=FALSE);
+			_Init	:= 99;
+		END_IF		
 
-
+			
+	30://RUN HOME
+		RB_CS_SysIO.qPGNO	:= 61;
+		RB_CS_SysIO.qSTART	:= TRUE;
+		_Init				:= 31;
+	31:
+		tmrInit(IN:=NOT RB_CS_SysIO.iRUNNING,PT:= T#1S);		
+		IF RB_CS_SysIO.iHome_Pos THEN
+			RB_CS_SysIO.qSTART	:= FALSE;
+			tmrInit(IN:=FALSE);
+			_Init	:= 50;	
+		END_IF
+	
+		IF RB_CS_SysIO.iPAUSED THEN
+			RB_CS_SysIO.qCONTINUE:= TRUE;
+		END_IF
+	
+		IF RB_CS_SysIO.iERROR OR tmrInit.q THEN
+			tmrInit(IN:=FALSE);
+			_Init	:= 99;
+		END_IF
+	99:
+		;	
+		
+END_CASE;
+(*
 CASE _Init OF
 0:
 	RB_CS_SysIO.qENABLE	:= TRUE;
@@ -255,7 +329,9 @@ CASE _Init OF
    
     
 
-END_CASE]]></ST>
+END_CASE
+
+*)]]></ST>
       </Implementation>
     </Method>
     <Action Name="IO_Mapp" Id="{baa19ce6-9d6a-4fcc-85cb-1d5e7b11f9b8}">

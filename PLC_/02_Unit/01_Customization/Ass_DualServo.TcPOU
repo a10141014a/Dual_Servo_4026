@@ -67,6 +67,8 @@ END_IF
 
 //Modhed
 IF NOT _bProcessScan AND NOT _bInitialScan THEN
+	MC_TouchProbeDual1.Execute	:= FALSE;
+	MC_TouchProbeDual2.Execute	:= FALSE;
 	strText:=strLeftText:=strRightText:='';
 END_IF
 
@@ -270,7 +272,7 @@ CASE nInitiStep OF
 		MC_AXISSTATE_ERRORSTOP:
 			Axis_DualServo1.Reset();
 		MC_AXISSTATE_DISCRETEMOTION:
-			Axis_DualServo2.Reset();
+			Axis_DualServo1.Reset();
 		MC_AXISSTATE_CONTINOUSMOTION:
 			Axis_DualServo1.Stop();
 		MC_AXISSTATE_SYNCHRONIZEDMOTION	:

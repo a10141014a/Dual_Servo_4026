@@ -434,7 +434,7 @@ IF NOT _bHaltPause THEN
 	
 
 		50:
-			IF OP.xAutoMode THEN
+			IF OP.xAutoMode AND M_Sealing2.Connect = 'OpenBox In' THEN
 				nNextStep	:= 0;
 			END_IF
 			;
