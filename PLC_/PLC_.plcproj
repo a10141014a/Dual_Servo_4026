@@ -266,17 +266,6 @@
       <Resolution>Tc3_McCoordinatedMotion, * (Beckhoff Automation GmbH)</Resolution>
     </PlaceholderResolution>
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="Documents\CS_BOX時序圖.pdf">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Documents\KR_C5時序圖.pdf">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Documents\原宏_io表260512.xlsx">
-      <SubType>Content</SubType>
-    </Content>
-  </ItemGroup>
   <ProjectExtensions>
     <PlcProjectOptions>
       <XmlArchive>
