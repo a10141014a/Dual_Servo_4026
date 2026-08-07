@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <GVL Name="HardwareIO" Id="{ab16b357-f6f7-4329-9ff6-e369f2c6481d}">
     <Declaration><![CDATA[VAR_GLOBAL
 	(*EtherCAT Link Status*)
@@ -110,7 +110,7 @@
 	Light_Yellow			AT%Q*	:BOOL;
 	Light_BZ			AT%Q*	:BOOL;
 	ElectronicBoxLight	AT%Q*	:BOOL;
-	WindowsSafe			AT%I*	:ARRAY [1..6] OF BOOL;
+	WindowsSafe			AT%I*	:ARRAY [1..6] OF BOOL;			//4=Gate 5btn
 	Air_Signal			AT%I*	:BOOL;	
 	TemperatureHigh			AT%I*	:BOOL;	
 	TemperatureFans			AT%Q*	:BOOL;
