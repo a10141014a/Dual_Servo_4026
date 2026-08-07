@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <POU Name="prgInputMapp" Id="{99bd5eed-e25f-4710-b535-8567b88e1446}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM prgInputMapp
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

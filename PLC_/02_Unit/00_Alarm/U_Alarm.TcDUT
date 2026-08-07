@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <DUT Name="U_Alarm" Id="{4a403055-959b-47e1-9c49-3e178805b613}">
+    <Declaration><![CDATA[TYPE U_Alarm :
+UNION
+	Item			:ST_AlarmParameter;
+	Row				:ARRAY[0..599] OF INT;
+END_UNION
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

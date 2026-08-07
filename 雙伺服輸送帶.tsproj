@@ -3277,7 +3277,7 @@ and will return to Group State Standby when the situation permits.
 		</Motion>
 		<Plc>
 			<Project GUID="{1C3DB08B-B3FE-41F6-BFE0-480D0E253FD3}" Name="PLC_" PrjFilePath="PLC_\PLC_.plcproj" TmcFilePath="PLC_\PLC_.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x001e" CopyTmcToTarget="true" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{741417C6-CF63-62B1-7C41-F903AEE86398}" TmcPath="PLC_\PLC_.tmc">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{D1911D57-05D5-F5E9-6765-1D9A2F4C864B}" TmcPath="PLC_\PLC_.tmc">
 					<Name>PLC_ Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="2" ContextId="1" AreaNo="17">
@@ -4078,6 +4078,7 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>HardwareIO.WindowsSafe</Name>
+							<Comment><![CDATA[4=Gate 5btn]]></Comment>
 							<Type GUID="{91952434-3B1E-48FD-FCD9-909033EAF991}">ARRAY [1..6] OF BOOL</Type>
 						</Var>
 						<Var>

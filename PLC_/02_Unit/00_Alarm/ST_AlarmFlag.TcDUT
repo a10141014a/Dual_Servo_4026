@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <DUT Name="ST_AlarmFlag" Id="{1a4667fa-7713-4cb2-88b0-56c8660165bc}">
+    <Declaration><![CDATA[TYPE ST_AlarmFlag :
+STRUCT
+	AlarmLWord_64Bit		: ARRAY [0..2] OF LWORD;
+	WarningLWord_64Bit		: ARRAY [0..1] OF LWORD;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
