@@ -134,6 +134,15 @@
     <Compile Include="02_Unit\99_Other\ST_InventerUD.TcDUT">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="02_Unit\00_Alarm_use\E_Alarm.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Unit\00_Alarm_use\E_Warn.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="02_Unit\00_Alarm_use\ST_AlarmItem.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="GlobalTextList.TcGTLO">
       <SubType>Code</SubType>
     </Compile>
@@ -207,6 +216,7 @@
     <Folder Include="02_Unit\11_EventLogger" />
     <Folder Include="02_Unit\99_Other" />
     <Folder Include="02_Unit\04_Kuka" />
+    <Folder Include="02_Unit\00_Alarm_use" />
     <Folder Include="Documents" />
     <Folder Include="01_POUs" />
   </ItemGroup>
