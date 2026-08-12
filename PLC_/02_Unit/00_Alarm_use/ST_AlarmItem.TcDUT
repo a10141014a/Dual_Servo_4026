@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <DUT Name="ST_AlarmItem" Id="{9cb69242-8032-46c0-853f-b35cfc8c43e8}">
+    <Declaration><![CDATA[TYPE ST_AlarmItem :
+STRUCT
+	Reset					: BOOL;		//異常復歸輸出
+	R_Trig_AlarmReset		: R_TRIG;	//異常復歸上微分
+	F_Trig_Error			: F_TRIG;	//異常發生下微分
+	Error					: BOOL;		//錯誤發生
+	Warning					: BOOL;		//警示發生
+	Alarm					: BOOL;		//異常發生
+	Rescue					: BOOL;		//過溫救貨中 (AlarmList[12..15] 任一觸發且無其他 alarm)
+	ErrorCounts				: INT;		//錯誤數量
+	WarningCounts			: INT;		//警示數量
+	AlarmCounts				: INT;		//異常數量      
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

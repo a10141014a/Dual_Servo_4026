@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <DUT Name="E_Alarm" Id="{895b1ec5-7ade-44d3-a317-bca7ecd292a0}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+{attribute 'to_string'}
+TYPE E_Alarm :
+(
+	AL000,
+	AL001,
+	AL002,
+	AL003,
+	AL004,
+	AL005,
+	AL006,
+	AL007,
+	AL008,
+	AL009,
+	AL010,
+	AL011,
+	AL012,
+	AL013,
+	AL014,
+	AL015,
+	AL016,
+	AL017,
+	AL018,
+	AL019,
+	AL020,
+	AL021,
+	AL022,
+	AL023,
+	AL024,
+	AL025,
+	AL026,
+	AL027,
+	AL028,
+	AL029,
+	AL030,
+	AL031,
+	AL032,
+	AL033,
+	AL034,
+	AL035,
+	AL036,
+	AL037,
+	AL038,
+	AL039,
+	AL040,
+	AL041,
+	AL042,
+	AL043,
+	AL044,
+	AL045,
+	AL046,
+	AL047,
+	AL048,
+	AL049,
+	AL050              
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

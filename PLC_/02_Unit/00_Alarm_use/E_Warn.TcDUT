@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+  <DUT Name="E_Warn" Id="{07a88125-4f96-4f66-96dc-8a283f5f706f}">
+    <Declaration><![CDATA[{attribute 'qualified_only'}
+{attribute 'strict'}
+{attribute 'to_string'}
+TYPE E_Warn :
+(
+	Warn000,
+	Warn001,
+	Warn002,
+	Warn003,
+	Warn004,
+	Warn005,
+	Warn006,
+	Warn007,
+	Warn008,
+	Warn009,
+	Warn010,
+	Warn011,
+	Warn012,
+	Warn013,
+	Warn014,
+	Warn015,
+	Warn016,
+	Warn017,
+	Warn018,
+	Warn019,
+	Warn020,
+	Warn021,
+	Warn022,
+	Warn023,
+	Warn024,
+	Warn025,
+	Warn026,
+	Warn027,
+	Warn028,
+	Warn029,
+	Warn030,
+	Warn031,
+	Warn032,
+	Warn033,
+	Warn034,
+	Warn035,
+	Warn036,
+	Warn037,
+	Warn038,
+	Warn039,
+	Warn040,
+	Warn041,
+	Warn042,
+	Warn043,
+	Warn044,
+	Warn045,
+	Warn046,
+	Warn047,
+	Warn048,
+	Warn049,
+	Warn050
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>
