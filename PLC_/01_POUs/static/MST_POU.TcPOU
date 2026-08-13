@@ -40,7 +40,7 @@ END_IF
 
 
 IF M[0] THEN
-	M[6]:= M_DualServo.Initialization(M[1]);
+	M[6]:= M_DualServo.Initialization();
 	IF M[6] THEN
 		M[0]	:=FALSE;
 	END_IF
@@ -89,7 +89,7 @@ END_IF
 //開箱 
 IF M[10] THEN
 	M[12]:=FALSE;
-	M[11]:=M_Openbox1.Initialization(FALSE);
+	M[11]:=M_Openbox1.Initialization();
 END_IF;
 IF M[11] THEN
 	M[10]:=FALSE;
@@ -105,7 +105,7 @@ END_IF;
 		
 //裝箱  
 IF M[15] THEN
-	M[16]:=M_LoadPic3.Initialization(FALSE);
+	M[16]:=M_LoadPic3.Initialization();
 END_IF;
 IF M[16] THEN
 	M[15]:=FALSE;
@@ -124,7 +124,7 @@ END_IF;
 //封箱底  
 IF M[20] THEN
 	M[22]	:=FALSE;
-	M[21]:=M_Sealing2.Initialization(FALSE);
+	M[21]:=M_Sealing2.Initialization();
 END_IF;
 IF M[21] THEN
 	M[20]:=FALSE;
@@ -140,7 +140,7 @@ END_IF;
 
 //秤重晃   
 IF M[25] THEN
-	M[26]:=M_UnloadNG4.Initialization(FALSE);
+	M[26]:=M_UnloadNG4.Initialization();
 END_IF;
 IF M[26] THEN
 	M[25]:=FALSE;
@@ -156,7 +156,7 @@ END_IF;
 //堆疊
 
 IF M[30] THEN
-	M[31]:=M_StackComv5.Initialization(FALSE);
+	M[31]:=M_StackComv5.Initialization();
 END_IF;
 IF M[31] THEN
 	M[30]:=FALSE;
@@ -167,7 +167,7 @@ END_IF;
 //堆疊手臂
 
 IF M[35] THEN
-	M[36]:=M_RBStack6.Initialization(FALSE);
+	M[36]:=M_RBStack6.Initialization();
 END_IF;
 IF M[37] THEN
 	M[36]:=M_RBStack6.Process(M[38]);

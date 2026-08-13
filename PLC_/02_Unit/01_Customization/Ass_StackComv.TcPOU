@@ -98,7 +98,6 @@ METHOD HaltStepContiune : BOOL
     <Method Name="Initialization" Id="{68df2561-95fa-4481-b660-382046a2754b}">
       <Declaration><![CDATA[METHOD Initialization : BOOL
 VAR_INPUT
-	_Testmode	: BOOL;
 END_VAR
 ]]></Declaration>
       <Implementation>

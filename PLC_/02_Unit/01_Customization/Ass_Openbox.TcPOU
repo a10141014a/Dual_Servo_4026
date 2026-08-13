@@ -118,7 +118,6 @@ END_VAR
     <Method Name="Initialization" Id="{d94725ae-728a-4d23-b958-9e593abe157c}">
       <Declaration><![CDATA[METHOD Initialization : BOOL
 VAR_INPUT
-	_Testmode	:BOOL;	//OOP Var
 END_VAR
 VAR
 	bConfig: BOOL;
