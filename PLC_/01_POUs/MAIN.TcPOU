@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <POU Name="MAIN" Id="{bbb2616a-be8a-4b16-b012-4fc48c768fe4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM MAIN
 VAR
@@ -8,6 +8,7 @@ VAR
 	ResetTrigger,AutoRunInitTrigger,PB_StartTrigger,IntiStartTrigger 	:R_TRIG;
 	AutoRunDownTrigger,InitailDownTrigger	:F_TRIG;
 	i	:INT;
+
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -109,59 +110,38 @@ END_IF
 
 ]]></ST>
     </Implementation>
-    <LineIds Name="MAIN">
-      <LineId Id="288" Count="0" />
-      <LineId Id="324" Count="0" />
-      <LineId Id="129" Count="0" />
-      <LineId Id="366" Count="0" />
-      <LineId Id="386" Count="0" />
-      <LineId Id="388" Count="0" />
-      <LineId Id="387" Count="0" />
-      <LineId Id="428" Count="0" />
-      <LineId Id="389" Count="0" />
-      <LineId Id="438" Count="0" />
-      <LineId Id="437" Count="0" />
-      <LineId Id="368" Count="0" />
-      <LineId Id="371" Count="0" />
-      <LineId Id="419" Count="0" />
-      <LineId Id="369" Count="0" />
-      <LineId Id="367" Count="0" />
-      <LineId Id="409" Count="1" />
-      <LineId Id="131" Count="0" />
-      <LineId Id="22" Count="18" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="42" Count="0" />
-      <LineId Id="193" Count="0" />
-      <LineId Id="184" Count="0" />
-      <LineId Id="177" Count="0" />
-      <LineId Id="43" Count="0" />
-      <LineId Id="392" Count="1" />
-      <LineId Id="391" Count="0" />
-      <LineId Id="396" Count="0" />
-      <LineId Id="398" Count="0" />
-      <LineId Id="400" Count="0" />
-      <LineId Id="399" Count="0" />
-      <LineId Id="397" Count="0" />
-      <LineId Id="395" Count="0" />
-      <LineId Id="44" Count="1" />
-      <LineId Id="382" Count="0" />
-      <LineId Id="49" Count="2" />
-      <LineId Id="381" Count="0" />
-      <LineId Id="309" Count="0" />
-      <LineId Id="53" Count="2" />
-      <LineId Id="57" Count="9" />
-      <LineId Id="68" Count="1" />
-      <LineId Id="71" Count="7" />
-      <LineId Id="233" Count="0" />
-      <LineId Id="303" Count="0" />
-      <LineId Id="315" Count="0" />
-      <LineId Id="229" Count="0" />
-      <LineId Id="383" Count="2" />
-      <LineId Id="311" Count="0" />
-      <LineId Id="310" Count="0" />
-      <LineId Id="312" Count="1" />
-      <LineId Id="346" Count="0" />
-      <LineId Id="41" Count="0" />
-    </LineIds>
+    <Action Name="ErrorFlagMapp" Id="{d8cd540b-6b47-4d33-985b-a98540ca2147}">
+      <Implementation>
+        <ST><![CDATA[GVL.AlarmList[0]:=Cyl_Axis90.bError		;	
+GVL.AlarmList[1]:=Cyl_AxisBottom.bError;	;
+GVL.AlarmList[2]:=Cyl_AxisBoxCatch.bError;
+GVL.AlarmList[3]:=Cyl_BeltBottom.bError	;
+GVL.AlarmList[4]:=Cyl_BeltBottomSup.bError;
+GVL.AlarmList[5]:=Cyl_BoxSideBottom.bError;
+GVL.AlarmList[6]:=Cyl_BoxSidePitch.bError;
+GVL.AlarmList[7]:=Cyl_ExitClip.bError;
+GVL.AlarmList[8]:=Cyl_ExitStopper.bError;
+GVL.AlarmList[9]:=Cyl_NGPurge.bError;
+GVL.AlarmList[10]:=Cyl_ShockStop.bError;
+GVL.AlarmList[11]:=Cyl_StackUD.bError;
+GVL.AlarmList[12]:=Cyl_UnloadDef.bError;
+GVL.AlarmList[13]:=Axis_BoxPullOut.Status.Error;
+GVL.AlarmList[14]:=Axis_DualServo1.Status.Error;
+GVL.AlarmList[15]:=Axis_DualServo2.Status.Error;
+GVL.AlarmList[16]:=Axis_FlyIn.Status.Error;
+GVL.AlarmList[17]:=Axis_load1.Status.Error;
+GVL.AlarmList[18]:=Axis_load2.Status.Error;
+GVL.AlarmList[19]:=RB_CS.bOffline;
+GVL.AlarmList[20]:=RB_KR.bOffline;
+
+
+//Warning
+//GVL.WarningList[0]				//CS手臂BG no run 
+//GVL.WarningList[1]				//堆疊手臂BG NOT run
+
+
+]]></ST>
+      </Implementation>
+    </Action>
   </POU>
 </TcPlcObject>

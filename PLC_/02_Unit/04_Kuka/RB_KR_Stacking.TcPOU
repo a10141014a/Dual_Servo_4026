@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <POU Name="RB_KR_Stacking" Id="{a85c7ca9-d251-4387-9841-f5f96417914e}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK RB_KR_Stacking
 VAR_INPUT
@@ -12,6 +12,7 @@ VAR_OUTPUT
 	strTextBox			:STRING(50);
 	eKRStatus				:E_CS_Status;
 	bOffline			:BOOL;
+	bBackgroundRun			:BOOL;
 END_VAR
 VAR
 	_bCapture			:BOOL;
@@ -95,7 +96,12 @@ IF NOT RB_KR_SysIO.iEXT_CONTROL THEN
 		eKRStatus:= E_CS_Status.Idle;
 	END_IF
 END_IF
-
+IF state<> 0 THEN
+	eKRStatus:=E_CS_Status.Offline;
+	bOffline:= TRUE;
+	ELSE
+	bOffline:=FALSE;
+END_IF
 tmrBGRun(IN:=  RB_KR_StackingIO.cmd_wIndex <> RB_KR_StackingIO.fb_wIndex,PT:= T#1S);
 IF RB_KR_StackingIO.cmd_wIndex = RB_KR_StackingIO.fb_wIndex THEN
 	RB_KR_StackingIO.cmd_wIndex	:= RB_KR_StackingIO.cmd_wIndex + 1;
@@ -103,7 +109,10 @@ IF RB_KR_StackingIO.cmd_wIndex = RB_KR_StackingIO.fb_wIndex THEN
 		RB_KR_StackingIO.cmd_wIndex:= 1;
 	END_IF
 END_IF
-
+bBackgroundRun	:= tmrBGRun.Q ;
+IF bBackgroundRun AND NOT bOffline THEN
+	GVL.WarningList[1]:= TRUE;
+END_IF
 
 
 
@@ -396,180 +405,5 @@ CASE _POUrun OF
 END_CASE]]></ST>
       </Implementation>
     </Method>
-    <LineIds Name="RB_KR_Stacking">
-      <LineId Id="41" Count="0" />
-      <LineId Id="235" Count="1" />
-      <LineId Id="234" Count="0" />
-      <LineId Id="197" Count="0" />
-      <LineId Id="196" Count="0" />
-      <LineId Id="198" Count="0" />
-      <LineId Id="200" Count="1" />
-      <LineId Id="199" Count="0" />
-      <LineId Id="194" Count="1" />
-      <LineId Id="202" Count="1" />
-      <LineId Id="367" Count="0" />
-      <LineId Id="101" Count="0" />
-      <LineId Id="209" Count="0" />
-      <LineId Id="206" Count="0" />
-      <LineId Id="210" Count="0" />
-      <LineId Id="362" Count="2" />
-      <LineId Id="361" Count="0" />
-      <LineId Id="358" Count="0" />
-      <LineId Id="357" Count="0" />
-      <LineId Id="347" Count="0" />
-      <LineId Id="351" Count="0" />
-      <LineId Id="353" Count="1" />
-      <LineId Id="352" Count="0" />
-      <LineId Id="260" Count="2" />
-      <LineId Id="207" Count="0" />
-      <LineId Id="155" Count="0" />
-      <LineId Id="263" Count="0" />
-      <LineId Id="305" Count="1" />
-      <LineId Id="279" Count="1" />
-      <LineId Id="288" Count="0" />
-      <LineId Id="295" Count="1" />
-      <LineId Id="392" Count="1" />
-      <LineId Id="317" Count="0" />
-      <LineId Id="391" Count="0" />
-      <LineId Id="319" Count="1" />
-      <LineId Id="318" Count="0" />
-      <LineId Id="293" Count="0" />
-      <LineId Id="355" Count="1" />
-      <LineId Id="449" Count="1" />
-      <LineId Id="448" Count="0" />
-      <LineId Id="294" Count="0" />
-      <LineId Id="297" Count="0" />
-      <LineId Id="301" Count="1" />
-      <LineId Id="300" Count="0" />
-      <LineId Id="315" Count="0" />
-      <LineId Id="309" Count="0" />
-      <LineId Id="307" Count="1" />
-      <LineId Id="281" Count="0" />
-      <LineId Id="264" Count="0" />
-      <LineId Id="156" Count="0" />
-      <LineId Id="417" Count="5" />
-      <LineId Id="157" Count="23" />
-      <LineId Id="42" Count="1" />
-      <LineId Id="119" Count="0" />
-      <LineId Id="121" Count="0" />
-      <LineId Id="120" Count="0" />
-      <LineId Id="122" Count="0" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="142" Count="0" />
-      <LineId Id="147" Count="2" />
-      <LineId Id="151" Count="1" />
-      <LineId Id="141" Count="0" />
-      <LineId Id="146" Count="0" />
-    </LineIds>
-    <LineIds Name="RB_KR_Stacking.Capture">
-      <LineId Id="5" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="36" Count="0" />
-      <LineId Id="19" Count="0" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="20" Count="3" />
-      <LineId Id="25" Count="0" />
-      <LineId Id="24" Count="0" />
-      <LineId Id="15" Count="1" />
-      <LineId Id="27" Count="0" />
-      <LineId Id="29" Count="0" />
-      <LineId Id="26" Count="0" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="30" Count="0" />
-      <LineId Id="12" Count="0" />
-    </LineIds>
-    <LineIds Name="RB_KR_Stacking.Initialization">
-      <LineId Id="5" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="16" Count="1" />
-      <LineId Id="66" Count="0" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="20" Count="0" />
-      <LineId Id="19" Count="0" />
-      <LineId Id="22" Count="6" />
-      <LineId Id="33" Count="1" />
-      <LineId Id="39" Count="7" />
-      <LineId Id="51" Count="14" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="68" Count="0" />
-      <LineId Id="15" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="12" Count="0" />
-    </LineIds>
-    <LineIds Name="RB_KR_Stacking.IO_Mapp">
-      <LineId Id="46" Count="0" />
-      <LineId Id="43" Count="1" />
-      <LineId Id="2" Count="4" />
-      <LineId Id="55" Count="0" />
-      <LineId Id="7" Count="8" />
-      <LineId Id="56" Count="0" />
-      <LineId Id="16" Count="11" />
-      <LineId Id="51" Count="1" />
-      <LineId Id="48" Count="0" />
-      <LineId Id="28" Count="0" />
-      <LineId Id="54" Count="0" />
-      <LineId Id="53" Count="0" />
-      <LineId Id="29" Count="10" />
-      <LineId Id="47" Count="0" />
-      <LineId Id="41" Count="0" />
-      <LineId Id="1" Count="0" />
-      <LineId Id="77" Count="0" />
-      <LineId Id="81" Count="2" />
-      <LineId Id="78" Count="1" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="67" Count="0" />
-      <LineId Id="70" Count="0" />
-      <LineId Id="72" Count="0" />
-      <LineId Id="80" Count="0" />
-      <LineId Id="74" Count="2" />
-      <LineId Id="73" Count="0" />
-      <LineId Id="71" Count="0" />
-      <LineId Id="69" Count="0" />
-      <LineId Id="68" Count="0" />
-      <LineId Id="66" Count="0" />
-    </LineIds>
-    <LineIds Name="RB_KR_Stacking.POU_Run">
-      <LineId Id="5" Count="0" />
-      <LineId Id="12" Count="3" />
-      <LineId Id="117" Count="3" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="121" Count="0" />
-      <LineId Id="123" Count="3" />
-      <LineId Id="195" Count="1" />
-      <LineId Id="205" Count="2" />
-      <LineId Id="204" Count="0" />
-      <LineId Id="127" Count="5" />
-      <LineId Id="187" Count="1" />
-      <LineId Id="133" Count="9" />
-      <LineId Id="146" Count="0" />
-      <LineId Id="110" Count="0" />
-      <LineId Id="112" Count="0" />
-      <LineId Id="149" Count="0" />
-      <LineId Id="155" Count="0" />
-      <LineId Id="151" Count="0" />
-      <LineId Id="113" Count="0" />
-      <LineId Id="156" Count="1" />
-      <LineId Id="160" Count="0" />
-      <LineId Id="147" Count="0" />
-      <LineId Id="114" Count="0" />
-      <LineId Id="212" Count="0" />
-      <LineId Id="191" Count="0" />
-      <LineId Id="194" Count="0" />
-      <LineId Id="189" Count="0" />
-      <LineId Id="198" Count="0" />
-      <LineId Id="197" Count="0" />
-      <LineId Id="199" Count="0" />
-      <LineId Id="201" Count="2" />
-      <LineId Id="200" Count="0" />
-      <LineId Id="115" Count="0" />
-      <LineId Id="166" Count="16" />
-      <LineId Id="161" Count="4" />
-      <LineId Id="116" Count="0" />
-      <LineId Id="10" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>

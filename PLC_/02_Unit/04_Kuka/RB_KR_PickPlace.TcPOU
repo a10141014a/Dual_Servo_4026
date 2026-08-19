@@ -11,7 +11,7 @@ VAR_OUTPUT
 	strTextBox			:STRING(50);
 	aryEIPOutput		AT%Q*	:ARRAY [0..63] OF UINT ;
 	bOffline				:BOOL;
-	bBackRun			:BOOL;
+	bBackgroundRun			:BOOL;
 END_VAR
 VAR
 	tmrSimuLoadingDelay,tmrBGRun		:TON;	
@@ -111,6 +111,9 @@ END_IF
 //
 IF state<> 0 THEN
 	eCSStatus:=E_CS_Status.Offline;
+	bOffline:= TRUE;
+	ELSE
+	bOffline:=FALSE;
 END_IF
 // =====================================================
 // BG
@@ -121,6 +124,10 @@ IF RB_CS_PickIO.cmd_wIndex = RB_CS_PickIO.fb_wIndex THEN
 	IF RB_CS_PickIO.cmd_wIndex > 255 THEN
 		RB_CS_PickIO.cmd_wIndex:= 1;
 	END_IF
+END_IF
+bBackgroundRun	:= tmrBGRun.Q ;
+IF bBackgroundRun AND NOT bOffline THEN
+	GVL.WarningList[0]:= TRUE;
 END_IF
 
 

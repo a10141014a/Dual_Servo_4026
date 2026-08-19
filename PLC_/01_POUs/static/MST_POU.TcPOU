@@ -196,7 +196,9 @@ END_IF
 IF M[46] THEN
 	 M[45]	:=	RB_KR.Initialization();
 END_IF
-
+IF m[50] THEN
+	HardwareIO.Axis_DualServo1.MoveVelocity(100,1);
+END_IF
 
 
 //Loadcell

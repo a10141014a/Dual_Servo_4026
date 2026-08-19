@@ -184,8 +184,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="HaltStepContiune" Id="{d396cd10-9f63-4417-8480-d1cd25505f17}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
-METHOD HaltStepContiune : BOOL
+      <Declaration><![CDATA[METHOD HaltStepContiune : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[]]></ST>
@@ -234,7 +233,7 @@ CASE nInitiStep OF
 		// Remember which mode owned each active measuring cycle before Initialization changes it.
 		bInitialProbe1Single:=TouchTriggerDual1.Mode=TOUCHPROBEMODE_SINGLE;
 		bInitialProbe2Single:=TouchTriggerDual2.Mode=TOUCHPROBEMODE_SINGLE;
-
+		tmrT1(IN:=FALSE);
 		_tmrT0(IN:=TRUE,PT:=T#0.1S);
 		nStopStep			:= 0;
 		strText:='ORG : Initial ';
@@ -246,25 +245,18 @@ CASE nInitiStep OF
 
 1: // Static: cancel according to the mode captured at Initialization entry
 	strText:='ORG : TouchProbe Cancel';
-	MC_TouchProbeDual1.Execute:=FALSE;
-	MC_TouchProbeDual2.Execute:=FALSE;
+	nInitiStep:=5;
 	// Continuous: Execute=FALSE. Single: Execute=FALSE plus MC_AbortTrigger.
-	MC_AbortTrigger1.Execute:=bInitialProbe1Single;
-	MC_AbortTrigger2.Execute:=bInitialProbe2Single;
-	nInitiStep:=2;
-
-2: // Static: wait until the previous measuring cycles are cancelled
-	MC_TouchProbeDual1.Execute:=FALSE;
-	MC_TouchProbeDual2.Execute:=FALSE;
-	IF MC_AbortTrigger1.Error OR MC_AbortTrigger2.Error THEN
-		nInitiStep:=900;
-	ELSIF (NOT bInitialProbe1Single OR MC_AbortTrigger1.Done)
-	AND (NOT bInitialProbe2Single OR MC_AbortTrigger2.Done)
-	AND NOT MC_TouchProbeDual1.Busy AND NOT MC_TouchProbeDual2.Busy THEN
-		MC_AbortTrigger1.Execute:=FALSE;
-		MC_AbortTrigger2.Execute:=FALSE;
+	IF MC_TouchProbeDual1.Busy OR MC_TouchProbeDual2.Busy THEN
+		MC_AbortTrigger1.Execute:= TRUE;
+		MC_AbortTrigger2.Execute:= TRUE;
+		nInitiStep:=2;		
+	END_IF
+2:
+	IF 	MC_AbortTrigger1.Done AND MC_AbortTrigger2.Done THEN
 		nInitiStep:=3;
 	END_IF
+
 
 3: // Static: write Single only after the previous mode has been cancelled
 	MC_TouchProbeDual1.Execute:=FALSE;
@@ -314,7 +306,7 @@ CASE nInitiStep OF
 	END_IF
 	IF _tmrT0.Q THEN
 		_tmrT0(IN:=FALSE);
-		nInitiStep	:= 900;
+		nInitiStep	:=nInitiStep+ 900;
 	END_IF
 
 20: // Static: disable DualGroupRef if axes are assigned
@@ -335,10 +327,15 @@ CASE nInitiStep OF
 	fbMC_UngroupAllAxes.Execute:=TRUE;
 	IF fbMC_UngroupAllAxes.Done AND DualGroupRef.NcToPlc.CA.Common.GroupAxesCount=0 THEN
 		nInitiStep:=30;
+		IF Axis_DualServo1.Status.Stopping THEN
+			nInitiStep:=26;
+		END_IF
 	ELSIF fbMC_UngroupAllAxes.Error THEN
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
-
+26:
+	HardwareIO.Axis_DualServo1.Reset();
+	nInitiStep:=30;
 30: // Static: clear the ungroup command
 	fbMC_UngroupAllAxes.Execute:=FALSE;
 	nInitiStep:=40;
@@ -355,7 +352,7 @@ CASE nInitiStep OF
 			nInitiStep:=50;
 		ELSIF fbMC_GearIn.Error THEN
 			fbMC_GearIn.Execute:=FALSE;
-			nInitiStep:=900;
+			nInitiStep:=nInitiStep+900;
 		END_IF
 	END_IF
 
@@ -376,14 +373,14 @@ CASE nInitiStep OF
 	IF MC_TouchProbeDual1.Busy AND MC_TouchProbeDual2.Busy THEN
 		nInitiStep:=55;
 	ELSIF MC_TouchProbeDual1.Error OR MC_TouchProbeDual2.Error THEN
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
 
 55: // Dynamic: verify coupling before motion
 	IF Axis_DualServo2.Status.Coupled THEN
 		nInitiStep:=60;
 	ELSE
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
 
 60: // Dynamic: move master and capture both latch positions
@@ -407,10 +404,10 @@ CASE nInitiStep OF
 		nInitiStep:=70;
 	ELSIF MC_TouchProbeDual1.Error OR MC_TouchProbeDual2.Error THEN
 		tmrT1(IN:=FALSE);
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	ELSIF tmrT1.Q THEN
 		tmrT1(IN:=FALSE);
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
 
 70: // Dynamic: stop the master and coupled slave
@@ -433,7 +430,7 @@ CASE nInitiStep OF
 	END_IF
 	IF fbMC_GearOut.Error THEN
 		fbMC_GearOut.Execute:=FALSE;
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
 
 80: // Dynamic: set coordinates from latched positions
@@ -446,7 +443,7 @@ CASE nInitiStep OF
 	IF MC_SetPositionLeft.Done AND MC_SetPositionRight.Done AND MC_SetPositionCon.Done THEN
 		nInitiStep:=81;
 	ELSIF MC_SetPositionLeft.Error OR MC_SetPositionRight.Error OR MC_SetPositionCon.Error THEN
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
 
 81: // Dynamic: force calibration home on both dual-servo axes
@@ -458,7 +455,7 @@ CASE nInitiStep OF
 	IF L_Home.Done AND R_Home.Done THEN
 		nInitiStep:=86;
 	ELSIF L_Home.Error OR R_Home.Error THEN
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
 
 86: // Dynamic: add is allowed only when DualGroupRef is empty
@@ -475,7 +472,7 @@ CASE nInitiStep OF
 		fbAddAxis[2].IdentInGroup:=UDINT_TO_IDENTINGROUP(2); // Y-Axis
 		nInitiStep:=87;
 	ELSE
-		nInitiStep:=900;
+		nInitiStep:=nInitiStep+900;
 	END_IF
 
 87: // Dynamic: add both axes to DualGroupRef
@@ -523,6 +520,7 @@ CASE nInitiStep OF
 		Axis_DualServo1.Stop();
 	END_IF
 	strText:='ORG : Error Stop';
+	nInitiStep:=nInitiStep+100;
 	(* Legacy initialization sequence retained as reference only.
 
 20:	//感測sensor
@@ -1029,7 +1027,7 @@ END_CASE
 CASE nStopStep OF
 	0:
 		Motor_LoadIn.qRun	:= TRUE;
-		Cyl_FlyIn_Pass		:= TRUE;
+		//Cyl_FlyIn_Pass		:= TRUE;
 		(*
 		IF nLeftStep < 20 THEN
 			IF fbMC_MoveAbsoluteCA_Left.Busy AND Axis_DualServo1.Status.NotMoving THEN

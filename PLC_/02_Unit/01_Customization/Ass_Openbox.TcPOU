@@ -330,7 +330,7 @@ IF NOT _bHaltPause THEN
 				ELSE
 				nNextStep	:= 100;
 				nStep		:= 100;	
-				strText:= '馬達狀態異常 ';			
+				strText:= 'Motor Error ';			
 			END_IF;
 			
 		10:

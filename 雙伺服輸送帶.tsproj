@@ -3277,15 +3277,11 @@ and will return to Group State Standby when the situation permits.
 		</Motion>
 		<Plc>
 			<Project GUID="{1C3DB08B-B3FE-41F6-BFE0-480D0E253FD3}" Name="PLC_" PrjFilePath="PLC_\PLC_.plcproj" TmcFilePath="PLC_\PLC_.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x001e" CopyTmcToTarget="true" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{F07C1EB1-F402-DCDA-E296-67A91999E569}" TmcPath="PLC_\PLC_.tmc">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{8272064A-75AB-D4B3-C699-6A77879BA282}" TmcPath="PLC_\PLC_.tmc">
 					<Name>PLC_ Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="2" ContextId="1" AreaNo="17">
 						<Name>PlcTask Outputs</Name>
-						<Var>
-							<Name>HardwareIO.Vacm_AxisCatchBox</Name>
-							<Type>BOOL</Type>
-						</Var>
 						<Var>
 							<Name>HardwareIO.EL2889</Name>
 							<Comment><![CDATA[DO]]></Comment>
@@ -3304,10 +3300,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Vacm_Axis90</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.RB_CS.aryEIPOutput</Name>
 							<Type GUID="{B5A93647-8137-7048-0173-B2FAB34A1D2C}">ARRAY [0..63] OF UINT</Type>
 						</Var>
@@ -3321,6 +3313,10 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>HardwareIO.Motor_Blower.qErrorReset</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Vacm_AxisCatchBox</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3440,6 +3436,10 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Vacm_Axis90</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Cyl_AxisBottom.qExtendCoil</Name>
 							<Comment><![CDATA[ 氣缸伸出線圈]]></Comment>
 							<Type>BOOL</Type>
@@ -3540,10 +3540,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Vacm_StackUD</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.Cyl_NGPurge.qExtendCoil</Name>
 							<Comment><![CDATA[ 氣缸伸出線圈]]></Comment>
 							<Type>BOOL</Type>
@@ -3586,6 +3582,10 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Vacm_StackUD</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Motor_Stack.qRun</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -3595,11 +3595,6 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>HardwareIO.Motor_Stack.qErrorReset</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Cyl_FlyIn_Pass</Name>
-							<Comment><![CDATA[高速入料 ]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3620,6 +3615,11 @@ and will return to Group State Standby when the situation permits.
 						<Var>
 							<Name>HardwareIO.Cyl_ExitStopper.qRetractCoil</Name>
 							<Comment><![CDATA[ 氣缸收回線圈]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Cyl_FlyIn_Pass</Name>
+							<Comment><![CDATA[高速入料 ]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3667,22 +3667,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_BoxsideStorageMaterial</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_AxisBoxCatchVacumm</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_AxisBoxORG</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_Axis90Vacumm</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.MainFiledBus</Name>
 							<Comment><![CDATA[EtherCAT Link Status]]></Comment>
 							<Type GUID="{FE916439-5CDC-6803-A210-0DB90FFB2C74}">ARRAY [0..20] OF UINT</Type>
@@ -3697,7 +3681,11 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_BeltLoadIn</Name>
+							<Name>HardwareIO.Sen_BoxsideStorageMaterial</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_AxisBoxCatchVacumm</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3713,11 +3701,7 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_BeltLoadOut</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_UnloadLoadIn</Name>
+							<Name>HardwareIO.Sen_AxisBoxORG</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3881,6 +3865,18 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Sen_Axis90Vacumm</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_BeltLoadIn</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_BeltLoadOut</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Cyl_AxisBottom.iOriginSensor</Name>
 							<Comment><![CDATA[ 原點感測]]></Comment>
 							<Type>BOOL</Type>
@@ -3929,6 +3925,10 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Sen_UnloadLoadIn</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Sen_UnloadLoadPos</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -3972,6 +3972,16 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Cyl_NGPurge.iOriginSensor</Name>
+							<Comment><![CDATA[ 原點感測]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Cyl_NGPurge.iEndSensor</Name>
+							<Comment><![CDATA[ 末端感測]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.Swtich_PassFeet</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -3985,16 +3995,6 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>HardwareIO.Sen_StackComvStop</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Cyl_NGPurge.iOriginSensor</Name>
-							<Comment><![CDATA[ 原點感測]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Cyl_NGPurge.iEndSensor</Name>
-							<Comment><![CDATA[ 末端感測]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>

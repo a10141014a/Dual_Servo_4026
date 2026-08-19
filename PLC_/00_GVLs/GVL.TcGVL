@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <GVL Name="GVL" Id="{50e5aea6-7a13-4d7c-af9a-a310723619e3}">
     <Declaration><![CDATA[VAR_GLOBAL
 	OP		:ST_Operation	;
@@ -16,7 +16,10 @@
 	M_Pallet			:Ass_Pallet;
 	RecipeManCommands	:RecipeManCommands;			//配方處理 
 	MainControl			:MainControl;
-	DoNotLoadingRB: BOOL;
+	DoNotLoadingRB		: BOOL;
+	
+	AlarmList				:ARRAY [0..50] OF BOOL;
+	WarningList				:ARRAY [0..50] OF BOOL;
 END_VAR
 ]]></Declaration>
   </GVL>
