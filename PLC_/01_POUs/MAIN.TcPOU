@@ -15,6 +15,7 @@ END_VAR
       <ST><![CDATA[//常態掃描  
 RunParameter.strName	:= F_TrimRightSpace(RunParameter.strName);
 Manual_POU();
+ErrorFlagMapp();
 IF PB_Stop OR PB_EMG OR OP.bStop_Sign THEN
 	OP.xAutoRuning				:= FALSE;
 	OP.xInitialRuning			:=FALSE;	
@@ -131,16 +132,30 @@ GVL.AlarmList[15]:=Axis_DualServo2.Status.Error;
 GVL.AlarmList[16]:=Axis_FlyIn.Status.Error;
 GVL.AlarmList[17]:=Axis_load1.Status.Error;
 GVL.AlarmList[18]:=Axis_load2.Status.Error;
-GVL.AlarmList[19]:=RB_CS.bOffline;
-GVL.AlarmList[20]:=RB_KR.bOffline;
+//GVL.AlarmList[19]:=RB_CS.bOffline;
+//GVL.AlarmList[20]:=RB_KR.bOffline;
 
 
 //Warning
 //GVL.WarningList[0]				//CS手臂BG no run 
 //GVL.WarningList[1]				//堆疊手臂BG NOT run
+//GVL.WarningList[2]				入料開箱-缺紙警報 
+//GVL.WarningList[3]				封箱-卡箱異常  
+//GVL.WarningList[4]				
 
 
-]]></ST>
+
+//[PLC1]GVL.WarningList[40]			雙伺服輸送-初始化失敗
+//[PLC1]GVL.WarningList[41]			開箱-初始化失敗
+//[PLC1]GVL.WarningList[42]			裝箱-初始化失敗
+//[PLC1]GVL.WarningList[43]			秤重輸送-初始化失敗
+//[PLC1]GVL.WarningList[44]			打包堆疊-初始化失敗
+//[PLC1]GVL.WarningList[45]			堆疊裝箱-初始化失敗
+//[PLC1]GVL.WarningList[46]			取料手臂-初始化失敗
+//[PLC1]GVL.WarningList[47]			堆疊手臂-初始化失敗
+//[PLC1]GVL.WarningList[48]				
+//[PLC1]GVL.WarningList[49]				
+//]]></ST>
       </Implementation>
     </Action>
   </POU>

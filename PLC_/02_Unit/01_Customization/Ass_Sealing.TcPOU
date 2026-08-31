@@ -5,12 +5,12 @@
 VAR_INPUT
 END_VAR
 VAR_OUTPUT
+	strText	:STRING;
 END_VAR
 VAR
 	i	:INT;
 	_bProcessScan,_bInitialScan: BOOL;
 	_bHalt , _bError,_bHaltPause: BOOL;
-	strText	:STRING;
 	nStep,nInitiStep ,nNextStep 	: INT;
 	_tmrT0			:TON;
 END_VAR
@@ -61,7 +61,7 @@ END_VAR
       </Set>
     </Property>
     <Property Name="Error" Id="{c4e7731e-732d-489c-9847-7d733a800e09}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY Error : BOOL
 ]]></Declaration>
       <Get Name="Get" Id="{ef07e930-46de-449d-b1ba-f8123ef084cf}">
@@ -74,7 +74,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="ErrorClear" Id="{4351c64a-5973-412f-9c2a-d62ab6ea446f}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD ErrorClear : BOOL
 ]]></Declaration>
       <Implementation>
@@ -82,7 +82,7 @@ METHOD ErrorClear : BOOL
       </Implementation>
     </Method>
     <Method Name="FB_init" Id="{49c9e524-43f7-4b09-8037-50637c554f51}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD FB_init : BOOL
 VAR_INPUT
 	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
@@ -96,7 +96,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="HaltStepContiune" Id="{e067c393-fc75-436b-a825-48fad1a93c84}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD HaltStepContiune : BOOL
 ]]></Declaration>
       <Implementation>
@@ -117,12 +117,13 @@ END_VAR]]></Declaration>
 CASE nInitiStep OF
 	0:		
 		_tmrT0(IN:=FALSE);
-		strText:='ORG : Initial ';
+		strText:='Sealing Initial [Step 0] - Reset';
 		Motor_BoxSealBottom_L.qRun		:=FALSE;
 		Motor_BoxSealBottom_R.qRun		:=FALSE;
 		Cyl_BeltBottomSup.qExtendCoil	:=FALSE;		
 		nInitiStep						:= 5;
 	5:
+	strText:='Sealing Initial [Step 5] - Check Configuration';
 	bConfig			:=TRUE;
 	IF Sen_BeltLoadIn OR Sen_BeltLoadOut THEN
 		bConfig			:=FALSE;
@@ -138,10 +139,10 @@ CASE nInitiStep OF
 	END_IF	
 	
 	IF bConfig THEN
-		strText:='ORG : Done ';
+		strText:='Sealing Initial [Step 5] - Configuration Ready';
 		nInitiStep	:= 20;
 		ELSE
-		strText:='ORG : Failed ';
+		strText:='Sealing Initial Error [Step 5] - Configuration Failed';
 		nInitiStep	:= 50;
 	END_IF
 	
@@ -151,13 +152,17 @@ CASE nInitiStep OF
 	
 
 20:
+	strText:='Sealing Initial [Step 20] - Done';
 	Initialization	:= TRUE;
+
+50:
+	strText:='Sealing Initial Error [Step 50] - Check Failed';
 
 END_CASE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="NoEntry" Id="{7f044b28-0411-4954-86f6-f74c7f97a387}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY NoEntry : BOOL
 ]]></Declaration>
       <Get Name="Get" Id="{805ef038-e4f3-4be4-8390-1e1ba28c3bb3}">
@@ -170,7 +175,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="Pause" Id="{3248126b-b242-4316-ae47-c6ac4ef43604}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD Pause : BOOL
 ]]></Declaration>
       <Implementation>
@@ -190,8 +195,7 @@ _bProcessScan	:= TRUE;
 //判斷 
 
 IF _bError THEN
-	strText	:= 'OpenBox:Error ';
-	strText	:= CONCAT(Status,INT_TO_STRING(nStep));
+	strText:=CONCAT(CONCAT('Sealing Process Error [Step ',INT_TO_STRING(nStep)),']');
 END_IF;
 //半自動模式
 IF NOT bHlatMode  THEN
@@ -207,29 +211,32 @@ END_IF
 IF NOT _bHaltPause THEN
 	CASE nStep OF
 		0:
+			strText:='Sealing Process [Step 0] - Wait Load';
 			_tmrT0(IN:=FALSE);
 			Motor_BoxSealBottom_L.qRun		:=TRUE;
 			Motor_BoxSealBottom_R.qRun		:=TRUE;
 			nNextStep						:= 5;
-			strText							:= 'Waiting for load';
 		5:
+			strText:='Sealing Process [Step 5] - Load In';
 			IF Sen_BeltLoadIn THEN
 				Cyl_BeltBottomSup.qExtendCoil	:=TRUE;
-				strText							:= 'load In';
 				nNextStep						:= 10;
 			END_IF;	
 		10:
-			IF NOT Sen_BeltLoadIn THEN
-				//Cyl_BeltBottomSup.qExtendCoil	:=FALSE;
-				;
-			END_IF;		
-	
+			strText:='Sealing Process [Step 10] - Transfer Box';
+			_tmrT0(IN:=TRUE,PT:=T#6S);	
+			
 			IF Sen_BeltLoadOut THEN
+				_tmrT0(IN:=FALSE);
 				Cyl_BeltBottomSup.qExtendCoil	:=FALSE;
-				strText						:= 'load Out';
 				nNextStep					:= 15;
 			END_IF;		
+			IF _tmrT0.Q THEN
+				GVL.WarningList[3]:=TRUE;
+			END_IF
+			
 		15:
+			strText:='Sealing Process [Step 15] - Load-Out Delay';
 			_tmrT0(IN:=TRUE,PT:=T#0.5S);
 			IF _tmrT0.Q THEN
 				_tmrT0(IN:=FALSE);
@@ -240,6 +247,7 @@ IF NOT _bHaltPause THEN
 				END_IF;
 			END_IF
 		20:
+				strText:='Sealing Process [Step 20] - Wait LoadPic Ready';
 				IF M_LoadPic3.Connect= 'Seal In' THEN
 					nNextStep					:= 21;
 					ELSE
@@ -247,6 +255,7 @@ IF NOT _bHaltPause THEN
 					Motor_BoxSealBottom_R.qRun		:=FALSE;
 				END_IF
 		21:
+				strText:='Sealing Process [Step 21] - Clear Load-Out Sensor';
 				_tmrT0(IN:=NOT Sen_BeltLoadOut,PT:=T#0.5S);
 				Motor_BoxSealBottom_L.qRun		:=TRUE;
 				Motor_BoxSealBottom_R.qRun		:=TRUE;		
@@ -255,6 +264,7 @@ IF NOT _bHaltPause THEN
 					nNextStep					:= 50;
 				END_IF
 		50:
+				strText:='Sealing Process [Step 50] - Done';
 				nNextStep					:= 0;
 	END_CASE
 END_IF;
@@ -265,7 +275,7 @@ Process	:= nStep =50;
       </Implementation>
     </Method>
     <Property Name="Status" Id="{3522a825-d2b8-46c3-9396-824ffc70819e}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY Status : STRING(50)
 ]]></Declaration>
       <Get Name="Get" Id="{ddbe10c8-e747-4091-b45b-68c48cded3b1}">

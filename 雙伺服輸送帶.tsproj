@@ -3277,7 +3277,7 @@ and will return to Group State Standby when the situation permits.
 		</Motion>
 		<Plc>
 			<Project GUID="{1C3DB08B-B3FE-41F6-BFE0-480D0E253FD3}" Name="PLC_" PrjFilePath="PLC_\PLC_.plcproj" TmcFilePath="PLC_\PLC_.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x001e" CopyTmcToTarget="true" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{8272064A-75AB-D4B3-C699-6A77879BA282}" TmcPath="PLC_\PLC_.tmc">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{ED9A61E4-E3B9-78DF-57AF-C215E964B59D}" TmcPath="PLC_\PLC_.tmc">
 					<Name>PLC_ Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="2" ContextId="1" AreaNo="17">

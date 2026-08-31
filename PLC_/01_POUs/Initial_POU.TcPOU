@@ -5,6 +5,9 @@
 VAR
 	nStep	:INT;
 	strText	:STRING;
+	nErrorStep : INT := -1; // Original failed Initial_POU step; -1 = no error
+	strErrorDetail,strErrorText,strUnitText : STRING;
+	i : INT;
 	aryBit	:ARRAY [0..100] OF BOOL;
 	dwError: DWORD;
 	tmrDelay,tmrDone	:TON;
@@ -13,82 +16,79 @@ END_VAR
     <Implementation>
       <ST><![CDATA[CASE nStep OF
 	0:
+		Motor_Blower.qRun	:=FALSE;
 		tmrDelay(IN:=FALSE);
 		tmrDone(IN:=FALSE);
-		strText:= 'Intiail Runing';
-		EventLogger.eEventType		:= 2;
-		EventLogger.strEventText	:= 'Ini. Execute! ';	
+		nErrorStep:=-1;
+		strErrorDetail:='';
+		strErrorText:='';
+		strUnitText:='';
+		dwError:=0;
+		FOR i:=0 TO 9 DO
+			aryBit[i]:=FALSE;
+		END_FOR
+		strText:='Initial [Step 0] - Check Recipe Selection';
+		EventLogger.eEventType:=2;
+		EventLogger.strEventText:=strText;
 		EventLogger();
-		OP.xInitialDone				:=FALSE;
-		nStep:= 5;
-		IF LEN(RunParameter.strName) = 0 THEN
-			nStep			:= 90;
-			EventLogger.eEventType		:= 3;
-			EventLogger.strEventText	:= 'Recipe Not Find ';	
-			EventLogger();
-			strText			:= 'Ini.Recipe Not Find';
-		END_IF;
+		OP.xInitialDone:=FALSE;
+		IF LEN(RunParameter.strName)=0 THEN
+			strErrorDetail:='No recipe selected';
+			nStep:=100;
+		ELSE
+			nStep:=5;
+		END_IF
+
 	5:
-		tmrDelay(IN:=TRUE,PT:=T#5S);		
+		strText:='Initial [Step 5] - Load and Apply Recipe';
+		tmrDelay(IN:=TRUE,PT:=T#5S);
 		IF tmrDelay.Q THEN
-			strText:= 'Ini.Recipe Time Up ';
-			EventLogger.eEventType		:= 3;
-			EventLogger.strEventText	:= 'Recipe TimeUp ';	
-			EventLogger();
-			tmrDelay(IN:=FALSE);
-			nStep			:= 90;
-		END_IF	
-			dwError:= RecipeManCommands.LoadAndWriteRecipe(RecipeDefinitionName:='Recipes' , RecipeName:=RunParameter.strName);	
-			IF dwError = 0 THEN
-				RunParameter	:= Edit_Parameter;
-				strText:= 'Ini.Run Home ';
-				nStep			:= 6;
-				ELSE
-				nStep			:= 90;
-				strText:= 'Ini.Recipe Not Find';
-				EventLogger.eEventType		:= 3;
-				EventLogger.strEventText	:= 'Recipe Not Find ';	
-				EventLogger();
+			strErrorDetail:='Recipe load timeout';
+			nStep:=105;
+		ELSE
+			dwError:=RecipeManCommands.LoadAndWriteRecipe(
+				RecipeDefinitionName:='Recipes', RecipeName:=RunParameter.strName);
+			IF dwError=0 THEN
+				RunParameter:=Edit_Parameter;
+				tmrDelay(IN:=FALSE);
+				nStep:=6;
+			ELSE
+				strErrorDetail:=CONCAT('Recipe load failed, code=',DWORD_TO_STRING(dwError));
+				nStep:=105;
 			END_IF
+		END_IF
+
 	6:
+		strText:='Initial [Step 6] - Reset Errors / Check Air Pressure';
 		MainControl.ErrorReset();
 		IF Air_Signal THEN
-			nStep			:= 10;
-			ELSE
-			nStep			:= 90;
-			strText:= 'Ini. Insuff. Air Pressure ';
-			EventLogger.eEventType		:= 3;
-			EventLogger.strEventText	:= ' Insuff. Air Pressure  ';	
-			EventLogger();
-		END_IF;		
+			nStep:=10;
+		ELSE
+			strErrorDetail:='Insufficient air pressure';
+			nStep:=106;
+		END_IF
+
 	10:
-		tmrDelay(IN:=TRUE,PT:=T#50S);		
-		IF tmrDelay.Q THEN
-			strText:= 'RB Init.TimeUp ';
-			EventLogger.eEventType		:= 3;
-			EventLogger.strEventText	:= ' RB Init.TimeUp ';	
-			EventLogger();
-			tmrDelay(IN:=FALSE);
-			nStep			:= 90;
-		END_IF	
-	
-		
-		tmrDone(IN:= aryBit[7] AND aryBit[8],PT:=T#0.1S );
+		strText:='Initial [Step 10] - Initialize CS Robot';
+		tmrDelay(IN:=TRUE,PT:=T#50S);
 		aryBit[7]:=RB_CS.Initialization();
-		aryBit[8]:=RB_KR.Initialization();					
-		IF 	RB_CS.CommandError THEN
-			strText:= 'RB Init. CS BOX Error ';
-			EventLogger.eEventType		:= 3;
-			EventLogger.strEventText	:= 'RB Init. CS BOX Error';	
-			EventLogger();
+		// RB_KR initialization remains disabled.
+		tmrDone(IN:=aryBit[7],PT:=T#0.1S);
+		// Faults take priority over completion in the same scan.
+		IF RB_CS.CommandError THEN
+			strErrorDetail:='CS robot initialization command error';
+			nStep:=110;
+		ELSIF tmrDelay.Q THEN
+			strErrorDetail:='CS robot initialization timeout';
+			nStep:=110;
+		ELSIF tmrDone.Q THEN
 			tmrDelay(IN:=FALSE);
-			nStep			:= 90;
+			tmrDone(IN:=FALSE);
+			nStep:=20;
 		END_IF
-		IF tmrDone.Q THEN
-			tmrDelay(IN:=FALSE);
-			nStep	:= 20;	
-		END_IF
+
 	20:
+		// Keep all units running in parallel; display the first unfinished unit.
 		aryBit[0]:=M_DualServo.Initialization();
 		aryBit[1]:=M_Openbox1.Initialization();
 		aryBit[2]:=M_Sealing2.Initialization();
@@ -96,34 +96,79 @@ END_VAR
 		aryBit[4]:=M_UnloadNG4.Initialization();
 		aryBit[5]:=M_StackComv5.Initialization();
 		aryBit[6]:=M_RBStack6.Initialization();
-		tmrDelay(IN:=TRUE,PT:=T#50S);		
-		IF tmrDelay.Q THEN
-			strText:= 'Init. TimeUp ';
-			EventLogger.eEventType		:= 3;
-			EventLogger.strEventText	:= 'Hardware TimeUp';	
-			EventLogger();
-			tmrDelay(IN:=FALSE);
-			nStep			:= 99;	
+
+		IF NOT aryBit[0] THEN
+			strUnitText:=CONCAT('DualServo: ',M_DualServo.strText);
+		ELSIF NOT aryBit[1] THEN
+			strUnitText:=M_Openbox1.strText;
+		ELSIF NOT aryBit[2] THEN
+			strUnitText:=M_Sealing2.strText;
+		ELSIF NOT aryBit[3] THEN
+			strUnitText:=M_LoadPic3.strText;
+		ELSIF NOT aryBit[4] THEN
+			strUnitText:=M_UnloadNG4.strText;
+		ELSIF NOT aryBit[5] THEN
+			strUnitText:=M_StackComv5.strText;
+		ELSIF NOT aryBit[6] THEN
+			strUnitText:=M_RBStack6.strText;
+		ELSE
+			strUnitText:='All units ready - confirm completion';
 		END_IF
-		tmrDone(IN:= aryBit[0] AND aryBit[1] AND aryBit[2] AND aryBit[3] AND aryBit[4] AND aryBit[5] AND aryBit[6] ,PT:=T#0.1S);
-		IF  tmrDone.q THEN
+		strText:=CONCAT('Initial [Step 20] - ',strUnitText);
+		tmrDelay(IN:=TRUE,PT:=T#50S);
+		tmrDone(IN:=aryBit[0] AND aryBit[1] AND aryBit[2] AND aryBit[3]
+			AND aryBit[4] AND aryBit[5] AND aryBit[6],PT:=T#0.1S);
+		IF tmrDelay.Q THEN
+			strErrorDetail:=CONCAT('Timeout: ',strUnitText);
+			nStep:=120;
+		ELSIF tmrDone.Q THEN
 			tmrDone(IN:=FALSE);
 			tmrDelay(IN:=FALSE);
-			EventLogger.eEventType		:= 1;
-			EventLogger.strEventText	:= 'Intil. Complete';	
+			nStep:=49;
+		END_IF
+
+	49:
+		strText:='Initial [Step 49] - Start CS Robot Production Program';
+		aryBit[9]:=RB_CS.POU_Run(Numb:=Parameter_PERSISTENT.RunParameter.Load_RBPrgNo);
+		IF RB_CS.CommandError THEN
+			strErrorDetail:='CS robot production program command error';
+			nStep:=149;
+		ELSIF aryBit[9] THEN
+			EventLogger.eEventType:=1;
+			EventLogger.strEventText:='Initial [Step 50] - Complete';
 			EventLogger();
-			strText:= 'Int.Finished';
-			nStep			:= 50;
-		END_IF;
-		
+			nStep:=50;
+			Motor_Blower.qRun:= TRUE;
+			strText:='Initial [Step 50] - Complete';
+		END_IF
+
 	50:
-		OP.xInitialDone	:= TRUE;	
-	90:		
-		EventLogger.eEventType		:= 3;
-		EventLogger.strEventText	:= 'Ini. Cancel!';	
-		EventLogger();	
-		nStep			:= 91;	
-END_CASE]]></ST>
+		strText:='Initial [Step 50] - Complete';
+		OP.xInitialDone:=TRUE;
+
+	100..199:
+		; // Error details are latched below, including on the first fault scan.
+
+	200..299:
+		strText:=strErrorText; // Retain the original failed step until restart.
+END_CASE
+
+IF (nStep>=100) AND (nStep<=199) THEN
+	nErrorStep:=nStep-100;
+	IF LEN(strErrorDetail)=0 THEN
+		strErrorDetail:='Initialization cancelled';
+	END_IF
+	strErrorText:=CONCAT(CONCAT('Initial Error [Step ',INT_TO_STRING(nErrorStep)),'] - ');
+	strErrorText:=CONCAT(strErrorText,strErrorDetail);
+	strText:=strErrorText;
+	OP.xInitialDone:=FALSE;
+	tmrDelay(IN:=FALSE);
+	tmrDone(IN:=FALSE);
+	EventLogger.eEventType:=3;
+	EventLogger.strEventText:=strErrorText;
+	EventLogger();
+	nStep:=nStep+100;
+END_IF]]></ST>
     </Implementation>
     <Method Name="FB_init" Id="{f0e1d5c9-cb6f-4d69-9756-baed2e282f23}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
@@ -134,7 +179,11 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[nStep	:= 0;
-strText	:= '';]]></ST>
+strText	:= '';
+nErrorStep:= -1;
+strErrorDetail:= '';
+strErrorText:= '';
+strUnitText:= '';]]></ST>
       </Implementation>
     </Method>
   </POU>

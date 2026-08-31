@@ -13,9 +13,7 @@ VAR
 	MC_GearIn			:MC_GearIn;
 	MC_Stop				: MC_Stop;
 	MC_MoveVelocity		: MC_MoveVelocity := (Velocity := 100);
-	fbTrigger_Load1	,	fbTrigger_Load2			:R_TRIG;
-	Loadin1Pos		:ARRAY [1..10] OF LREAL ;
-	Loadin2Pos		:ARRAY [1..10] OF LREAL ;
+
 	i					:INT;
 	
 	//
@@ -70,21 +68,6 @@ IF fbLDF[5].Q THEN
 END_IF;
 
 
-fbTrigger_Load1(CLK:= Sen_AxisLoad1ORG);
-fbTrigger_Load2(CLK:= Sen_AxisLoad2ORG);
-IF fbTrigger_Load1.Q THEN
-	FOR i := 9 TO 1 BY -1 DO
-		Loadin1Pos[i+1]:= Loadin1Pos[i];
-	END_FOR
-	Loadin1Pos[1]	:= Axis_load1.NcToPlc.ActPos;
-END_IF
-
-IF fbTrigger_Load2.Q THEN
-	FOR i := 9 TO 1 BY -1 DO
-		Loadin2Pos[i+1]:= Loadin2Pos[i];
-	END_FOR
-	Loadin2Pos[1]	:= Axis_load2.NcToPlc.ActPos;
-END_IF
 
 //開箱 
 IF M[10] THEN

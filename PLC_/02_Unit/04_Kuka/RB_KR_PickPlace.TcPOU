@@ -3,6 +3,7 @@
   <POU Name="RB_KR_PickPlace" Id="{c9f12692-5f34-4330-981d-5bc83a04e51f}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK RB_KR_PickPlace
 VAR_INPUT
+	Disable			:BOOL;
 	state			AT%I*	:UINT;
 	aryEIPInput		AT%I*	:ARRAY [0..63] OF UINT ;
 END_VAR
@@ -129,6 +130,10 @@ bBackgroundRun	:= tmrBGRun.Q ;
 IF bBackgroundRun AND NOT bOffline THEN
 	GVL.WarningList[0]:= TRUE;
 END_IF
+IF Disable THEN
+	GVL.AlarmList[19]	:= FALSE;
+	GVL.WarningList[0]	:= FALSE;
+END_IF
 
 
 // =====================================================
@@ -165,9 +170,6 @@ _bPOUrun:=FALSE;
 
 
 
-
-
-
 IF NOT _bInit THEN
 	_Init:= 0;
 END_IF
@@ -183,7 +185,7 @@ _bInit:= FALSE;
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[CommandError	:= _Init = 99 OR _POUrun = 99;]]></ST>
+          <ST><![CDATA[CommandError	:= _Init > 100 OR _POUrun > 100;]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -201,7 +203,8 @@ CASE _Init OF
 			_Init	:= 5;
 			ELSE
 			RB_CS_SysIO.qENABLE	:= FALSE;
-			_Init	:= 99;	
+			WarningList[46]		:=TRUE;
+			_Init	:=_Init +100;	
 		END_IF
 	5:
 		RB_CS_SysIO.qENABLE	:= TRUE;
@@ -212,7 +215,8 @@ CASE _Init OF
 		END_IF
 		IF tmrInit.Q THEN
 			tmrInit(IN:=FALSE);
-			_Init	:= 99;
+			WarningList[46]		:=TRUE;
+			_Init	:=_Init +100;	
 		END_IF
 	
 	10:
@@ -225,6 +229,7 @@ CASE _Init OF
 	
 		IF RB_CS_SysIO.iHome_Pos THEN
 			tmrInit(IN:=FALSE);
+			
 			_Init	:= 50;
 		END_IF;		
 	15://取消程序
@@ -241,20 +246,22 @@ CASE _Init OF
 		END_IF
 		IF tmrInit.Q THEN
 			tmrInit(IN:=FALSE);
-			_Init	:= 99;
+			WarningList[46]		:=TRUE;
+			_Init	:=_Init +100;	
 		END_IF		
 
 			
 	30://RUN HOME
+		tmrInit(IN:=FALSE);
 		RB_CS_SysIO.qPGNO	:= 61;
 		RB_CS_SysIO.qSTART	:= TRUE;
 		_Init				:= 31;
 	31:
-		tmrInit(IN:=NOT RB_CS_SysIO.iRUNNING,PT:= T#1S);		
+		tmrInit(IN:=NOT RB_CS_SysIO.iRUNNING,PT:= T#7S);		
 		IF RB_CS_SysIO.iHome_Pos THEN
 			RB_CS_SysIO.qSTART	:= FALSE;
 			tmrInit(IN:=FALSE);
-			_Init	:= 50;	
+			_Init	:=0;	
 		END_IF
 	
 		IF RB_CS_SysIO.iPAUSED THEN
@@ -263,12 +270,14 @@ CASE _Init OF
 	
 		IF RB_CS_SysIO.iERROR OR tmrInit.q THEN
 			tmrInit(IN:=FALSE);
-			_Init	:= 99;
+			WarningList[46]		:=TRUE;
+			_Init	:=_Init +100;	
 		END_IF
 	99:
 		;	
 		
 END_CASE;
+Initialization	:= _Init = 50;
 (*
 CASE _Init OF
 0:
@@ -501,57 +510,46 @@ CASE _POUrun OF
 		RB_CS_PickIO.cmd_bBoxInPos	:=FALSE;
 		RB_CS_PickIO.cmd_bPartInPos	:=FALSE;
 		tmrPouRun(IN:=FALSE);
-		wRetry				:= 0;
-			CASE eCSStatus OF
-				E_CS_Status.Idle :
-					_POUrun:= 99;
-				E_CS_Status.DriveReady:
-					_POUrun:= 5;
-			    E_CS_Status.ReadyToWork:
-					_POUrun:= 10;
-					IF Numb=0 THEN
-						strTextBox:='Wait To Call';
-						_POUrun:= 90;
-					END_IF
-			    E_CS_Status.Pou_Runing:
-					_POUrun:= 90;
-			    E_CS_Status.Pou_Run_Pause:
-					_POUrun:= 90;
-			    E_CS_Status.Pou_Run_Down:
-					_POUrun:= 10;
-					IF Numb=0 THEN
-						strTextBox:='Wait To Call';
-						_POUrun:= 90;
-					END_IF
-				E_CS_Status.EStop:
-					_POUrun:= 99;
-			    E_CS_Status.Error:	
-					_POUrun:= 50;		
-			END_CASE
+		IF RB_CS_SysIO.iREADY THEN
+			_POUrun	:= 5;
+			ELSE
+			_POUrun	:= 200+_POUrun;
+		END_IF
+		
 	5:
 			tmrPouRun(IN:= TRUE,PT:=T#1S);
 			RB_CS_SysIO.qENABLE	:= TRUE;
 			IF RB_CS_SysIO.iENABLED THEN
-				_POUrun:= 0;
+				_POUrun:= 10;
 			END_IF
 			IF tmrPouRun.Q THEN
-				wRetry			:= wRetry+1;
 				RB_CS_SysIO.qENABLE	:= FALSE;
 				tmrPouRun(IN:=FALSE);
-				_POUrun:= 6;
+				_POUrun	:= 100+_POUrun;
 			END_IF
-	6:
-			tmrPouRun(IN:= TRUE,PT:=T#0.5S);
-			IF tmrPouRun.Q THEN
-				tmrPouRun(IN:=FALSE);
-				_POUrun:= 5;
-				IF wRetry >2 THEN
-					strTextBox:='ENABLE Faild';
-					_POUrun:= 98;	
-				END_IF
-			END_IF				
+			IF NOT RB_CS_SysIO.iREADY THEN
+				_POUrun	:= 200+_POUrun;
+			END_IF			
+	10:		
+		IF RB_CS_SysIO.iHome_Pos THEN
+			_POUrun	:=30;
+			ELSE
+			_POUrun	:=15;
+		END_IF			
+		IF RB_CS_SysIO.iRUNNING THEN
+			_POUrun	:=15;
+		END_IF
 			
-	10:
+			
+	15:
+		IF Initialization() THEN
+			_POUrun	:=30;
+		END_IF;	
+		IF CommandError THEN
+			_POUrun	:= 100+_POUrun;
+		END_IF
+		 
+	30:
 			tmrPouRun(IN:= TRUE,PT:=T#1S);
 			RB_CS_SysIO.qPGNO:= WORD_TO_BYTE(Numb);
 			RB_CS_SysIO.qSTART	:= TRUE;
@@ -563,41 +561,25 @@ CASE _POUrun OF
 			IF Numb>65 THEN
 				tmrPouRun(IN:= FALSE);
 				strTextBox:='Numb. Out of Range';
-				_POUrun:= 98;
+				_POUrun	:= 100+_POUrun;
 			END_IF
 			IF tmrPouRun.Q THEN
 				strTextBox:='Star Time Out';
-				_POUrun:= 98;
+				_POUrun	:= 100+_POUrun;
 				tmrPouRun(IN:= FALSE);
 			END_IF
-	50://Error Reset
-		tmrPouRun(IN:= TRUE,PT:=T#1S);	
-		RB_CS_SysIO.qRESET	:= TRUE;
-		IF eCSStatus<>  E_CS_Status.Error THEN
-			strTextBox:='ERROR Reset';
-			tmrPouRun(IN:= FALSE,PT:=T#1S);	
-			_POUrun:= 10;
-		END_IF
-		
-			IF tmrPouRun.Q THEN
-				strTextBox:='Reset Faild';
-				_POUrun:= 98;
-				tmrPouRun(IN:= FALSE);
-			END_IF	
+
 	90://成功
 		POU_Run	:= TRUE;
 	
 	98:
-		
+		;
 	99://失敗
 		failRetrun:= TRUE;
 		strTextBox:='Disallowed status';
 
-
-
-
-
-END_CASE]]></ST>
+END_CASE		
+]]></ST>
       </Implementation>
     </Method>
   </POU>

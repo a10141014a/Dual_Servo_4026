@@ -3,6 +3,7 @@
   <POU Name="RB_KR_Stacking" Id="{a85c7ca9-d251-4387-9841-f5f96417914e}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK RB_KR_Stacking
 VAR_INPUT
+	Disable			:BOOL;
 	state			AT%I*	:UINT;
 	aryEIPInput		AT%I*	:ARRAY [0..127] OF BYTE ;
 END_VAR
@@ -114,6 +115,10 @@ IF bBackgroundRun AND NOT bOffline THEN
 	GVL.WarningList[1]:= TRUE;
 END_IF
 
+IF Disable THEN
+	GVL.AlarmList[20]	:= FALSE;
+	GVL.WarningList[1]	:= FALSE;
+END_IF
 
 
 

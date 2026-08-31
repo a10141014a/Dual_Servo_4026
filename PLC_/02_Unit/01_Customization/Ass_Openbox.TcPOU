@@ -5,21 +5,22 @@
 VAR_INPUT
 END_VAR
 VAR_OUTPUT
+	strText	:STRING;
 END_VAR
 VAR
-	strText	:STRING;
 	i	:INT;
 	MC_MoveAbsolute		: MC_MoveAbsolute;
 	MC_Home				: MC_Home;
 	_bProcessScan,_bInitialScan: BOOL;
 	_bHalt , _bError,_bHaltPause: BOOL;
-	nStep,nStt,nInitiStep	: INT;
+	nStep,nPushStep,nInitiStep	: INT;
 	nNextStep		: INT;
 	tmrClear		:TON;
 	temp: DWORD;
-	tmrloadIn,tmrloadIn2,tmrDelay: TON;
+	tmrloadInPaperBox,tmrloadIn2,tmrDelay: TON;
 	wPunchcounter	:INT;
 	_tmrT0: TON;
+	fbCommandOffTrig	:Tc2_Standard.F_TRIG;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -29,19 +30,22 @@ IF NOT _bInitialScan THEN
 	nInitiStep	:= 0;
 END_IF
 
-_bInitialScan:=FALSE;
-
-
-
 IF NOT _bProcessScan THEN
 	nNextStep	:= 0;
 	nStep		:= 0;
 END_IF
 
+fbCommandOffTrig(CLK:=_bProcessScan OR _bInitialScan);
+IF fbCommandOffTrig.Q THEN
+	Motor_LoadIn.qRun	:= FALSE;
+	HardwareIO.Axis_BoxPullOut.Stop();
+END_IF
+
+_bInitialScan:=FALSE;
 _bProcessScan	:=FALSE;]]></ST>
     </Implementation>
     <Property Name="Connect" Id="{f8a0cc84-e528-48fb-9909-0d076c8ed288}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY Connect : STRING(50)
 ]]></Declaration>
       <Get Name="Get" Id="{916ac29f-c4ba-414e-b515-aab1610a8f15}">
@@ -74,7 +78,7 @@ END_VAR
       </Implementation>
     </Method>
     <Property Name="Error" Id="{99a50443-c8ff-44e1-be1d-7897cb57eb9c}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY Error : BOOL
 ]]></Declaration>
       <Get Name="Get" Id="{546d74a7-10a9-4ddf-b2cf-c3b21f91dbbd}">
@@ -87,7 +91,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="ErrorClear" Id="{f5177dd6-d91c-416b-9996-3213b7f3eaf5}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD ErrorClear : BOOL
 ]]></Declaration>
       <Implementation>
@@ -95,7 +99,7 @@ METHOD ErrorClear : BOOL
       </Implementation>
     </Method>
     <Method Name="FB_init" Id="{5c308be5-1d5e-4ea1-bbbe-6ed8bda94146}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD FB_init : BOOL
 VAR_INPUT
 	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
@@ -132,7 +136,7 @@ END_VAR]]></Declaration>
 CASE nInitiStep OF
 	0:
 		_tmrT0(IN:=FALSE);
-		strText:='ORG : Initial ';
+		strText:='OpenBox Initial [Step 0] - Reset';
 		MC_Home.Execute:=FALSE;
 		MC_MoveAbsolute(Axis:= Axis_BoxPullOut,Execute:=FALSE);
 			
@@ -151,7 +155,7 @@ CASE nInitiStep OF
 			nInitiStep	:= 1;
 		END_IF
 	1:
-
+	strText:='OpenBox Initial [Step 1] - Prepare Axis';
 	_tmrT0(IN:= NOT _tmrT0.Q ,PT:= T#1S);
 	CASE Axis_BoxPullOut.Status.MotionState OF
 		MC_AXISSTATE_UNDEFINED:
@@ -182,6 +186,7 @@ CASE nInitiStep OF
 	END_IF
 
 	5:
+		strText:='OpenBox Initial [Step 5] - Check Configuration';
 		bConfig			:=TRUE;
 		IF NOT Axis_BoxPullOut.Status.StandStill THEN
 			bConfig			:=FALSE;
@@ -196,7 +201,7 @@ CASE nInitiStep OF
 			EventLogger();
 			_tmrT0(IN:= FALSE);
 			nInitiStep:= nInitiStep + 5 ;
-			strText:='ORG : Runing ';
+			strText:='OpenBox Initial [Step 5] - Configuration Ready';
 			ELSE
 			EventLogger.eEventType		:= 4;
 			EventLogger.strEventText	:= 'Exceptions Cause interruptions!! ';	
@@ -204,19 +209,19 @@ CASE nInitiStep OF
 			OP.bInitialSign		:=FALSE;
 			OP.xInitialRuning	:=FALSE;
 			nInitiStep := nInitiStep +100;	
-			strText:='ORG : Failed ';
+			strText:='OpenBox Initial Error [Step 5] - Configuration Failed';
 		END_IF	
 		
 	10:
+		strText:='OpenBox Initial [Step 10] - Check Homing';
 		IF NOT Axis_BoxPullOut.Status.Homed THEN
-			strText:='ORG : Runing ';
 			nInitiStep	:= 16;
 			ELSE
-			strText:='ORG : Runing ';	
 			nInitiStep	:= 17;
 		END_IF;	
 	//Axis Find Home
 	16:
+		strText:='OpenBox Initial [Step 16] - Home Pull-Out Axis';
 		MC_Home.Execute:=TRUE;
 		IF MC_Home.Done THEN
 			nInitiStep	:= 17;
@@ -225,6 +230,7 @@ CASE nInitiStep OF
 	
 	//Axis Go Abs SDANDBY Pos
 	17:
+		strText:='OpenBox Initial [Step 17] - Move to Standby Position';
 		MC_MoveAbsolute(Axis:= Axis_BoxPullOut,Execute:=TRUE,Position:= RunParameter.Unboxing_PullOut,Velocity:= RunParameter.Unboxing_Velo);
 			
 		IF MC_MoveAbsolute.Done THEN
@@ -237,10 +243,11 @@ CASE nInitiStep OF
 		
 	//JobDone		
 	20:
-		strText:='ORG : Done ';
+		strText:='OpenBox Initial [Step 20] - Done';
 		Initialization	:= TRUE;	
 	//Error step
 	99:	
+		strText:='OpenBox Initial Error [Step 99] - Axis Driver Error';
 		IF Axis_BoxPullOut.DeviceErrorcode <> 0  THEN
 			EventLogger.eEventType	:= E_EventType.Error;
 			EventLogger.strEventText:= 'UnboxServo Driver Error';
@@ -256,7 +263,7 @@ END_CASE
       </Implementation>
     </Method>
     <Property Name="NoEntry" Id="{befa025c-d2f0-40e8-9b59-96ee3d462de7}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY NoEntry : BOOL
 ]]></Declaration>
       <Get Name="Get" Id="{f7bbb03f-72cd-41cc-86ee-ecaef34c9ca5}">
@@ -269,7 +276,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="Pause" Id="{ba2412fb-0b39-4975-9760-48b5002ca4b2}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD Pause : BOOL
 ]]></Declaration>
       <Implementation>
@@ -289,8 +296,7 @@ END_VAR]]></Declaration>
 //判斷 
 
 IF _bError THEN
-	strText	:= 'OpenBox:Error ';
-	strText	:= CONCAT(Status,INT_TO_STRING(nStep));
+	strText:=CONCAT(CONCAT('OpenBox Process Error [Step ',INT_TO_STRING(nStep)),']');
 END_IF;
 //半自動模式
 IF NOT bHlatMode  THEN
@@ -304,57 +310,73 @@ END_IF
 
 //主程序 
 IF NOT _bHaltPause THEN
-	tmrloadIn(in:= NOT tmrloadIn.q , PT:=RunParameter.Unboxing_DelayTime[0]);	
-	IF tmrloadIn.Q THEN
-		IF NOT Sen_BoxsideFeed THEN
-			wPunchcounter	:= 	wPunchcounter + 1 ;
-			Cyl_BoxSidePitch.qExtendCoil:= TRUE;
-			ELSE
-			wPunchcounter	:= 0;			
-		END_IF
-	END_IF;
-	tmrloadIn2(IN:= Cyl_BoxSidePitch.iEndSensor ,PT:= T#1S);
-	IF tmrloadIn2.q THEN
-		Cyl_BoxSidePitch.qExtendCoil:= FALSE;			
+	//Loadin Psuh處理紙箱入料 
+	IF Sen_BoxsideFeed THEN
+		wPunchcounter	:= 0;
 	END_IF
+	tmrloadInPaperBox(in:=NOT tmrloadInPaperBox.q , PT:=RunParameter.Unboxing_DelayTime[0]);
+	IF tmrloadInPaperBox.Q THEN
+	CASE nPushStep OF
+		0:
+			IF NOT Sen_BoxsideFeed THEN
+				wPunchcounter	:=wPunchcounter +1;
+				nPushStep	:= 5;
+				IF wPunchcounter > 5 THEN
+					GVL.WarningList[2]:= TRUE;
+				END_IF
+			END_IF
+		5:
+			Cyl_BoxSidePitch.qExtendCoil:= TRUE;
+				nPushStep	:= 10;
+		10:
+			Cyl_BoxSidePitch.qExtendCoil:= FALSE;
+				nPushStep	:= 0;
+	END_CASE
+	END_IF;
 	
 	
+//Loadin 開箱 	
 	CASE nStep OF
 		0:
+			strText:='OpenBox Process [Step 0] - Check Axis';
 			tmrDelay(IN:=FALSE);
 			MC_MoveAbsolute(Axis:=Axis_BoxPullOut,Execute:=FALSE);
 			IF Axis_BoxPullOut.Status.MotionState= MC_AXISSTATE_STANDSTILL AND Axis_BoxPullOut.Status.Homed THEN
-				strText:= '';
 				nNextStep	:= 10;
 				nStep		:= 10;
 				ELSE
 				nNextStep	:= 100;
 				nStep		:= 100;	
-				strText:= 'Motor Error ';			
+				strText:='OpenBox Process Error [Step 0] - Motor Not Ready';
 			END_IF;
 			
 		10:
+			strText:='OpenBox Process [Step 10] - Pull Out Box';
 			MC_MoveAbsolute(Axis:= Axis_BoxPullOut,Execute:=TRUE,Position:= RunParameter.Unboxing_PullOut,Velocity:= RunParameter.Unboxing_Velo);
 			IF MC_MoveAbsolute.Done THEN
 				MC_MoveAbsolute(Axis:=Axis_BoxPullOut,Execute:=FALSE);
 				nNextStep	:= 15;
 			END_IF	
 		15:
+			strText:='OpenBox Process [Step 15] - Extend Box Catch';
 			Cyl_AxisBoxCatch.qExtendCoil	:= TRUE;
 			IF Cyl_AxisBoxCatch.iEndSensor THEN
 				nNextStep	:= 20;
 			END_IF
 		20:
+			strText:='OpenBox Process [Step 20] - Catch Box Vacuum';
 			Vacm_AxisCatchBox:= TRUE;
 			IF Sen_AxisBoxCatchVacumm THEN
 				nNextStep	:= 21;
 			END_IF
 		21:
+			strText:='OpenBox Process [Step 21] - Retract Box Catch';
 			Cyl_AxisBoxCatch.qExtendCoil	:= FALSE;	
 			IF Cyl_AxisBoxCatch.iOriginSensor THEN
 				nNextStep	:= 22;
 			END_IF			
 		22:
+			strText:='OpenBox Process [Step 22] - Rotate Box';
 			Cyl_Axis90.qExtendCoil	:= TRUE;	
 			tmrDelay(IN:= Cyl_Axis90.iEndSensor , pt:= T#1S);
 			IF Cyl_Axis90.iEndSensor THEN
@@ -362,17 +384,20 @@ IF NOT _bHaltPause THEN
 				nNextStep	:= 23;
 			END_IF
 		23:		
+			strText:='OpenBox Process [Step 23] - Hold Rotated Box';
 			Vacm_Axis90				:= TRUE;
 			IF Sen_Axis90Vacumm THEN
 				nNextStep	:= 24;
 			END_IF
 		24:
+			strText:='OpenBox Process [Step 24] - Extend Bottom Support';
 			Cyl_AxisBottom.qExtendCoil	:= TRUE;
 			IF Cyl_AxisBottom.iEndSensor THEN
 				nNextStep	:= 25;
 			END_IF
 
 		25:
+			strText:='OpenBox Process [Step 25] - Open Box';
 			MC_MoveAbsolute(Axis:= Axis_BoxPullOut,Execute:=TRUE,Position:= RunParameter.Unboxing_PullOut+60,Velocity:= RunParameter.Unboxing_Velo);
 
 
@@ -381,12 +406,14 @@ IF NOT _bHaltPause THEN
 				nNextStep	:= 26;
 			END_IF
 		26:
+			strText:='OpenBox Process [Step 26] - Extend Belt Bottom';
 			Cyl_BeltBottom.qExtendCoil	:= TRUE;
 			IF  Cyl_BeltBottom.iEndSensor THEN
 				nNextStep	:= 27;
 			END_IF		
 
 		27:
+			strText:='OpenBox Process [Step 27] - Extend Side Bottom';
 			Cyl_BoxSideBottom.qExtendCoil	:= TRUE;
 			IF Cyl_BoxSideBottom.iEndSensor THEN
 				nNextStep	:= 28;
@@ -394,7 +421,7 @@ IF NOT _bHaltPause THEN
 
 		28:
 			tmrDelay(IN:=FALSE);
-			strText:= 'Wait for Next St. ';	
+			strText:='OpenBox Process [Step 28] - Wait Next Station';
 
 			IF M_Sealing2.Connect = 'OpenBox In' THEN
 				nNextStep	:= 30;
@@ -405,6 +432,7 @@ IF NOT _bHaltPause THEN
 			END_IF
 	
 		30:
+			strText:='OpenBox Process [Step 30] - Transfer Box';
 			//MC_MoveAbsolute(Axis:= Axis_BoxPullOut,Execute:=TRUE,Position:= RunParameter.Unboxing_LoadOut,Velocity:= RunParameter.Unboxing_Velo);
 			MC_MoveAbsolute(Axis:= Axis_BoxPullOut,Execute:=TRUE,Position:= RunParameter.Unboxing_LoadOut,Velocity:= 100);
 
@@ -433,10 +461,13 @@ IF NOT _bHaltPause THEN
 	
 
 		50:
+			strText:='OpenBox Process [Step 50] - Done';
 			IF OP.xAutoMode AND M_Sealing2.Connect = 'OpenBox In' THEN
 				nNextStep	:= 0;
 			END_IF
 			;
+		100:
+			strText:='OpenBox Process Error [Step 100] - Motor Not Ready';
 	END_CASE
 END_IF;
 

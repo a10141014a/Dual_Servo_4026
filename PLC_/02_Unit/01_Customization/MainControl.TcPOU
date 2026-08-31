@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
   <POU Name="MainControl" Id="{3d241d5b-f045-49eb-89f8-8fec391d8179}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK MainControl
 VAR_INPUT
@@ -119,7 +119,13 @@ IF Axis_load2.Status.Error THEN
 END_IF
 IF Axis_FlyIn.Status.Error THEN
 	Axis_FlyIn.Reset();
-END_IF]]></ST>
+END_IF
+
+
+FOR i := 0 TO 50 DO
+	AlarmList[i]:=FALSE;		
+	WarningList[i]:=FALSE;
+END_FOR]]></ST>
       </Implementation>
     </Method>
     <Method Name="Fan" Id="{dea1780e-79bf-48d9-baad-bdd634136ac4}">
@@ -227,102 +233,5 @@ Motor_shock.qRun			:=FALSE;
 ]]></ST>
       </Implementation>
     </Method>
-    <LineIds Name="MainControl">
-      <LineId Id="9" Count="0" />
-      <LineId Id="16" Count="4" />
-      <LineId Id="30" Count="0" />
-      <LineId Id="26" Count="3" />
-      <LineId Id="23" Count="2" />
-      <LineId Id="22" Count="0" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="45" Count="1" />
-      <LineId Id="44" Count="0" />
-      <LineId Id="47" Count="1" />
-      <LineId Id="63" Count="1" />
-      <LineId Id="62" Count="0" />
-      <LineId Id="70" Count="0" />
-      <LineId Id="66" Count="0" />
-      <LineId Id="65" Count="0" />
-      <LineId Id="121" Count="0" />
-      <LineId Id="74" Count="0" />
-      <LineId Id="122" Count="1" />
-      <LineId Id="75" Count="1" />
-      <LineId Id="73" Count="0" />
-      <LineId Id="72" Count="0" />
-      <LineId Id="95" Count="0" />
-      <LineId Id="97" Count="5" />
-      <LineId Id="96" Count="0" />
-    </LineIds>
-    <LineIds Name="MainControl.Dual_Release">
-      <LineId Id="5" Count="0" />
-      <LineId Id="11" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="21" Count="1" />
-      <LineId Id="24" Count="0" />
-      <LineId Id="23" Count="0" />
-      <LineId Id="18" Count="2" />
-      <LineId Id="12" Count="0" />
-      <LineId Id="15" Count="1" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="9" Count="0" />
-    </LineIds>
-    <LineIds Name="MainControl.ErrorReset">
-      <LineId Id="5" Count="4" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="15" Count="1" />
-      <LineId Id="20" Count="1" />
-      <LineId Id="19" Count="0" />
-      <LineId Id="23" Count="1" />
-      <LineId Id="22" Count="0" />
-      <LineId Id="26" Count="1" />
-      <LineId Id="25" Count="0" />
-      <LineId Id="29" Count="1" />
-      <LineId Id="28" Count="0" />
-      <LineId Id="32" Count="1" />
-      <LineId Id="31" Count="0" />
-    </LineIds>
-    <LineIds Name="MainControl.Fan">
-      <LineId Id="5" Count="0" />
-    </LineIds>
-    <LineIds Name="MainControl.ResetAllAxes">
-      <LineId Id="5" Count="2" />
-    </LineIds>
-    <LineIds Name="MainControl.SoftStopAxis">
-      <LineId Id="5" Count="2" />
-      <LineId Id="9" Count="1" />
-      <LineId Id="8" Count="0" />
-      <LineId Id="12" Count="1" />
-      <LineId Id="11" Count="0" />
-      <LineId Id="15" Count="1" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="18" Count="1" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="21" Count="1" />
-      <LineId Id="20" Count="0" />
-      <LineId Id="23" Count="0" />
-      <LineId Id="27" Count="1" />
-    </LineIds>
-    <LineIds Name="MainControl.StopAir">
-      <LineId Id="5" Count="2" />
-      <LineId Id="9" Count="0" />
-      <LineId Id="11" Count="1" />
-      <LineId Id="14" Count="10" />
-    </LineIds>
-    <LineIds Name="MainControl.StopAllAxes">
-      <LineId Id="5" Count="0" />
-      <LineId Id="7" Count="1" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="6" Count="0" />
-    </LineIds>
-    <LineIds Name="MainControl.StopMotor">
-      <LineId Id="5" Count="2" />
-      <LineId Id="11" Count="2" />
-      <LineId Id="8" Count="0" />
-      <LineId Id="10" Count="0" />
-      <LineId Id="17" Count="1" />
-    </LineIds>
   </POU>
 </TcPlcObject>

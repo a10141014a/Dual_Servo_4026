@@ -5,9 +5,9 @@
 VAR_INPUT
 END_VAR
 VAR_OUTPUT
+	strText	:STRING;
 END_VAR
 VAR
-	strText	:STRING;
 	i	:INT;
 	_bProcessScan,_bInitialScan		: BOOL;
 	_bHalt , _bError,_bHaltPause	: BOOL;
@@ -21,6 +21,7 @@ VAR
 	_tmrT0,tmrStopper							: TON;
 	temp:DWORD;
 	bReady: BOOL;
+	fbCommandOffTrig	:F_TRIG;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -34,15 +35,22 @@ IF NOT _bInitialScan THEN
 	nInitiStep	:= 0;
 END_IF
 
-_bInitialScan:=FALSE;
-
-
-
 IF NOT _bProcessScan THEN
 	nNextStep	:= 0;
 	nStep		:= 0;
 END_IF
 
+
+fbCommandOffTrig(CLK:=_bProcessScan OR _bInitialScan);
+IF fbCommandOffTrig.Q THEN
+	HardwareIO.Axis_load1.Stop();
+	HardwareIO.Axis_load2.Stop();
+END_IF
+
+
+
+
+_bInitialScan:=FALSE;
 _bProcessScan	:=FALSE;
 
 
@@ -68,7 +76,7 @@ END_VAR
       </Implementation>
     </Method>
     <Property Name="Connect" Id="{dd733115-1bb2-4f8e-bc53-dbef49f5e4af}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY Connect : STRING(50)
 ]]></Declaration>
       <Get Name="Get" Id="{019cfa34-437d-40b0-9773-6999e0db6284}">
@@ -117,7 +125,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="FB_init" Id="{3c67647f-4069-4f92-affe-311c7be04a50}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD FB_init : BOOL
 VAR_INPUT
 	(* if TRUE, the retain variables are initialized (warm start / cold start)*)
@@ -131,7 +139,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="HaltStepContiune" Id="{ef121d40-ba23-4ebf-abc0-02af33e485ba}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD HaltStepContiune : BOOL
 ]]></Declaration>
       <Implementation>
@@ -158,11 +166,12 @@ CASE nInitiStep OF
 		fbMC_GearOut(Slave:= Axis_load2,Execute:=FALSE);
 		_tmrT0(IN:=FALSE);
 		Cyl_UnloadDef.qExtendCoil	:= FALSE;
-		strText:='ORG : Initial ';
+		strText:='LoadPic Initial [Step 0] - Reset';
 		IF AssRoller.Initialization() THEN
 			nInitiStep := 1;
 		END_IF
 	1:
+		strText:='LoadPic Initial [Step 1] - Prepare Axes';
 		_tmrT0(IN:= NOT _tmrT0.Q ,PT:= T#1S);
 		CASE Axis_load1.Status.MotionState OF
 			MC_AXISSTATE_DISABLED:
@@ -194,6 +203,7 @@ CASE nInitiStep OF
 			nInitiStep	:= 5;		
 		END_IF
 	5:
+		strText:='LoadPic Initial [Step 5] - Check Configuration';
 		bConfig			:=TRUE;
 		IF NOT Axis_load1.Status.StandStill THEN
 			bConfig			:=FALSE;
@@ -216,17 +226,18 @@ CASE nInitiStep OF
 			END_IF;
 			_tmrT0(IN:= FALSE);
 			nInitiStep:= 10 ;
-			strText:='ORG : Runing ';
+			strText:='LoadPic Initial [Step 5] - Configuration Ready';
 			ELSE
 			EventLogger.eEventType		:= 4;
 			EventLogger.strEventText	:= 'Exceptions Cause interruptions!! ';	
 			EventLogger();
-			OP.xAutoRuning	:=FALSE;
+			WarningList[42]		:=TRUE;
 			nInitiStep := nInitiStep +100;	
-			strText:='ORG : Failed  ';
+			strText:='LoadPic Initial Error [Step 5] - Configuration Failed';
 		END_IF			
 		
 	10:
+		strText:='LoadPic Initial [Step 10] - Home Axes';
 		fbHomeInside.Execute:=TRUE;
 		fbHomeOutside.Execute:=TRUE;
 		fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= fbHomeInside.Done );
@@ -237,17 +248,18 @@ CASE nInitiStep OF
 			fbHomeOutside.Execute:=FALSE;
 			fbMC_AbsLoad1(Axis:= Axis_load1,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
 			fbMC_AbsLoad2(Axis:= Axis_load2,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
-			strText:='ORG : Done ';
+			strText:='LoadPic Initial [Step 10] - Homing Done';
 			nInitiStep	:= 20 ;
 		END_IF
 	20:
+		strText:='LoadPic Initial [Step 20] - Done';
 		Initialization := TRUE;
 
 END_CASE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="NoEntry" Id="{8ec65748-586b-4750-9ce0-856e1544908c}">
-      <Declaration><![CDATA[{warning 'add property implementation'}
+      <Declaration><![CDATA[
 PROPERTY NoEntry : BOOL
 ]]></Declaration>
       <Get Name="Get" Id="{11ed35a8-a5c5-40d1-8ef2-a6a43ee5c9d3}">
@@ -260,7 +272,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="Pause" Id="{1c396a50-1f9f-419e-87a9-cb9845eeb508}">
-      <Declaration><![CDATA[{warning 'add method implementation '}
+      <Declaration><![CDATA[
 METHOD Pause : BOOL
 ]]></Declaration>
       <Implementation>
@@ -277,8 +289,7 @@ END_VAR]]></Declaration>
 //判斷 
 
 IF _bError THEN
-	strText	:= 'OpenBox:Error ';
-	strText	:= CONCAT(Status,INT_TO_STRING(nStep));
+	strText:=CONCAT(CONCAT('LoadPic Process Error [Step ',INT_TO_STRING(nStep)),']');
 END_IF;
 //半自動模式
 IF NOT bHlatMode  THEN
@@ -300,6 +311,7 @@ fbMC_AbsLoad2(Axis:= Axis_load2,Position:= RunParameter.Load_RBLoadin,Velocity:=
 IF NOT _bHaltPause THEN
 	CASE nStep OF
 		0:
+			strText:='LoadPic Process [Step 0] - Reset';
 			fbMC_AbsLoad1.Execute:=FALSE;
 			fbMC_AbsLoad2.Execute:=FALSE;
 			fbMC_INC1.Execute:=FALSE;
@@ -312,6 +324,7 @@ IF NOT _bHaltPause THEN
 			nNextStep:= 5;
 		
 		5:
+			strText:='LoadPic Process [Step 5] - Move to Start Position';
 			fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);
 			fbMC_AbsLoad2(Axis:= Axis_load2,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);		
 			IF fbMC_AbsLoad1.Done AND fbMC_AbsLoad2.Done THEN
@@ -320,6 +333,7 @@ IF NOT _bHaltPause THEN
 				nNextStep	:= 10 ;
 			END_IF		
 		10:
+			strText:='LoadPic Process [Step 10] - Wait Load Request';
 			IF OP.xAutoMode THEN
 				IF M_Sealing2.Connect='LoadPic In' THEN	
 					nNextStep	:= 11 ;
@@ -333,6 +347,7 @@ IF NOT _bHaltPause THEN
 			END_IF
 
 		11:
+			strText:='LoadPic Process [Step 11] - Confirm Belt Clear';
 			_tmrT0(IN:= NOT Sen_BeltLoadOut ,pt:= T#0.5S);
 			IF _tmrT0.Q THEN
 				_tmrT0(IN:=FALSE);
@@ -340,6 +355,7 @@ IF NOT _bHaltPause THEN
 			END_IF
 			
 		15:
+			strText:='LoadPic Process [Step 15] - Move to Robot Load Position';
 			Cyl_UnloadDef.qExtendCoil	:= TRUE;
 			fbMC_Mode1.Execute:= TRUE;
 			fbMC_Mode1.Position	:= Parameter_PERSISTENT.RunParameter.Load_RBLoadin;
@@ -354,17 +370,20 @@ IF NOT _bHaltPause THEN
 
 	
 		16:
+			strText:='LoadPic Process [Step 16] - Wait Unload Cylinder';
 			IF Cyl_UnloadDef.iEndSensor  THEN
 				nNextStep	:= 20 ;
 			END_IF	
 			
 		20:	// 允許手臂loadin
+			strText:='LoadPic Process [Step 20] - Wait Robot Loading';
 			IF RB_CS.LoadingDone() THEN
 				bReady	:= M_Sealing2.Connect = 'Ready';
 				_tmrT0(IN:=FALSE);
 				nNextStep	:= 25 ;
 			END_IF	
 		25:
+			strText:='LoadPic Process [Step 25] - Retract Unload Cylinder';
 			Cyl_UnloadDef.qExtendCoil	:= FALSE;
 			IF Roller_LoadcellUD.iLowPos AND Cyl_UnloadDef.iOriginSensor THEN
 				IF bReady THEN
@@ -374,6 +393,7 @@ IF NOT _bHaltPause THEN
 				END_IF;	
 			END_IF
 		30:	
+			strText:='LoadPic Process [Step 30] - Index Next Load';
 			tmrStopper(IN:= NOT Sen_UnloadLoadPos ,PT := T#0.5S);
 			IF tmrStopper.q THEN
 				Cyl_UnloadDef.qExtendCoil	:= TRUE;
@@ -389,6 +409,7 @@ IF NOT _bHaltPause THEN
 				nNextStep	:= 16 ;
 			END_IF;
 		31:	
+			strText:='LoadPic Process [Step 31] - Return to Start Position';
 			fbMC_Mode1.Execute:= TRUE;
 			fbMC_Mode1.Position	:= 0;
 			fbMC_Mode2.Execute:= TRUE;
@@ -398,22 +419,10 @@ IF NOT _bHaltPause THEN
 				fbMC_Mode2.Execute:= FALSE;	
 				nNextStep	:= 10 ;			
 			END_IF
-			
-			(*
-			IF Initialization(FALSE) THEN
-				nNextStep	:= 0 ;
-				IF bReady THEN
-					nNextStep	:= 15 ;
-				END_IF
-			END_IF
-		*)
-		
-			
 		
 	END_CASE;
 END_IF;
-		
-Process	:= nStep =50;]]></ST>
+]]></ST>
       </Implementation>
     </Method>
     <Property Name="Status" Id="{15589aae-c7ea-459f-af14-8a5808d9a3c9}">
