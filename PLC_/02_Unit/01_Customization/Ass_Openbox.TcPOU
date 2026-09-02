@@ -26,6 +26,13 @@ END_VAR
     <Implementation>
       <ST><![CDATA[MC_Home(Axis:= Axis_BoxPullOut,bCalibrationCam := NOT Sen_AxisBoxORG);
 
+_bError := Cyl_AxisBoxCatch.bError
+		OR Cyl_Axis90.bError
+		OR Cyl_AxisBottom.bError
+		OR Cyl_BoxSideBottom.bError
+		OR Cyl_BoxSidePitch.bError
+		OR Cyl_BeltBottom.bError;
+
 IF NOT _bInitialScan THEN
 	nInitiStep	:= 0;
 END_IF
@@ -86,7 +93,7 @@ PROPERTY Error : BOOL
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[]]></ST>
+          <ST><![CDATA[Error := _bError;]]></ST>
         </Implementation>
       </Get>
     </Property>

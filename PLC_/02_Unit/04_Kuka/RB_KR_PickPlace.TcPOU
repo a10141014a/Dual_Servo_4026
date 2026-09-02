@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <POU Name="RB_KR_PickPlace" Id="{c9f12692-5f34-4330-981d-5bc83a04e51f}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK RB_KR_PickPlace
 VAR_INPUT
@@ -112,6 +112,7 @@ END_IF
 //
 IF state<> 0 THEN
 	eCSStatus:=E_CS_Status.Offline;
+	GVL.AlarmList[19]	:=TRUE;
 	bOffline:= TRUE;
 	ELSE
 	bOffline:=FALSE;
@@ -200,6 +201,7 @@ CASE _Init OF
 	0:
 		tmrInit(IN:=FALSE);
 		IF RB_CS_SysIO.iREADY THEN
+			RB_CS_PickIO.cmd_Velo	:= 10;
 			_Init	:= 5;
 			ELSE
 			RB_CS_SysIO.qENABLE	:= FALSE;

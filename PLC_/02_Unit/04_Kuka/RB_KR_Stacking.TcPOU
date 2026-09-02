@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <POU Name="RB_KR_Stacking" Id="{a85c7ca9-d251-4387-9841-f5f96417914e}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK RB_KR_Stacking
 VAR_INPUT
@@ -99,6 +99,7 @@ IF NOT RB_KR_SysIO.iEXT_CONTROL THEN
 END_IF
 IF state<> 0 THEN
 	eKRStatus:=E_CS_Status.Offline;
+	GVL.AlarmList[20]	:= TRUE;
 	bOffline:= TRUE;
 	ELSE
 	bOffline:=FALSE;

@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4026.24">
+<TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0" TcVersion="3.1.4026.26">
 	<DataTypes>
 		<DataType>
 			<Name GUID="{18071995-0000-0000-0000-000000000035}" TcBaseType="true" HideType="true">UINTARR2</Name>
@@ -3277,11 +3277,15 @@ and will return to Group State Standby when the situation permits.
 		</Motion>
 		<Plc>
 			<Project GUID="{1C3DB08B-B3FE-41F6-BFE0-480D0E253FD3}" Name="PLC_" PrjFilePath="PLC_\PLC_.plcproj" TmcFilePath="PLC_\PLC_.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x001e" CopyTmcToTarget="true" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{ED9A61E4-E3B9-78DF-57AF-C215E964B59D}" TmcPath="PLC_\PLC_.tmc">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{6AC7785E-5637-A860-8805-F7D3A2C07708}" TmcPath="PLC_\PLC_.tmc">
 					<Name>PLC_ Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="2" ContextId="1" AreaNo="17">
 						<Name>PlcTask Outputs</Name>
+						<Var>
+							<Name>HardwareIO.Vacm_AxisCatchBox</Name>
+							<Type>BOOL</Type>
+						</Var>
 						<Var>
 							<Name>HardwareIO.EL2889</Name>
 							<Comment><![CDATA[DO]]></Comment>
@@ -3300,6 +3304,10 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
+							<Name>HardwareIO.Vacm_Axis90</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>HardwareIO.RB_CS.aryEIPOutput</Name>
 							<Type GUID="{B5A93647-8137-7048-0173-B2FAB34A1D2C}">ARRAY [0..63] OF UINT</Type>
 						</Var>
@@ -3313,10 +3321,6 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>HardwareIO.Motor_Blower.qErrorReset</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Vacm_AxisCatchBox</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3433,10 +3437,6 @@ and will return to Group State Standby when the situation permits.
 						<Var>
 							<Name>HardwareIO.Cyl_Axis90.qRetractCoil</Name>
 							<Comment><![CDATA[ 氣缸收回線圈]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Vacm_Axis90</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3657,6 +3657,7 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>GVL.DualGroupRef.PlcToNc</Name>
+							<Comment><![CDATA[ Data from PLC to MC. ]]></Comment>
 							<Type GUID="{0E2E3852-A98C-4AF3-81E2-209EE128940C}" Namespace="MC">CDT_PLCTOMC_GROUP</Type>
 						</Var>
 					</Vars>
@@ -3664,6 +3665,18 @@ and will return to Group State Standby when the situation permits.
 						<Name>PlcTask Inputs</Name>
 						<Var>
 							<Name>HardwareIO.Sen_BoxsideFeed</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_BoxsideStorageMaterial</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_AxisBoxCatchVacumm</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_AxisBoxORG</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3681,11 +3694,7 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_BoxsideStorageMaterial</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_AxisBoxCatchVacumm</Name>
+							<Name>HardwareIO.Sen_Axis90Vacumm</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3701,7 +3710,11 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_AxisBoxORG</Name>
+							<Name>HardwareIO.Sen_BeltLoadIn</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Sen_BeltLoadOut</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -3865,18 +3878,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Sen_Axis90Vacumm</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_BeltLoadIn</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Sen_BeltLoadOut</Name>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.Cyl_AxisBottom.iOriginSensor</Name>
 							<Comment><![CDATA[ 原點感測]]></Comment>
 							<Type>BOOL</Type>
@@ -3972,16 +3973,6 @@ and will return to Group State Standby when the situation permits.
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
-							<Name>HardwareIO.Cyl_NGPurge.iOriginSensor</Name>
-							<Comment><![CDATA[ 原點感測]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
-							<Name>HardwareIO.Cyl_NGPurge.iEndSensor</Name>
-							<Comment><![CDATA[ 末端感測]]></Comment>
-							<Type>BOOL</Type>
-						</Var>
-						<Var>
 							<Name>HardwareIO.Swtich_PassFeet</Name>
 							<Type>BOOL</Type>
 						</Var>
@@ -3995,6 +3986,16 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>HardwareIO.Sen_StackComvStop</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Cyl_NGPurge.iOriginSensor</Name>
+							<Comment><![CDATA[ 原點感測]]></Comment>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>HardwareIO.Cyl_NGPurge.iEndSensor</Name>
+							<Comment><![CDATA[ 末端感測]]></Comment>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
@@ -4122,6 +4123,7 @@ and will return to Group State Standby when the situation permits.
 						</Var>
 						<Var>
 							<Name>GVL.DualGroupRef.NcToPlc</Name>
+							<Comment><![CDATA[ Data from MC to PLC. ]]></Comment>
 							<Type GUID="{467F4325-10DF-4BC1-88DD-E8240EB4F8E3}" Namespace="MC">CDT_MCTOPLC_GROUP</Type>
 						</Var>
 					</Vars>
@@ -8106,10 +8108,10 @@ C:\TwinCAT\3.1\Config\Io\EtherNetIP\KRC5EtherNetIP.eds
 	<Mappings>
 		<MappingInfo Identifier="{00000000-2001-0850-0120-500832000403}" Id="#x02030040"/>
 		<MappingInfo Identifier="{00000000-2001-0850-0120-500841000403}" Id="#x02030030"/>
-		<MappingInfo Identifier="{00000000-2001-0850-0120-500850000403}" Id="#x02030050"/>
 		<MappingInfo Identifier="{00000000-0020-0304-1000-040320000403}" Id="#x02030010"/>
 		<MappingInfo Identifier="{00000000-0050-0304-6000-040350000403}" Id="#x02030080"/>
 		<MappingInfo Identifier="{08502001-0020-0304-0020-500820000403}" Id="#x02030020" Watchdog="04000000040000000400000004000000"/>
+		<MappingInfo Identifier="{08502001-0050-0304-0020-500850000403}" Id="#x02030050" Watchdog="00000000000000000000000000000000"/>
 		<MappingInfo Identifier="{05000010-2001-0850-1000-040301205008}" Id="#x02030060" Watchdog="04000000040000000400000004000000"/>
 		<MappingInfo Identifier="{05000010-2001-0850-1000-120501205008}" Id="#x02030070" Watchdog="04000000040000000400000004000000"/>
 		<OwnerA Name="TINC^NC-Task 1 SAF^Axes^Axis BoxPullout 4">
