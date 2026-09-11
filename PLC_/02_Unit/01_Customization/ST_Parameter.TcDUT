@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <DUT Name="ST_Parameter" Id="{c7aa7906-955d-4991-abed-78d18fcfafb8}">
     <Declaration><![CDATA[TYPE ST_Parameter :
 STRUCT
@@ -12,16 +12,17 @@ STRUCT
 	
 	
 	//雙伺服環形參數 
-	Dual_LoadInQty				:ARRAY [0..9]	OF INT;	//每層數量
+	Dual_LoadInQty				:ARRAY [0..15]	OF INT;	//每層數量
 	Dual_LoadInPos				:REAL;			//環形接料點
 	Dual_LoadOutPos				:REAL;			//環形出料點_RB 
 	Dual_LoadOutSecPos			:REAL;			//環形出料2點_RB 
-	Dual_ModuleSlotQty			:UINT;			//輸送帶格數 
+	//	Dual_ModuleSlotQty			:UINT;			//輸送帶格數 
 	Dual_ModulePitchLength		:REAL;			//每格長度
 	Dual_Length					:REAL;			//輸送帶長
 	Dual_Velo					:REAL;			//運行速度 
 	Dual_Gap					:REAL;			//安全間距
-	Dual_TwiceClip				:BOOL;			//兩次夾取  
+	Dual_TwiceClip				:ARRAY [0..15]	OF BOOL;			//兩次夾取  
+	Dual_SensorDef				:TIME;
 	
 	//入料輸送
 	Fly_Disdance				:REAL;		//輸送帶偵測料件輸送距離 

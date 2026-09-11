@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <GVL Name="HardwareIO" Id="{ab16b357-f6f7-4329-9ff6-e369f2c6481d}">
     <Declaration><![CDATA[VAR_GLOBAL
 	(*EtherCAT Link Status*)
@@ -54,7 +54,7 @@
 	//封箱底 
 	Motor_BoxSealBottom_L					:ST_Inventer;	//封箱底馬達-L 
 	Motor_BoxSealBottom_R					:ST_Inventer;	//封箱底馬達-R 
-	Cyl_BeltBottom							:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1S0MS, tOriginTimeout := TIME#1S0MS));	//皮帶底部壓和 
+	Cyl_BeltBottom							:ST_Cylinder := (stCylinderPara := (bEndNoSensor := TRUE, tEndDebounceTime := TIME#1s0ms, tEndTimeout := TIME#1s0ms, tOriginTimeout := TIME#1s0ms));	//皮帶底部壓和 
 	Cyl_BeltBottomSup						:ST_Cylinder;	//皮帶底部壓和邊角 沒感測器  
 	Sen_BeltLoadIn					AT%I*	:BOOL;	
 	Sen_BeltLoadOut					AT%I*	:BOOL;

@@ -159,7 +159,7 @@ END_IF]]></ST>
     <Action Name="ErrorFlagMapp" Id="{d8cd540b-6b47-4d33-985b-a98540ca2147}">
       <Implementation>
         <ST><![CDATA[GVL.AlarmList[0]:=Cyl_Axis90.bError		;	
-GVL.AlarmList[1]:=Cyl_AxisBottom.bError;	;
+//GVL.AlarmList[1]:=Cyl_AxisBottom.bError;	;
 GVL.AlarmList[2]:=Cyl_AxisBoxCatch.bError;
 GVL.AlarmList[3]:=Cyl_BeltBottom.bError	;
 GVL.AlarmList[4]:=Cyl_BeltBottomSup.bError;

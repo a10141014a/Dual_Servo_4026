@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <POU Name="Ass_UnloadNG" Id="{bd20b21e-c1a4-4f4a-a1c0-5aa3b9f16856}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK Ass_UnloadNG IMPLEMENTS ITF_AutoStructCommand
 VAR_INPUT
@@ -312,7 +312,7 @@ CASE nNGstep OF
 	
 	30://重量Error
 		Cyl_NGPurge.qExtendCoil	:= TRUE;
-		tmrNG(IN:=TRUE,PT:=T#2S);
+		tmrNG(IN:=TRUE,PT:=T#1.2S);
 		IF tmrNG.Q THEN
 			tmrNG(IN:=FALSE);
 			nStep := 0;

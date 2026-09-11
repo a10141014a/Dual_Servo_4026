@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <POU Name="Ass_Openbox" Id="{6fbfd320-f751-4f5c-aa0c-b173d550b2ff}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK Ass_Openbox IMPLEMENTS ITF_AutoStructCommand
 VAR_INPUT
@@ -28,7 +28,6 @@ END_VAR
 
 _bError := Cyl_AxisBoxCatch.bError
 		OR Cyl_Axis90.bError
-		OR Cyl_AxisBottom.bError
 		OR Cyl_BoxSideBottom.bError
 		OR Cyl_BoxSidePitch.bError
 		OR Cyl_BeltBottom.bError;
@@ -80,7 +79,7 @@ END_VAR
       <Implementation>
         <ST><![CDATA[Cyl_Safe	:= Cyl_AxisBoxCatch.iOriginSensor AND Cyl_Axis90.iOriginSensor AND
 				Cyl_AxisBottom.iOriginSensor AND Cyl_BoxSideBottom.iOriginSensor AND 	
-				Cyl_BoxSidePitch.iOriginSensor	AND Cyl_BeltBottom.iOriginSensor ;
+				Cyl_BeltBottom.iOriginSensor ;
 ]]></ST>
       </Implementation>
     </Method>
@@ -399,7 +398,7 @@ IF NOT _bHaltPause THEN
 		24:
 			strText:='OpenBox Process [Step 24] - Extend Bottom Support';
 			Cyl_AxisBottom.qExtendCoil	:= TRUE;
-			IF Cyl_AxisBottom.iEndSensor THEN
+			IF Cyl_AxisBottom.bEndConfirmed THEN
 				nNextStep	:= 25;
 			END_IF
 
@@ -456,7 +455,6 @@ IF NOT _bHaltPause THEN
 			IF tmrDelay.Q  THEN
 				Cyl_BoxSideBottom.qExtendCoil	:= FALSE;
 				Vacm_AxisCatchBox			:=FALSE;
-				Cyl_AxisBottom.qExtendCoil	:= FALSE;
 				Cyl_AxisBottom.qExtendCoil	:= FALSE;
 				Cyl_BeltBottom.qExtendCoil	:= FALSE;
 				Cyl_Axis90.qExtendCoil	:= FALSE;	

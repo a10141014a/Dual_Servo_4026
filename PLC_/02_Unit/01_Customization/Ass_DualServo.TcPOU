@@ -49,8 +49,13 @@ VAR
 
 	wSlot: INT;
 	bPause: BOOL;
+	bLeftReturning,bRightReturning: BOOL;
+	bLeftSmallPitch,bRightSmallPitch: BOOL;
+	tmrLeftGapBlocked,tmrRightGapBlocked: TON;
+	fLeftToLoadIn,fRightToLoadIn,fCatchUpDistance: LREAL;
 	fRampTime: REAL;
-	
+		bLeftDoubleClip: BOOL;
+	bRightDoubleClip: BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -111,6 +116,10 @@ nInitiStep:=0;
 nStep	:=0;
 nLeftStep	:=0;
 nRightStep	:=0;
+bLeftReturning:=FALSE;
+bRightReturning:=FALSE;
+bLeftSmallPitch:=FALSE;
+bRightSmallPitch:=FALSE;
 		MC_AbortTrigger1.Execute:= FALSE;
 		MC_AbortTrigger2.Execute:= FALSE;
 		MC_TouchProbeDual1.Execute:= FALSE;
@@ -762,6 +771,8 @@ METHOD Pause : BOOL
       <Declaration><![CDATA[METHOD Process : BOOL
 VAR_INPUT
 	bHlatMode	: BOOL;
+END_VAR
+VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[_bProcessScan	:= TRUE;
@@ -786,6 +797,7 @@ CASE  nStep OF
 		MC_SetPositionCon.Position:=0;
 		MC_SetPositionCon.Execute:=TRUE;
 		IF 	MC_SetPositionCon.Done THEN
+			Motor_Blower.qRun	:=TRUE;
 			MC_TouchProbeFly.Execute	:= TRUE;
 			nStep	:= 2;
 		END_IF
@@ -798,23 +810,35 @@ CASE  nStep OF
 	5:
 		strText	:= 'AutoFeed';
 		IF NOT bPause THEN
-			strText	:= 'Pause';
 			Axis_FlyIn.MoveVelocity(RunParameter.Fly_Velo,1);
+			ELSE
+			strText	:= 'Pause';
 		END_IF;
-		//feedin def
-		tmrFlyinDef(PT:=T#0.2S);
-		IF tmrFlyinDef.IN THEN
-			_FlyInCalibrationPos	:= MC_TouchProbeFly.RecordedData.RecordedPosition;
+		IF RunParameter.Dual_SensorDef < T#200MS THEN
+			RunParameter.Dual_SensorDef := T#200MS;
 		END_IF
-		IF tmrFlyinDef.Q THEN
+		tmrFlyinDef.PT:= RunParameter.Dual_SensorDef;
+		tmrFlyinDef(PT:=T#0.5S);
+				IF tmrFlyinDef.Q THEN
 			tmrFlyinDef.IN	:= FALSE;
 		END_IF
-		IF _FlyInCalibrationPos <>  MC_TouchProbeFly.RecordedData.RecordedPosition THEN
+		//feedin def
+		(*
+		IF  tmrFlyinDef.IN THEN
+			_FlyInCalibrationPos	:= MC_TouchProbeFly.RecordedData.RecordedPosition;
+		END_IF
+		IF _FlyInCalibrationPos <>  MC_TouchProbeFly.RecordedData.RecordedPosition AND NOT tmrFlyinDef.IN THEN
 			tmrFlyinDef.IN	:= TRUE;
 			_FlyInCalibrationPos	:= MC_TouchProbeFly.RecordedData.RecordedPosition;
 			ResInData(_FlyInCalibrationPos);
 		END_IF
-
+		*)
+		IF fbSensorTrigger.Q AND NOT tmrFlyinDef.IN THEN
+			tmrFlyinDef.IN	:= TRUE;
+			_FlyInCalibrationPos	:=Axis_FlyIn.NcToPlc.ActPos;
+			ResInData(_FlyInCalibrationPos);
+		END_IF
+		
 
 		//auto test tool
 		IF Hmi_bDualFeedTest THEN
@@ -848,6 +872,8 @@ END_CASE
 CASE nLeftStep OF
 	0:
 		strLeftText:='Para Set';
+		bLeftReturning:=FALSE;
+		bLeftSmallPitch:=FALSE;
 		MC_TouchProbeDual1.Execute:= TRUE;
 		IF MC_TouchProbeDual1.Busy THEN
 			nLeftStep	:=1;
@@ -875,6 +901,8 @@ CASE nLeftStep OF
 		IF fbMC_MoveAbsoluteCA_Left.Done THEN
 			strLeftText:='P1 Pos';
 			fbMC_MoveAbsoluteCA_Left.Execute	:= FALSE;
+			bLeftReturning:=FALSE;
+			bLeftSmallPitch:=FALSE;
 			nLeftStep	:=10;
 		END_IF
 	10:
@@ -886,12 +914,15 @@ CASE nLeftStep OF
 			IF LeftLoadinQty < RunParameter.Dual_LoadInQty[wSlot] THEN
 				strLeftText:='P1 Next Pos';
 				strLeftText	:= CONCAT(strLeftText,UINT_TO_STRING(LeftLoadinQty));
+				bLeftSmallPitch	:= TRUE;
 				fbMC_MoveAbsoluteCA_Left.Execute	:= TRUE;
 				fbMC_MoveAbsoluteCA_Left.Position	:= fbMC_MoveAbsoluteCA_Left.Position + RunParameter.Dual_ModulePitchLength;
 				fbMC_MoveAbsoluteCA_Left.Velocity	:= 1500;
 				//fbMC_MoveAbsoluteCA_Left.Velocity	:= RunParameter.Dual_ModulePitchLength / (fRampTime*0.5);
 				nLeftStep	:= 5;
 				ELSE
+				bLeftSmallPitch					:= FALSE;
+				bLeftDoubleClip	:= RunParameter.Dual_TwiceClip[wSlot];
 				wSlot								:= wSlot + 1;
 				IF RunParameter.Dual_LoadInQty[wSlot] = 0 THEN
 					wSlot	:= 0;
@@ -941,7 +972,8 @@ CASE nLeftStep OF
 
 	29://RB輸出通知
 
-			IF NOT RunParameter.Dual_TwiceClip THEN
+			IF NOT bLeftDoubleClip THEN
+				bLeftReturning	:= TRUE;
 				nLeftStep		:= 1;
 				ELSE
 				strLeftText:='P3 moving';
@@ -963,6 +995,7 @@ CASE nLeftStep OF
 		IF Hmi_bPickFeedTest THEN
 			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
 			Hmi_bPickFeedTest			:=FALSE;
+			bLeftReturning				:=TRUE;
 			nLeftStep					:= 1;
 		END_IF
 		IF RB_CS_PickIO.fb_bPackFinish	THEN
@@ -971,6 +1004,7 @@ CASE nLeftStep OF
 		END_IF
 	32:
 		IF NOT RB_CS_PickIO.fb_bPackFinish	THEN
+			bLeftReturning	:= TRUE;
 			nLeftStep	:= 1;
 		END_IF
 
@@ -979,6 +1013,8 @@ END_CASE
 CASE nRightStep OF
 	0:
 		strRightText:='Para Set';
+		bRightReturning:=FALSE;
+		bRightSmallPitch:=FALSE;
 		MC_TouchProbeDual2.Execute:= TRUE;
 		IF MC_TouchProbeDual2.Busy THEN
 			nRightStep	:=1;
@@ -1003,6 +1039,8 @@ CASE nRightStep OF
 		IF fbMC_MoveAbsoluteCA_Right.Done THEN
 			strRightText:='P1 Pos';
 			fbMC_MoveAbsoluteCA_Right.Execute	:= FALSE;
+			bRightReturning:=FALSE;
+			bRightSmallPitch:=FALSE;
 			nRightStep	:=10;
 		END_IF
 	10:
@@ -1012,11 +1050,14 @@ CASE nRightStep OF
 			RifgtLoadinQty	:= 	RifgtLoadinQty+1;
 			ResOut();
 			IF RifgtLoadinQty < RunParameter.Dual_LoadInQty[wSlot] THEN
+				bRightSmallPitch	:= TRUE;
 				fbMC_MoveAbsoluteCA_Right.Execute	:= TRUE;
 				fbMC_MoveAbsoluteCA_Right.Position	:= fbMC_MoveAbsoluteCA_Right.Position + RunParameter.Dual_ModulePitchLength;
 				fbMC_MoveAbsoluteCA_Right.Velocity	:= 1500;
 				nRightStep	:= 5;
 				ELSE
+				bRightSmallPitch					:= FALSE;
+				bRightDoubleClip					:=RunParameter.Dual_TwiceClip[wSlot];
 				wSlot								:= wSlot + 1;
 				IF RunParameter.Dual_LoadInQty[wSlot] = 0 THEN
 					wSlot	:= 0;
@@ -1064,7 +1105,8 @@ CASE nRightStep OF
 
 
 	29:
-			IF NOT RunParameter.Dual_TwiceClip THEN
+			IF NOT bRightDoubleClip THEN
+				bRightReturning	:= TRUE;
 				nRightStep		:= 1;
 				ELSE
 				strRightText:='P3 moving';
@@ -1085,6 +1127,7 @@ CASE nRightStep OF
 		IF Hmi_bPickFeedTest THEN
 			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
 			Hmi_bPickFeedTest			:=FALSE;
+			bRightReturning			:=TRUE;
 			nRightStep					:= 1;
 		END_IF
 		IF RB_CS_PickIO.fb_bPackFinish	THEN
@@ -1093,6 +1136,7 @@ CASE nRightStep OF
 		END_IF
 	32:
 		IF NOT RB_CS_PickIO.fb_bPackFinish	THEN
+			bRightReturning	:= TRUE;
 			nRightStep	:= 1;
 		END_IF
 
@@ -1100,10 +1144,33 @@ END_CASE
 
 CASE nStopStep OF
 	0:
-		//任一軸的 CA 移動被阻塞就停止入料；若已有一軸在 LoadInPos 等待接料則維持運轉。
+		//計算兩軸沿正方向到 P1 的環形距離；Modulo Factor = 3657.5 mm。
+		fLeftToLoadIn:=REAL_TO_LREAL(RunParameter.Dual_LoadInPos)-Axis_DualServo1.NcToPlc.ModuloActPos;
+		IF fLeftToLoadIn < 0 THEN
+			fLeftToLoadIn:=fLeftToLoadIn+3657.5;
+		END_IF
+		fRightToLoadIn:=REAL_TO_LREAL(RunParameter.Dual_LoadInPos)-Axis_DualServo2.NcToPlc.ModuloActPos;
+		IF fRightToLoadIn < 0 THEN
+			fRightToLoadIn:=fRightToLoadIn+3657.5;
+		END_IF
+		fCatchUpDistance:=REAL_TO_LREAL(RunParameter.Dual_Length+RunParameter.Dual_Gap);
+
+		//命令啟動時 Busy 會比 Moving 早成立，延遲確認以免把正常啟動誤判為 Gap 阻塞。
+		tmrLeftGapBlocked(
+			IN:=fbMC_MoveAbsoluteCA_Left.Busy AND Axis_DualServo1.Status.NotMoving AND NOT bLeftSmallPitch,
+			PT:=T#100MS);
+		tmrRightGapBlocked(
+			IN:=fbMC_MoveAbsoluteCA_Right.Busy AND Axis_DualServo2.Status.NotMoving AND NOT bRightSmallPitch,
+			PT:=T#100MS);
+
+		//任一軸被阻塞或正由 P2/P3 返回就停止入料。
+		//已有一軸在 LoadInPos、小 Pitch，或可在安全節距內補到 P1 時，優先維持入料運轉。
 		IF (nLeftStep <> 10) AND (nRightStep <> 10)
-		AND ((fbMC_MoveAbsoluteCA_Left.Busy AND Axis_DualServo1.Status.NotMoving)
-			OR (fbMC_MoveAbsoluteCA_Right.Busy AND Axis_DualServo2.Status.NotMoving)) THEN
+		AND NOT bLeftSmallPitch AND NOT bRightSmallPitch
+		AND (fLeftToLoadIn > fCatchUpDistance) AND (fRightToLoadIn > fCatchUpDistance)
+		AND (bLeftReturning OR bRightReturning
+			OR tmrLeftGapBlocked.Q
+			OR tmrRightGapBlocked.Q) THEN
 			Motor_LoadIn.qRun	:= FALSE;
 		ELSE
 			Motor_LoadIn.qRun	:= TRUE;
@@ -1111,6 +1178,20 @@ CASE nStopStep OF
 		Cyl_FlyIn_Pass		:=NOT Motor_LoadIn.qRun;
 
 END_CASE
+
+IF nStep  > 0 AND nStep < 998 THEN
+	IF Axis_DualServo1.Status.Error OR Axis_DualServo2.Status.Error THEN
+		nStep		:=999;
+		nLeftStep	:=999;
+		nRightStep	:=999;
+		Axis_DualServo1.Stop();
+		Axis_DualServo2.Stop();
+		EventLogger.eEventType		:= 3;
+		EventLogger.strEventText	:= 'Dual Runing AxesError ';	
+		EventLogger();	
+	END_IF
+
+END_IF
 
 ]]></ST>
       </Implementation>

@@ -3277,7 +3277,7 @@ and will return to Group State Standby when the situation permits.
 		</Motion>
 		<Plc>
 			<Project GUID="{1C3DB08B-B3FE-41F6-BFE0-480D0E253FD3}" Name="PLC_" PrjFilePath="PLC_\PLC_.plcproj" TmcFilePath="PLC_\PLC_.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x001e" CopyTmcToTarget="true" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{6AC7785E-5637-A860-8805-F7D3A2C07708}" TmcPath="PLC_\PLC_.tmc">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{C13F8F5D-99C6-5559-B3D0-4C9D5032FBAC}" TmcPath="PLC_\PLC_.tmc">
 					<Name>PLC_ Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="2" ContextId="1" AreaNo="17">
@@ -7336,7 +7336,7 @@ and will return to Group State Standby when the situation permits.
 						<CoeProfile ProfileNo="402"/>
 					</EtherCAT>
 				</Box>
-				<EtherCAT/>
+				<EtherCAT PromiscuousModeNoCopy="true"/>
 			</Device>
 			<Device Id="2" DevType="133" DevFlags="#x0002" AmsPort="28674" AmsNetId="10.200.96.23.3.1" RemoteName="Device 2 (TC3 EIP Scanner)" InfoImageId="7">
 				<Name>Device 2 (TC3 EIP Scanner)</Name>

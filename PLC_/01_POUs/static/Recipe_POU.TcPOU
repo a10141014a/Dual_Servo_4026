@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.16">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <POU Name="Recipe_POU" Id="{95390418-b344-4f7c-80c6-a06b0ed686c4}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM Recipe_POU
 VAR	
@@ -147,7 +147,6 @@ Edit_Parameter.Dual_Length				:= 430;
 Edit_Parameter.Dual_Gap					:= 150;
 Edit_Parameter.Dual_LoadOutPos			:= 2800;
 Edit_Parameter.Dual_LoadOutSecPos		:= 3200;
-Edit_Parameter.Dual_TwiceClip			:= FALSE;
 Edit_Parameter.Dual_Velo				:= 1000;
 Edit_Parameter.Dual_LoadInQty[0]		:= 4;
 Edit_Parameter.Dual_LoadInQty[1]		:= 4;
@@ -213,108 +212,5 @@ END_FOR
 	END_IF]]></ST>
       </Implementation>
     </Action>
-    <LineIds Name="Recipe_POU">
-      <LineId Id="291" Count="0" />
-      <LineId Id="295" Count="0" />
-      <LineId Id="297" Count="0" />
-      <LineId Id="438" Count="0" />
-      <LineId Id="299" Count="0" />
-      <LineId Id="298" Count="0" />
-      <LineId Id="294" Count="0" />
-      <LineId Id="467" Count="0" />
-      <LineId Id="292" Count="0" />
-      <LineId Id="417" Count="0" />
-      <LineId Id="241" Count="0" />
-      <LineId Id="245" Count="0" />
-      <LineId Id="256" Count="2" />
-      <LineId Id="239" Count="0" />
-      <LineId Id="288" Count="0" />
-      <LineId Id="269" Count="2" />
-      <LineId Id="363" Count="0" />
-      <LineId Id="284" Count="0" />
-      <LineId Id="274" Count="0" />
-      <LineId Id="272" Count="0" />
-      <LineId Id="211" Count="0" />
-      <LineId Id="285" Count="0" />
-      <LineId Id="56" Count="1" />
-      <LineId Id="59" Count="2" />
-      <LineId Id="444" Count="2" />
-      <LineId Id="442" Count="0" />
-      <LineId Id="468" Count="1" />
-      <LineId Id="474" Count="0" />
-      <LineId Id="470" Count="1" />
-      <LineId Id="358" Count="0" />
-      <LineId Id="357" Count="0" />
-      <LineId Id="359" Count="0" />
-      <LineId Id="364" Count="0" />
-      <LineId Id="361" Count="1" />
-      <LineId Id="360" Count="0" />
-      <LineId Id="238" Count="0" />
-      <LineId Id="439" Count="0" />
-      <LineId Id="441" Count="0" />
-      <LineId Id="440" Count="0" />
-      <LineId Id="496" Count="2" />
-      <LineId Id="503" Count="0" />
-      <LineId Id="514" Count="0" />
-      <LineId Id="504" Count="0" />
-      <LineId Id="507" Count="1" />
-      <LineId Id="505" Count="0" />
-      <LineId Id="509" Count="0" />
-      <LineId Id="516" Count="0" />
-      <LineId Id="512" Count="1" />
-      <LineId Id="511" Count="0" />
-      <LineId Id="506" Count="0" />
-      <LineId Id="499" Count="0" />
-      <LineId Id="321" Count="0" />
-      <LineId Id="324" Count="0" />
-      <LineId Id="356" Count="0" />
-      <LineId Id="352" Count="1" />
-      <LineId Id="323" Count="0" />
-    </LineIds>
-    <LineIds Name="Recipe_POU.CheckCreateView">
-      <LineId Id="2" Count="3" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="14" Count="0" />
-      <LineId Id="20" Count="1" />
-      <LineId Id="15" Count="0" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="6" Count="5" />
-      <LineId Id="1" Count="0" />
-    </LineIds>
-    <LineIds Name="Recipe_POU.CheckLoadView">
-      <LineId Id="18" Count="1" />
-      <LineId Id="2" Count="0" />
-      <LineId Id="4" Count="1" />
-      <LineId Id="17" Count="0" />
-      <LineId Id="11" Count="5" />
-      <LineId Id="1" Count="0" />
-      <LineId Id="21" Count="1" />
-    </LineIds>
-    <LineIds Name="Recipe_POU.LoadDefData">
-      <LineId Id="1" Count="1" />
-      <LineId Id="4" Count="5" />
-      <LineId Id="20" Count="5" />
-      <LineId Id="18" Count="0" />
-      <LineId Id="26" Count="1" />
-      <LineId Id="29" Count="0" />
-      <LineId Id="28" Count="0" />
-      <LineId Id="30" Count="1" />
-      <LineId Id="33" Count="0" />
-      <LineId Id="32" Count="0" />
-      <LineId Id="34" Count="3" />
-    </LineIds>
-    <LineIds Name="Recipe_POU.LoadingRecipe">
-      <LineId Id="7" Count="10" />
-      <LineId Id="22" Count="0" />
-      <LineId Id="21" Count="0" />
-      <LineId Id="5" Count="0" />
-    </LineIds>
-    <LineIds Name="Recipe_POU.ReloadList">
-      <LineId Id="2" Count="2" />
-      <LineId Id="13" Count="0" />
-      <LineId Id="5" Count="7" />
-      <LineId Id="1" Count="0" />
-    </LineIds>
   </POU>
 </TcPlcObject>

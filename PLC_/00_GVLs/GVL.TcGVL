@@ -17,7 +17,7 @@
 	RecipeManCommands	:RecipeManCommands;			//配方處理 
 	MainControl			:MainControl;
 	DoNotLoadingRB		: BOOL;
-	MuteBZ				:BOOL;
+	MuteBZ				:BOOL:=TRUE;
 	
 	AlarmList				:ARRAY [0..50] OF BOOL;
 	WarningList				:ARRAY [0..50] OF BOOL;
