@@ -176,18 +176,18 @@ END_VAR
 
 CASE nInitiStep OF
 	0:		
-		strText:='RBStack Initial [Step 0] - Reset';
+		strText:='I0 Reset';
 		Cyl_ExitStopper.qExtendCoil	:=FALSE;
 		Cyl_ExitClip.qExtendCoil	:=FALSE;
 		Roller_Exit.qRun			:=FALSE;	
 		nInitiStep				:= 5;	
 	5:
-		strText:='RBStack Initial [Step 5] - Wait Exit Clear';
+		strText:='I5 Wait Exit Clear';
 		IF 	NOT Sen_ExitLoadIn AND NOT Sen_ExitBoxCheck AND NOT Sen_ExitComvStop THEN
 			nInitiStep				:= 10;	
 		END_IF;
 	10:
-			strText:='RBStack Initial [Step 10] - Done';
+			strText:='I10 Done';
 			Initialization	:= TRUE;
 	
 END_CASE;]]></ST>
@@ -226,7 +226,7 @@ END_VAR
 
 CASE nStep OF
 	0:	
-		strText:='RBStack Process [Step 0] - Wait Box';
+		strText:='P0 Wait Box';
 		Bundling_yPause			:=FALSE;
 		_tmrT0(IN:=FALSE);
 		_tmrT1(IN:=FALSE);
@@ -241,7 +241,7 @@ CASE nStep OF
 		END_IF
 		
 	5:
-		strText:='RBStack Process [Step 5] - Position Box';
+		strText:='P5 Position Box';
 		_tmrT0(IN:=Sen_ExitBoxCheck,PT:=T#0.2S);
 		IF _tmrT0.Q THEN
 			Cyl_ExitStopper.qExtendCoil:=	TRUE;
@@ -251,7 +251,7 @@ CASE nStep OF
 			nStep	:= 10;
 		END_IF
 	10:
-		strText:='RBStack Process [Step 10] - Release Box';
+		strText:='P10 Release Box';
 		_tmrT0(IN:=TRUE,PT:=T#0.2S);	
 		_tmrT1(IN:=Sen_ExitComvStop,PT:=T#0.2S);		
 		IF _tmrT0.Q THEN
@@ -267,14 +267,14 @@ CASE nStep OF
 			END_IF;		
 		END_IF
 	11:
-		strText:='RBStack Process [Step 11] - Auto Pass Delay';
+		strText:='P11 Auto Pass Delay';
 		tmrAutoPass(IN:= TRUE,PT:=T#2S);
 		IF tmrAutoPass.Q THEN
 			tmrAutoPass(IN:= FALSE);
 			nStep	:= 15;
 		END_IF
 	15://通知手臂
-		strText:='RBStack Process [Step 15] - Wait Robot Stacking';
+		strText:='P15 Wait Robot Stacking';
 		IF Sen_ExitLoadIn THEN
 			Bundling_yPause			:=TRUE;
 		END_IF;
@@ -316,7 +316,7 @@ CASE nStep OF
 
 		
 	20:
-		strText:='RBStack Process [Step 20] - Wait Exit Clear';
+		strText:='P20 Wait Exit Clear';
 		IF Sen_ExitLoadIn THEN
 			Bundling_yPause			:=TRUE;
 		END_IF;

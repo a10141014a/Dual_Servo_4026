@@ -166,12 +166,12 @@ CASE nInitiStep OF
 		fbMC_GearOut(Slave:= Axis_load2,Execute:=FALSE);
 		_tmrT0(IN:=FALSE);
 		Cyl_UnloadDef.qExtendCoil	:= FALSE;
-		strText:='LoadPic Initial [Step 0] - Reset';
+		strText:='I0 Reset';
 		IF AssRoller.Initialization() THEN
 			nInitiStep := 1;
 		END_IF
 	1:
-		strText:='LoadPic Initial [Step 1] - Prepare Axes';
+		strText:='I1 Prepare Axes';
 		_tmrT0(IN:= NOT _tmrT0.Q ,PT:= T#1S);
 		CASE Axis_load1.Status.MotionState OF
 			MC_AXISSTATE_DISABLED:
@@ -203,7 +203,7 @@ CASE nInitiStep OF
 			nInitiStep	:= 5;		
 		END_IF
 	5:
-		strText:='LoadPic Initial [Step 5] - Check Configuration';
+		strText:='I5 Check Configuration';
 		bConfig			:=TRUE;
 		IF NOT Axis_load1.Status.StandStill THEN
 			bConfig			:=FALSE;
@@ -226,18 +226,18 @@ CASE nInitiStep OF
 			END_IF;
 			_tmrT0(IN:= FALSE);
 			nInitiStep:= 10 ;
-			strText:='LoadPic Initial [Step 5] - Configuration Ready';
+			strText:='I5 Configuration Ready';
 			ELSE
 			EventLogger.eEventType		:= 4;
 			EventLogger.strEventText	:= 'Exceptions Cause interruptions!! ';	
 			EventLogger();
 			WarningList[42]		:=TRUE;
 			nInitiStep := nInitiStep +100;	
-			strText:='LoadPic Initial Error [Step 5] - Configuration Failed';
+			strText:='I5 ERR Configuration Failed';
 		END_IF			
 		
 	10:
-		strText:='LoadPic Initial [Step 10] - Home Axes';
+		strText:='I10 Home Axes';
 		fbHomeInside.Execute:=TRUE;
 		fbHomeOutside.Execute:=TRUE;
 		fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= fbHomeInside.Done );
@@ -248,11 +248,11 @@ CASE nInitiStep OF
 			fbHomeOutside.Execute:=FALSE;
 			fbMC_AbsLoad1(Axis:= Axis_load1,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
 			fbMC_AbsLoad2(Axis:= Axis_load2,Velocity:= RunParameter.Load_Velo,Execute:=FALSE );
-			strText:='LoadPic Initial [Step 10] - Homing Done';
+			strText:='I10 Homing Done';
 			nInitiStep	:= 20 ;
 		END_IF
 	20:
-		strText:='LoadPic Initial [Step 20] - Done';
+		strText:='I20 Done';
 		Initialization := TRUE;
 
 END_CASE;]]></ST>
@@ -289,7 +289,7 @@ END_VAR]]></Declaration>
 //判斷 
 
 IF _bError THEN
-	strText:=CONCAT(CONCAT('LoadPic Process Error [Step ',INT_TO_STRING(nStep)),']');
+	strText:=CONCAT(CONCAT('P',INT_TO_STRING(nStep)),' ERR');
 END_IF;
 //半自動模式
 IF NOT bHlatMode  THEN
@@ -311,7 +311,7 @@ fbMC_AbsLoad2(Axis:= Axis_load2,Position:= RunParameter.Load_RBLoadin,Velocity:=
 IF NOT _bHaltPause THEN
 	CASE nStep OF
 		0:
-			strText:='LoadPic Process [Step 0] - Reset';
+			strText:='P0 Reset';
 			fbMC_AbsLoad1.Execute:=FALSE;
 			fbMC_AbsLoad2.Execute:=FALSE;
 			fbMC_INC1.Execute:=FALSE;
@@ -324,7 +324,7 @@ IF NOT _bHaltPause THEN
 			nNextStep:= 5;
 		
 		5:
-			strText:='LoadPic Process [Step 5] - Move to Start Position';
+			strText:='P5 Move to Start Position';
 			fbMC_AbsLoad1(Axis:= Axis_load1,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);
 			fbMC_AbsLoad2(Axis:= Axis_load2,Position:= 0,Velocity:= RunParameter.Load_Velo,Execute:= TRUE);		
 			IF fbMC_AbsLoad1.Done AND fbMC_AbsLoad2.Done THEN
@@ -333,7 +333,7 @@ IF NOT _bHaltPause THEN
 				nNextStep	:= 10 ;
 			END_IF		
 		10:
-			strText:='LoadPic Process [Step 10] - Wait Load Request';
+			strText:='P10 Wait Load Request';
 			IF OP.xAutoMode THEN
 				IF M_Sealing2.Connect='LoadPic In' THEN	
 					nNextStep	:= 11 ;
@@ -347,7 +347,7 @@ IF NOT _bHaltPause THEN
 			END_IF
 
 		11:
-			strText:='LoadPic Process [Step 11] - Confirm Belt Clear';
+			strText:='P11 Confirm Belt Clear';
 			_tmrT0(IN:= NOT Sen_BeltLoadOut ,pt:= T#0.5S);
 			IF _tmrT0.Q THEN
 				_tmrT0(IN:=FALSE);
@@ -355,7 +355,7 @@ IF NOT _bHaltPause THEN
 			END_IF
 			
 		15:
-			strText:='LoadPic Process [Step 15] - Move to Robot Load Position';
+			strText:='P15 Move to Robot Load Position';
 			Cyl_UnloadDef.qExtendCoil	:= TRUE;
 			fbMC_Mode1.Execute:= TRUE;
 			fbMC_Mode1.Position	:= Parameter_PERSISTENT.RunParameter.Load_RBLoadin;
@@ -370,20 +370,20 @@ IF NOT _bHaltPause THEN
 
 	
 		16:
-			strText:='LoadPic Process [Step 16] - Wait Unload Cylinder';
+			strText:='P16 Wait Unload Cylinder';
 			IF Cyl_UnloadDef.iEndSensor  THEN
 				nNextStep	:= 20 ;
 			END_IF	
 			
 		20:	// 允許手臂loadin
-			strText:='LoadPic Process [Step 20] - Wait Robot Loading';
+			strText:='P20 Wait Robot Loading';
 			IF RB_CS.LoadingDone() THEN
 				bReady	:= M_Sealing2.Connect = 'Ready';
 				_tmrT0(IN:=FALSE);
 				nNextStep	:= 25 ;
 			END_IF	
 		25:
-			strText:='LoadPic Process [Step 25] - Retract Unload Cylinder';
+			strText:='P25 Retract Unload Cylinder';
 			Cyl_UnloadDef.qExtendCoil	:= FALSE;
 			IF Roller_LoadcellUD.iLowPos AND Cyl_UnloadDef.iOriginSensor THEN
 				IF bReady THEN
@@ -393,7 +393,7 @@ IF NOT _bHaltPause THEN
 				END_IF;	
 			END_IF
 		30:	
-			strText:='LoadPic Process [Step 30] - Index Next Load';
+			strText:='P30 Index Next Load';
 			tmrStopper(IN:= NOT Sen_UnloadLoadPos ,PT := T#0.5S);
 			IF tmrStopper.q THEN
 				Cyl_UnloadDef.qExtendCoil	:= TRUE;
@@ -409,7 +409,7 @@ IF NOT _bHaltPause THEN
 				nNextStep	:= 16 ;
 			END_IF;
 		31:	
-			strText:='LoadPic Process [Step 31] - Return to Start Position';
+			strText:='P31 Return to Start Position';
 			fbMC_Mode1.Execute:= TRUE;
 			fbMC_Mode1.Position	:= 0;
 			fbMC_Mode2.Execute:= TRUE;

@@ -105,19 +105,19 @@ END_VAR
 
 CASE nInitiStep OF
 	0:		
-		strText:='StackComv Initial [Step 0] - Reset';
+		strText:='I0 Reset';
 		Motor_Stack.qRun		:=FALSE;
 		Vacm_StackUD			:=FALSE;
 		Cyl_StackUD.qExtendCoil	:=FALSE;
 		Bundling_yPause			:= FALSE;	
 		nInitiStep				:= 5;	
 	5:
-		strText:='StackComv Initial [Step 5] - Wait Cylinder Origin';
+		strText:='I5 Wait Cylinder Origin';
 		IF 	Cyl_StackUD.iOriginSensor THEN
 			nInitiStep				:= 10;	
 		END_IF;
 	10:
-			strText:='StackComv Initial [Step 10] - Done';
+			strText:='I10 Done';
 			Initialization	:= TRUE;
 	
 END_CASE;]]></ST>
@@ -154,7 +154,7 @@ END_VAR
         <ST><![CDATA[_bProcessScan	:= TRUE;
 CASE nStep OF 
 	0:
-		strText:='StackComv Process [Step 0] - Start Conveyor';
+		strText:='P0 Start Conveyor';
 		Vacm_StackUD			:=FALSE;
 		Cyl_StackUD.qExtendCoil	:=FALSE;
 		Motor_Stack.qRun		:=TRUE;
@@ -162,7 +162,7 @@ CASE nStep OF
 		_tmrT0(IN:=FALSE);
 		_tmrT1(IN:=FALSE);
 	5:
-		strText:='StackComv Process [Step 5] - Wait Stack Position';
+		strText:='P5 Wait Stack Position';
 		IF RunParameter.stack_bUsed THEN
 				IF Sen_StackComvStop THEN
 					Motor_Stack.qRun		:=FALSE;
@@ -175,7 +175,7 @@ CASE nStep OF
 		
 		END_IF
 	9:
-		strText:='StackComv Process [Step 9] - Position Delay';
+		strText:='P9 Position Delay';
 		_tmrT0(IN:=TRUE,PT:=T#1S);
 		IF _tmrT0.Q THEN
 			_tmrT0(IN:=FALSE);
@@ -183,7 +183,7 @@ CASE nStep OF
 		END_IF		
 		
 	10://堆疊1
-		strText:='StackComv Process [Step 10] - Extend Stack Cylinder';
+		strText:='P10 Extend Stack Cylinder';
 		Cyl_StackUD.qExtendCoil	:= TRUE;
 		_tmrT0(IN:=TRUE,PT:=RunParameter.stack_DelayTime1);
 		IF _tmrT0.Q THEN
@@ -191,7 +191,7 @@ CASE nStep OF
 			nStep					:= 15;
 		END_IF
 	15:
-		strText:='StackComv Process [Step 15] - Apply Vacuum';
+		strText:='P15 Apply Vacuum';
 		Vacm_StackUD			:=TRUE;	
 		_tmrT0(IN:=TRUE,PT:=T#1S);
 		IF _tmrT0.Q THEN
@@ -199,20 +199,20 @@ CASE nStep OF
 			nStep					:= 20;
 		END_IF
 	20:
-		strText:='StackComv Process [Step 20] - Lift Stack';
+		strText:='P20 Lift Stack';
 		Cyl_StackUD.qExtendCoil	:= FALSE;		
 		IF Cyl_StackUD.iOriginSensor THEN
 			nStep					:= 25;
 		END_IF		
 	25:
-		strText:='StackComv Process [Step 25] - Move Next Box';
+		strText:='P25 Move Next Box';
 		Motor_Stack.qRun		:=TRUE;
 		IF Sen_StackComvStop THEN
 			Motor_Stack.qRun		:=FALSE;
 			nStep					:= 30;
 		END_IF	
 	30:	
-		strText:='StackComv Process [Step 30] - Position Delay';
+		strText:='P30 Position Delay';
 		_tmrT0(IN:=TRUE,PT:=T#1S);
 		IF _tmrT0.Q THEN
 			_tmrT0(IN:=FALSE);
@@ -220,7 +220,7 @@ CASE nStep OF
 		END_IF		
 	
 	35:		
-		strText:='StackComv Process [Step 35] - Lower Stack';
+		strText:='P35 Lower Stack';
 		Cyl_StackUD.qExtendCoil	:= TRUE;
 		_tmrT0(IN:=TRUE,PT:=RunParameter.stack_DelayTime2);
 		IF _tmrT0.Q THEN
@@ -228,7 +228,7 @@ CASE nStep OF
 			nStep					:= 40;
 		END_IF		
 	40:
-		strText:='StackComv Process [Step 40] - Release Stack';
+		strText:='P40 Release Stack';
 		Cyl_StackUD.qExtendCoil	:= FALSE;
 		Vacm_StackUD			:=FALSE;
 		_tmrT0(IN:=TRUE,PT:=T#0.5S);
@@ -237,7 +237,7 @@ CASE nStep OF
 			nStep					:= 45;
 		END_IF						
 	45:
-		strText:='StackComv Process [Step 45] - Clear Stack Position';
+		strText:='P45 Clear Stack Position';
 		Motor_Stack.qRun		:=TRUE;
 		IF NOT Sen_StackComvStop THEN
 			nStep					:=0;

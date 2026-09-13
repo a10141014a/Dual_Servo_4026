@@ -27,7 +27,7 @@ END_VAR
 		FOR i:=0 TO 9 DO
 			aryBit[i]:=FALSE;
 		END_FOR
-		strText:='Initial [Step 0] - Check Recipe Selection';
+		strText:='I0 Check Recipe Selection';
 		EventLogger.eEventType:=2;
 		EventLogger.strEventText:=strText;
 		EventLogger();
@@ -40,7 +40,7 @@ END_VAR
 		END_IF
 
 	5:
-		strText:='Initial [Step 5] - Load and Apply Recipe';
+		strText:='I5 Load and Apply Recipe';
 		tmrDelay(IN:=TRUE,PT:=T#5S);
 		IF tmrDelay.Q THEN
 			strErrorDetail:='Recipe load timeout';
@@ -59,7 +59,7 @@ END_VAR
 		END_IF
 
 	6:
-		strText:='Initial [Step 6] - Reset Errors / Check Air Pressure';
+		strText:='I6 Reset Errors / Check Air Pressure';
 		MainControl.ErrorReset();
 		IF Air_Signal THEN
 			nStep:=10;
@@ -69,7 +69,7 @@ END_VAR
 		END_IF
 
 	10:
-		strText:='Initial [Step 10] - Initialize CS Robot';
+		strText:='I10 Initialize CS Robot';
 		tmrDelay(IN:=TRUE,PT:=T#50S);
 		aryBit[7]:=RB_CS.Initialization();
 		// RB_KR initialization remains disabled.
@@ -98,7 +98,7 @@ END_VAR
 		aryBit[6]:=M_RBStack6.Initialization();
 
 		IF NOT aryBit[0] THEN
-			strUnitText:=CONCAT('DualServo: ',M_DualServo.strText);
+			strUnitText:=M_DualServo.strText;
 		ELSIF NOT aryBit[1] THEN
 			strUnitText:=M_Openbox1.strText;
 		ELSIF NOT aryBit[2] THEN
@@ -114,7 +114,7 @@ END_VAR
 		ELSE
 			strUnitText:='All units ready - confirm completion';
 		END_IF
-		strText:=CONCAT('Initial [Step 20] - ',strUnitText);
+		strText:=CONCAT('I20 ',strUnitText);
 		tmrDelay(IN:=TRUE,PT:=T#50S);
 		tmrDone(IN:=aryBit[0] AND aryBit[1] AND aryBit[2] AND aryBit[3]
 			AND aryBit[4] AND aryBit[5] AND aryBit[6],PT:=T#0.1S);
@@ -128,22 +128,22 @@ END_VAR
 		END_IF
 
 	49:
-		strText:='Initial [Step 49] - Start CS Robot Production Program';
+		strText:='I49 Start CS Robot Production Program';
 		aryBit[9]:=RB_CS.POU_Run(Numb:=Parameter_PERSISTENT.RunParameter.Load_RBPrgNo);
 		IF RB_CS.CommandError THEN
 			strErrorDetail:='CS robot production program command error';
 			nStep:=149;
 		ELSIF aryBit[9] THEN
 			EventLogger.eEventType:=1;
-			EventLogger.strEventText:='Initial [Step 50] - Complete';
+			EventLogger.strEventText:='I50 Complete';
 			EventLogger();
 			nStep:=50;
 			Motor_Blower.qRun:= TRUE;
-			strText:='Initial [Step 50] - Complete';
+			strText:='I50 Complete';
 		END_IF
 
 	50:
-		strText:='Initial [Step 50] - Complete';
+		strText:='I50 Complete';
 		OP.xInitialDone:=TRUE;
 
 	100..199:
@@ -158,7 +158,7 @@ IF (nStep>=100) AND (nStep<=199) THEN
 	IF LEN(strErrorDetail)=0 THEN
 		strErrorDetail:='Initialization cancelled';
 	END_IF
-	strErrorText:=CONCAT(CONCAT('Initial Error [Step ',INT_TO_STRING(nErrorStep)),'] - ');
+	strErrorText:=CONCAT(CONCAT('I',INT_TO_STRING(nErrorStep)),' ERR ');
 	strErrorText:=CONCAT(strErrorText,strErrorDetail);
 	strText:=strErrorText;
 	OP.xInitialDone:=FALSE;

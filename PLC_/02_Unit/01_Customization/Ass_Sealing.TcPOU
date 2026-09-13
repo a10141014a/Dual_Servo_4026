@@ -117,13 +117,13 @@ END_VAR]]></Declaration>
 CASE nInitiStep OF
 	0:		
 		_tmrT0(IN:=FALSE);
-		strText:='Sealing Initial [Step 0] - Reset';
+		strText:='I0 Reset';
 		Motor_BoxSealBottom_L.qRun		:=FALSE;
 		Motor_BoxSealBottom_R.qRun		:=FALSE;
 		Cyl_BeltBottomSup.qExtendCoil	:=FALSE;		
 		nInitiStep						:= 5;
 	5:
-	strText:='Sealing Initial [Step 5] - Check Configuration';
+	strText:='I5 Check Configuration';
 	bConfig			:=TRUE;
 	IF Sen_BeltLoadIn OR Sen_BeltLoadOut THEN
 		bConfig			:=FALSE;
@@ -139,10 +139,10 @@ CASE nInitiStep OF
 	END_IF	
 	
 	IF bConfig THEN
-		strText:='Sealing Initial [Step 5] - Configuration Ready';
+		strText:='I5 Configuration Ready';
 		nInitiStep	:= 20;
 		ELSE
-		strText:='Sealing Initial Error [Step 5] - Configuration Failed';
+		strText:='I5 ERR Configuration Failed';
 		nInitiStep	:= 50;
 	END_IF
 	
@@ -152,11 +152,11 @@ CASE nInitiStep OF
 	
 
 20:
-	strText:='Sealing Initial [Step 20] - Done';
+	strText:='I20 Done';
 	Initialization	:= TRUE;
 
 50:
-	strText:='Sealing Initial Error [Step 50] - Check Failed';
+	strText:='I50 ERR Check Failed';
 
 END_CASE;]]></ST>
       </Implementation>
@@ -195,7 +195,7 @@ _bProcessScan	:= TRUE;
 //判斷 
 
 IF _bError THEN
-	strText:=CONCAT(CONCAT('Sealing Process Error [Step ',INT_TO_STRING(nStep)),']');
+	strText:=CONCAT(CONCAT('P',INT_TO_STRING(nStep)),' ERR');
 END_IF;
 //半自動模式
 IF NOT bHlatMode  THEN
@@ -211,19 +211,19 @@ END_IF
 IF NOT _bHaltPause THEN
 	CASE nStep OF
 		0:
-			strText:='Sealing Process [Step 0] - Wait Load';
+			strText:='P0 Wait Load';
 			_tmrT0(IN:=FALSE);
 			Motor_BoxSealBottom_L.qRun		:=TRUE;
 			Motor_BoxSealBottom_R.qRun		:=TRUE;
 			nNextStep						:= 5;
 		5:
-			strText:='Sealing Process [Step 5] - Load In';
+			strText:='P5 Load In';
 			IF Sen_BeltLoadIn THEN
 				Cyl_BeltBottomSup.qExtendCoil	:=TRUE;
 				nNextStep						:= 10;
 			END_IF;	
 		10:
-			strText:='Sealing Process [Step 10] - Transfer Box';
+			strText:='P10 Transfer Box';
 			_tmrT0(IN:=TRUE,PT:=T#6S);	
 			
 			IF Sen_BeltLoadOut THEN
@@ -236,7 +236,7 @@ IF NOT _bHaltPause THEN
 			END_IF
 			
 		15:
-			strText:='Sealing Process [Step 15] - Load-Out Delay';
+			strText:='P15 Load-Out Delay';
 			_tmrT0(IN:=TRUE,PT:=T#0.5S);
 			IF _tmrT0.Q THEN
 				_tmrT0(IN:=FALSE);
@@ -247,7 +247,7 @@ IF NOT _bHaltPause THEN
 				END_IF;
 			END_IF
 		20:
-				strText:='Sealing Process [Step 20] - Wait LoadPic Ready';
+				strText:='P20 Wait LoadPic Ready';
 				IF M_LoadPic3.Connect= 'Seal In' THEN
 					nNextStep					:= 21;
 					ELSE
@@ -255,7 +255,7 @@ IF NOT _bHaltPause THEN
 					Motor_BoxSealBottom_R.qRun		:=FALSE;
 				END_IF
 		21:
-				strText:='Sealing Process [Step 21] - Clear Load-Out Sensor';
+				strText:='P21 Clear Load-Out Sensor';
 				_tmrT0(IN:=NOT Sen_BeltLoadOut,PT:=T#0.5S);
 				Motor_BoxSealBottom_L.qRun		:=TRUE;
 				Motor_BoxSealBottom_R.qRun		:=TRUE;		
@@ -264,7 +264,7 @@ IF NOT _bHaltPause THEN
 					nNextStep					:= 50;
 				END_IF
 		50:
-				strText:='Sealing Process [Step 50] - Done';
+				strText:='P50 Done';
 				nNextStep					:= 0;
 	END_CASE
 END_IF;

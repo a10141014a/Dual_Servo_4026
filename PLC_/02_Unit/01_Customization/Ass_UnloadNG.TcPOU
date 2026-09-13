@@ -131,7 +131,7 @@ CASE nInitiStep OF
 	0:		
 		LoadCell.GetTara();
 		_tmrT0(IN:=FALSE);
-		strText:='UnloadNG Initial [Step 0] - Reset';
+		strText:='I0 Reset';
 		Cyl_NGPurge.qExtendCoil		:= FALSE;
 		Roller_Purge.qRun			:= FALSE;
 		Motor_shock.qRun			:= FALSE;
@@ -139,7 +139,7 @@ CASE nInitiStep OF
 		Cyl_ShockStop.qExtendCoil	:= FALSE;		
 		nInitiStep						:= 5;
 	5:
-		strText:='UnloadNG Initial [Step 5] - Check Configuration';
+		strText:='I5 Check Configuration';
 		bConfig			:=TRUE;
 		IF Sen_TFLoadIn THEN
 			bConfig			:=FALSE;
@@ -150,21 +150,21 @@ CASE nInitiStep OF
 			
 		IF bConfig THEN
 			nInitiStep	:= 10;
-			strText:='UnloadNG Initial [Step 5] - Configuration Ready';
+			strText:='I5 Configuration Ready';
 			ELSE
-			strText:='UnloadNG Initial Error [Step 5] - Configuration Failed';
+			strText:='I5 ERR Configuration Failed';
 			nInitiStep	:= 50;
 		END_IF	
 	10:
-		strText:='UnloadNG Initial [Step 10] - Initialize Roller';
+		strText:='I10 Initialize Roller';
 		IF AssRoller.Initialization() THEN
 			nInitiStep	:= 20;
 		END_IF;		
 	20:
-		strText:='UnloadNG Initial [Step 20] - Done';
+		strText:='I20 Done';
 		Initialization	:= TRUE;
 	50:
-		strText:='UnloadNG Initial Error [Step 50] - Check Failed';
+		strText:='I50 ERR Check Failed';
 	
 END_CASE;
 	]]></ST>
@@ -206,7 +206,7 @@ END_VAR]]></Declaration>
 
 CASE nStep OF
 	0:
-		strText:='UnloadNG Process [Step 0] - Wait Box';
+		strText:='P0 Wait Box';
 		tmrLoadcell(IN:= FALSE);
 		_tmrT0(IN:=FALSE);
 		AssRoller.Roller();
@@ -214,14 +214,14 @@ CASE nStep OF
 			nStep := 5;
 		END_IF
 	5:
-		strText:='UnloadNG Process [Step 5] - Load and Stop';
+		strText:='P5 Load and Stop';
 		AssRoller.Roller();
 		IF NOT Sen_TFLoadIn THEN
 			SamplingWeight	:= 0;
 			nStep := 10;
 		END_IF	
 	10:		
-		strText:='UnloadNG Process [Step 10] - Check Weight';
+		strText:='P10 Check Weight';
 		tmrLoadcell(IN:= TRUE,PT:=T#1S);
 		UpperWeight	:= RunParameter.PackagingWeight + RunParameter.PackagingWeightUpLimit ;
 		LowerWeight := RunParameter.PackagingWeight - RunParameter.PackagingWeightLowLimit ;
@@ -230,21 +230,21 @@ CASE nStep OF
 			SamplingWeight	:= 	LoadCell.o_rWeight;
 			IF SamplingWeight >= LowerWeight AND
 				SamplingWeight <= UpperWeight THEN
-				strText:='UnloadNG Process [Step 10] - Weight Passed';
+				strText:='P10 Weight Passed';
 				bBoxPass:= TRUE;
 				ELSE
 				EventLogger.eEventType		:= 2;
 				EventLogger.strEventText	:= 'Box Over Weight ';	
 				EventLogger.strEventText	:=	CONCAT(EventLogger.strEventText,LEFT(REAL_TO_STRING(SamplingWeight),3));
 				EventLogger();
-				strText:='UnloadNG Process [Step 10] - Box NG';
+				strText:='P10 Box NG';
 				bBoxPass:= FALSE;
 			END_IF
 			nStep := 15;
 		END_IF
 	
 	15:
-		strText:='UnloadNG Process [Step 15] - Route Box';
+		strText:='P15 Route Box';
 		IF nNGstep = 0 THEN
 			nNGstep	:= 5;
 			IF RunParameter.PackagingCheck THEN
