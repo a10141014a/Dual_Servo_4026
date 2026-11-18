@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <POU Name="Initial_POU" Id="{9593bfb5-296d-4592-9257-2c0aff8b49cd}" SpecialFunc="None">
     <Declaration><![CDATA[PROGRAM Initial_POU
 VAR
@@ -16,6 +16,9 @@ END_VAR
     <Implementation>
       <ST><![CDATA[CASE nStep OF
 	0:
+		Hmi_bDualAutoTest	:=FALSE;
+		Hmi_bBoxAutoTest	:=FALSE;
+		Hmi_bLoadPicSimu	:=FALSE;
 		Motor_Blower.qRun	:=FALSE;
 		tmrDelay(IN:=FALSE);
 		tmrDone(IN:=FALSE);
@@ -138,6 +141,7 @@ END_VAR
 			EventLogger.strEventText:='I50 Complete';
 			EventLogger();
 			nStep:=50;
+			RB_CS_PickIO.cmd_Velo	:= RunParameter.Load_RBVelo;
 			Motor_Blower.qRun:= TRUE;
 			strText:='I50 Complete';
 		END_IF

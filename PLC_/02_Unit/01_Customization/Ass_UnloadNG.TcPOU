@@ -222,7 +222,7 @@ CASE nStep OF
 		END_IF	
 	10:		
 		strText:='P10 Check Weight';
-		tmrLoadcell(IN:= TRUE,PT:=T#1S);
+		tmrLoadcell(IN:= TRUE,PT:=T#3S);
 		UpperWeight	:= RunParameter.PackagingWeight + RunParameter.PackagingWeightUpLimit ;
 		LowerWeight := RunParameter.PackagingWeight - RunParameter.PackagingWeightLowLimit ;
 		IF tmrLoadcell.Q THEN
@@ -231,12 +231,14 @@ CASE nStep OF
 			IF SamplingWeight >= LowerWeight AND
 				SamplingWeight <= UpperWeight THEN
 				strText:='P10 Weight Passed';
+				Counter_OKBox	:= Counter_OKBox + 1;
 				bBoxPass:= TRUE;
 				ELSE
 				EventLogger.eEventType		:= 2;
 				EventLogger.strEventText	:= 'Box Over Weight ';	
 				EventLogger.strEventText	:=	CONCAT(EventLogger.strEventText,LEFT(REAL_TO_STRING(SamplingWeight),3));
 				EventLogger();
+				Counter_NGBox	:= Counter_NGBox + 1 ; 
 				strText:='P10 Box NG';
 				bBoxPass:= FALSE;
 			END_IF

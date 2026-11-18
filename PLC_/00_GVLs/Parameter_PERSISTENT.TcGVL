@@ -20,6 +20,8 @@
 	Setting_FanAuto					:BOOL;			//風扇自動 
 	Setting_DualServoCalibration	:BOOL;			//雙伺服輸送校準 
 	Setting_DualServoFrontPass		:BOOL;
+	Setting_PreSendRBSigned			:BOOL;
+	Setting_PreSendDistance			:REAL;
 	///////////////////////////////////////////////////	
 	EventLogger 				: EventLogger;
 	RunParameter				:ST_Parameter 	;

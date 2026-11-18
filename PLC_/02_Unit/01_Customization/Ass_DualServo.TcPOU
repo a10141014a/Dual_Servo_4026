@@ -51,11 +51,14 @@ VAR
 	bPause: BOOL;
 	bLeftReturning,bRightReturning: BOOL;
 	bLeftSmallPitch,bRightSmallPitch: BOOL;
-	tmrLeftGapBlocked,tmrRightGapBlocked: TON;
-	fLeftToLoadIn,fRightToLoadIn,fCatchUpDistance: LREAL;
+	fLeftToLoadIn,fRightToLoadIn: LREAL;
+	fLeftArrivalTime,fRightArrivalTime: LREAL;
+	fMaxArrivalTime: LREAL := 1.5;
 	fRampTime: REAL;
 		bLeftDoubleClip: BOOL;
 	bRightDoubleClip: BOOL;
+	bLeftSupport	,bRightSupport	:BOOL;
+	tmrSupport	:TON;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -814,12 +817,12 @@ CASE  nStep OF
 			ELSE
 			strText	:= 'Pause';
 		END_IF;
-		IF RunParameter.Dual_SensorDef < T#200MS THEN
-			RunParameter.Dual_SensorDef := T#200MS;
-		END_IF
 		tmrFlyinDef.PT:= RunParameter.Dual_SensorDef;
-		tmrFlyinDef(PT:=T#0.5S);
-				IF tmrFlyinDef.Q THEN
+		IF tmrFlyinDef.PT < T#500MS THEN
+			tmrFlyinDef.PT	:= T#500MS ;
+		END_IF
+		tmrFlyinDef();
+		IF tmrFlyinDef.Q THEN
 			tmrFlyinDef.IN	:= FALSE;
 		END_IF
 		//feedin def
@@ -860,6 +863,7 @@ CASE  nStep OF
 
 		IF slot[1].ScanIn AND NOT slot[1].LoadIn THEN
 			IF  Axis_FlyIn.NcToPlc.ActPos>slot[1].GearInPosition THEN
+				Counter_PackLoadIn	:= Counter_PackLoadIn + 1 ;
 				slot[1].LoadIn	:=TRUE;
 			END_IF
 		END_IF
@@ -872,7 +876,7 @@ END_CASE
 CASE nLeftStep OF
 	0:
 		strLeftText:='Para Set';
-		bLeftReturning:=FALSE;
+		bLeftReturning:=TRUE;
 		bLeftSmallPitch:=FALSE;
 		MC_TouchProbeDual1.Execute:= TRUE;
 		IF MC_TouchProbeDual1.Busy THEN
@@ -892,6 +896,17 @@ CASE nLeftStep OF
 			nLeftStep		:= 5;
 
 	5:
+		bLeftSupport:=TRUE;
+		IF bLeftReturning THEN
+			IF fLeftArrivalTime >= fMaxArrivalTime THEN
+				bLeftSupport	:=FALSE;
+			END_IF
+			ELSE
+			IF fbMC_MoveAbsoluteCA_LEFT.Busy AND Axis_DualServo1.Status.NotMoving THEN
+				bLeftSupport:=FALSE;
+			END_IF
+		END_IF
+
 		IF Axis_DualServo1.Status.NotMoving THEN
 			strLeftText:='P1 Coupled';
 			ELSE
@@ -901,11 +916,11 @@ CASE nLeftStep OF
 		IF fbMC_MoveAbsoluteCA_Left.Done THEN
 			strLeftText:='P1 Pos';
 			fbMC_MoveAbsoluteCA_Left.Execute	:= FALSE;
-			bLeftReturning:=FALSE;
-			bLeftSmallPitch:=FALSE;
-			nLeftStep	:=10;
+			bLeftReturning		:=FALSE;
+			nLeftStep			:=10;
 		END_IF
 	10:
+		bLeftSupport:= TRUE;
 		strLeftText:='P1 Pos';
 		strLeftText	:= CONCAT(strLeftText,UINT_TO_STRING(LeftLoadinQty));
 		IF slot[1].LoadIn THEN
@@ -933,6 +948,8 @@ CASE nLeftStep OF
 				fbMC_MoveAbsoluteCA_Left.Acceleration	:= Parameter_PERSISTENT.Setting_DualServoAcc;
 				fbMC_MoveAbsoluteCA_Left.Deceleration	:= Parameter_PERSISTENT.Setting_DualServoDec;
 				fbMC_MoveAbsoluteCA_Left.Jerk			:= Parameter_PERSISTENT.Setting_DualServoJerk;
+				LeftLoadinQty	:= 0;
+				bLeftSupport	:=FALSE;
 				strLeftText:='P2 moving';
 				nLeftStep	:= 20;
 			END_IF;
@@ -946,7 +963,11 @@ CASE nLeftStep OF
 			ELSE
 			strLeftText:='P2 moving';
 		END_IF
-
+		IF Setting_PreSendRBSigned	THEN
+			IF  fbMC_MoveAbsoluteCA_Left.Position - Axis_DualServo1.NcToPlc.ModuloActPos < Setting_PreSendDistance THEN  
+				RB_CS_PickIO.cmd_bPartInPos	:= TRUE;
+			END_IF;
+		END_IF
 		IF fbMC_MoveAbsoluteCA_Left.Done THEN
 			strLeftText:='P2 Pos Call RB';
 			fbMC_MoveAbsoluteCA_Left.Execute	:= FALSE;
@@ -973,7 +994,6 @@ CASE nLeftStep OF
 	29://RB輸出通知
 
 			IF NOT bLeftDoubleClip THEN
-				bLeftReturning	:= TRUE;
 				nLeftStep		:= 1;
 				ELSE
 				strLeftText:='P3 moving';
@@ -995,7 +1015,6 @@ CASE nLeftStep OF
 		IF Hmi_bPickFeedTest THEN
 			RB_CS_PickIO.cmd_bPartInPos	:= FALSE;
 			Hmi_bPickFeedTest			:=FALSE;
-			bLeftReturning				:=TRUE;
 			nLeftStep					:= 1;
 		END_IF
 		IF RB_CS_PickIO.fb_bPackFinish	THEN
@@ -1013,7 +1032,7 @@ END_CASE
 CASE nRightStep OF
 	0:
 		strRightText:='Para Set';
-		bRightReturning:=FALSE;
+		bRightReturning:=TRUE;
 		bRightSmallPitch:=FALSE;
 		MC_TouchProbeDual2.Execute:= TRUE;
 		IF MC_TouchProbeDual2.Busy THEN
@@ -1031,6 +1050,17 @@ CASE nRightStep OF
 			nRightStep		:= 5;
 
 	5:
+		bRightSupport:=TRUE;
+		IF bRightReturning  THEN		
+			IF fRightArrivalTime >= fMaxArrivalTime THEN
+				bRightSupport	:=FALSE;
+			END_IF
+			ELSE
+			IF fbMC_MoveAbsoluteCA_Right.Busy AND Axis_DualServo2.Status.NotMoving THEN
+				bRightSupport:=FALSE;
+			END_IF
+		END_IF		
+		
 		IF Axis_DualServo2.Status.NotMoving THEN
 			strRightText:='P1 Coupled';
 			ELSE
@@ -1040,10 +1070,10 @@ CASE nRightStep OF
 			strRightText:='P1 Pos';
 			fbMC_MoveAbsoluteCA_Right.Execute	:= FALSE;
 			bRightReturning:=FALSE;
-			bRightSmallPitch:=FALSE;
 			nRightStep	:=10;
 		END_IF
 	10:
+				bRightSupport:=TRUE;
 				strRightText	:='P1 Pos';
 				strRightText	:= CONCAT(strRightText,UINT_TO_STRING(RifgtLoadinQty));
 		IF slot[1].LoadIn THEN
@@ -1069,6 +1099,8 @@ CASE nRightStep OF
 				fbMC_MoveAbsoluteCA_Right.Deceleration	:= Parameter_PERSISTENT.Setting_DualServoDec;
 				fbMC_MoveAbsoluteCA_Right.Jerk			:= Parameter_PERSISTENT.Setting_DualServoJerk;
 				strRightText:='P2 moving';
+				RifgtLoadinQty	:= 0;
+				bRightSupport	:=FALSE;
 				nRightStep	:= 20;
 			END_IF;
 
@@ -1080,8 +1112,12 @@ CASE nRightStep OF
 			ELSE
 			strRightText:='P2 moving';
 		END_IF
-
-
+		IF Setting_PreSendRBSigned	THEN
+			IF  fbMC_MoveAbsoluteCA_Right.Position - Axis_DualServo2.NcToPlc.ModuloActPos < Setting_PreSendDistance THEN  
+				RB_CS_PickIO.cmd_bPartInPos	:= TRUE;
+			END_IF;
+		END_IF
+		
 		IF fbMC_MoveAbsoluteCA_Right.Done THEN
 			strRightText:='P2 Pos Call RB';
 			fbMC_MoveAbsoluteCA_Right.Execute	:= FALSE;
@@ -1144,39 +1180,45 @@ END_CASE
 
 CASE nStopStep OF
 	0:
-		//計算兩軸沿正方向到 P1 的環形距離；Modulo Factor = 3657.5 mm。
+		//計算兩軸沿正方向到 P1 的環形剩餘距離；Modulo Factor = 3657.5 mm。
 		fLeftToLoadIn:=REAL_TO_LREAL(RunParameter.Dual_LoadInPos)-Axis_DualServo1.NcToPlc.ModuloActPos;
-		IF fLeftToLoadIn < 0 THEN
+		IF fLeftToLoadIn < 0.0 THEN
 			fLeftToLoadIn:=fLeftToLoadIn+3657.5;
 		END_IF
+		IF fLeftToLoadIn >= 3656.5 THEN
+			fLeftToLoadIn:=0.0;
+		END_IF
+
 		fRightToLoadIn:=REAL_TO_LREAL(RunParameter.Dual_LoadInPos)-Axis_DualServo2.NcToPlc.ModuloActPos;
-		IF fRightToLoadIn < 0 THEN
+		IF fRightToLoadIn < 0.0 THEN
 			fRightToLoadIn:=fRightToLoadIn+3657.5;
 		END_IF
-		fCatchUpDistance:=REAL_TO_LREAL(RunParameter.Dual_Length+RunParameter.Dual_Gap);
-
-		//命令啟動時 Busy 會比 Moving 早成立，延遲確認以免把正常啟動誤判為 Gap 阻塞。
-		tmrLeftGapBlocked(
-			IN:=fbMC_MoveAbsoluteCA_Left.Busy AND Axis_DualServo1.Status.NotMoving AND NOT bLeftSmallPitch,
-			PT:=T#100MS);
-		tmrRightGapBlocked(
-			IN:=fbMC_MoveAbsoluteCA_Right.Busy AND Axis_DualServo2.Status.NotMoving AND NOT bRightSmallPitch,
-			PT:=T#100MS);
-
-		//任一軸被阻塞或正由 P2/P3 返回就停止入料。
-		//已有一軸在 LoadInPos、小 Pitch，或可在安全節距內補到 P1 時，優先維持入料運轉。
-		IF (nLeftStep <> 10) AND (nRightStep <> 10)
-		AND NOT bLeftSmallPitch AND NOT bRightSmallPitch
-		AND (fLeftToLoadIn > fCatchUpDistance) AND (fRightToLoadIn > fCatchUpDistance)
-		AND (bLeftReturning OR bRightReturning
-			OR tmrLeftGapBlocked.Q
-			OR tmrRightGapBlocked.Q) THEN
-			Motor_LoadIn.qRun	:= FALSE;
-		ELSE
-			Motor_LoadIn.qRun	:= TRUE;
+		IF fRightToLoadIn >= 3656.5 THEN
+			fRightToLoadIn:=0.0;
 		END_IF
-		Cyl_FlyIn_Pass		:=NOT Motor_LoadIn.qRun;
 
+		IF ABS(fbMC_MoveAbsoluteCA_Left.Velocity) > 0.001 THEN
+			fLeftArrivalTime:=fLeftToLoadIn/ABS(fbMC_MoveAbsoluteCA_Left.Velocity);
+		ELSE
+			fLeftArrivalTime:=999.0;
+		END_IF
+		IF ABS(fbMC_MoveAbsoluteCA_Right.Velocity) > 0.001 THEN
+			fRightArrivalTime:=fRightToLoadIn/ABS(fbMC_MoveAbsoluteCA_Right.Velocity);
+		ELSE
+			fRightArrivalTime:=999.0;
+		END_IF
+
+		tmrSupport(IN := NOT bRightSupport AND NOT bLeftSupport ,PT:=T#0.5S);
+		IF NOT tmrSupport.Q THEN
+			Motor_LoadIn.qRun	:= TRUE;
+		ELSE
+			Motor_LoadIn.qRun	:= FALSE;
+		END_IF
+		IF Setting_DualServoFrontPass THEN
+			Motor_LoadIn.qRun:= TRUE;
+		END_IF
+		
+		Cyl_FlyIn_Pass		:=NOT Motor_LoadIn.qRun;
 END_CASE
 
 IF nStep  > 0 AND nStep < 998 THEN

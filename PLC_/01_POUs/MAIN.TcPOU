@@ -24,11 +24,15 @@ IF PB_Stop OR PB_EMG OR OP.bStop_Sign THEN
 	OP.bInitialSign				:=FALSE;
 	OP.xAutoMode				:=FALSE;
 	RB_CS_SysIO.qENABLE			:= FALSE;
+	RB_CS_SysIO.qSTOP			:= TRUE;
 	RB_KR_SysIO.qMOVE_ENABLE	:= FALSE;
 	
 	MainControl.StopAllAxes();	
 	MainControl.StopMotor();
 	MainControl.StopAir();
+	EventLogger.eEventType	:= 1;
+	EventLogger.strEventText	:= 'Auto Stop!';
+	EventLogger();		
 END_IF
 IF OP.bReset THEN
 	MainControl.ErrorReset();
@@ -179,7 +183,7 @@ GVL.AlarmList[17]:=Axis_load1.Status.Error;
 GVL.AlarmList[18]:=Axis_load2.Status.Error;
 //GVL.AlarmList[19]:=RB_CS.bOffline;
 //GVL.AlarmList[20]:=RB_KR.bOffline;
-
+GVL.AlarmList[21]:=PB_EMG;
 
 //Warning
 //GVL.WarningList[0]				//CS手臂BG no run 

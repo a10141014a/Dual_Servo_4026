@@ -99,7 +99,7 @@ IF NOT RB_KR_SysIO.iEXT_CONTROL THEN
 END_IF
 IF state<> 0 THEN
 	eKRStatus:=E_CS_Status.Offline;
-	GVL.AlarmList[20]	:= TRUE;
+	//GVL.AlarmList[20]	:= TRUE;
 	bOffline:= TRUE;
 	ELSE
 	bOffline:=FALSE;
