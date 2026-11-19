@@ -22,6 +22,7 @@
 	Setting_DualServoFrontPass		:BOOL;
 	Setting_PreSendRBSigned			:BOOL;
 	Setting_PreSendDistance			:REAL;
+	Setting_HalfMode				:BOOL;
 	///////////////////////////////////////////////////	
 	EventLogger 				: EventLogger;
 	RunParameter				:ST_Parameter 	;

@@ -3277,7 +3277,7 @@ and will return to Group State Standby when the situation permits.
 		</Motion>
 		<Plc>
 			<Project GUID="{1C3DB08B-B3FE-41F6-BFE0-480D0E253FD3}" Name="PLC_" PrjFilePath="PLC_\PLC_.plcproj" TmcFilePath="PLC_\PLC_.tmc" ReloadTmc="true" AmsPort="851" TargetArchiveSettings="#x000f" FileArchiveSettings="#x001e" CopyTmcToTarget="true" SymbolicMapping="true">
-				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{99B47E63-1C2A-D845-0BAC-75CBDDE53C96}" TmcPath="PLC_\PLC_.tmc">
+				<Instance Id="#x08502000" TcSmClass="TComPlcObjDef" KeepUnrestoredLinks="1" TmcHash="{70171D7B-9E37-47FB-C4B4-062A47E8A089}" TmcPath="PLC_\PLC_.tmc">
 					<Name>PLC_ Instance</Name>
 					<CLSID ClassFactory="TcPlc30">{08500001-0000-0000-F000-000000000064}</CLSID>
 					<Vars VarGrpType="2" ContextId="1" AreaNo="17">
@@ -7344,7 +7344,7 @@ and will return to Group State Standby when the situation permits.
 					<Pnp>
 						<DeviceDesc>X001 (TwinCAT-Intel PCI Ethernet Adapter (Gigabit) </DeviceDesc>
 						<DeviceName>\DEVICE\{FCD64EBD-3EC5-46E1-8576-3DE78BC9B6FB}</DeviceName>
-						<DeviceData>00010583fbe7</DeviceData>
+						<DeviceData>000000000000</DeviceData>
 					</Pnp>
 				</AddressInfo>
 				<Image Id="5" AddrType="1" ImageType="3">

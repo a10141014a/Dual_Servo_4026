@@ -21,6 +21,7 @@ VAR
 	wPunchcounter	:INT;
 	_tmrT0: TON;
 	fbCommandOffTrig	:Tc2_Standard.F_TRIG;
+	bReload				:BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -145,7 +146,8 @@ CASE nInitiStep OF
 		strText:='I0 Reset';
 		MC_Home.Execute:=FALSE;
 		MC_MoveAbsolute(Axis:= Axis_BoxPullOut,Execute:=FALSE);
-			
+		bReload	:=FALSE;
+		
 		Vacm_AxisCatchBox				:=FALSE;
 		Cyl_AxisBoxCatch.qExtendCoil	:=FALSE;
 		Cyl_Axis90.qExtendCoil			:=FALSE;
@@ -339,7 +341,10 @@ IF NOT _bHaltPause THEN
 				nPushStep	:= 0;
 	END_CASE
 	END_IF;
-	
+	IF bReload THEN
+		bReload	:=FALSE;
+		nStep	:= 0 ;
+	END_IF
 	
 //Loadin 開箱 	
 	CASE nStep OF

@@ -12,6 +12,7 @@ END_VAR
 
 CASE  nStep OF
 	0:
+	IF NOT Setting_HalfMode THEN
 		M_Openbox1.Process(bHlatMode);
 		M_Sealing2.Process(FALSE);
 		M_LoadPic3.Process(FALSE);
@@ -19,6 +20,16 @@ CASE  nStep OF
 		M_DualServo.Process(FALSE);
 		M_StackComv5.Process(FALSE);
 		M_RBStack6.Process(FALSE);
+		ELSE
+		Cyl_FlyIn_Pass	:= TRUE;
+		M_UnloadNG4.Process(FALSE);	
+		M_StackComv5.Process(FALSE);
+		M_RBStack6.Process(FALSE);			
+	END_IF;
+	
+	
+	
+	
 END_CASE
 IF bNextStep THEN
 	M_Openbox1.HaltStepContiune();

@@ -306,7 +306,14 @@ CASE nNGstep OF
 
 		
 	10:
+		tmrNG(IN:=TRUE,PT:=T#10S);
+		IF tmrNG.Q THEN
+			tmrNG(IN:=FALSE);
+			strNGText	:= 'Shack ORG';
+			nNGstep	:= 0;
+		END_IF
 		IF Sen_ShockPos THEN
+			tmrNG(IN:=FALSE);
 			strNGText	:= 'Shack ORG';
 			nNGstep	:= 0;
 		END_IF
@@ -324,9 +331,17 @@ CASE nNGstep OF
 		
 		
 		
-	50://手動投入	
+	50://手動投入
+		tmrNG(IN:=TRUE,PT:=T#10S);
+		IF tmrNG.Q THEN
+			tmrNG(IN:=FALSE);
+			strNGText	:= 'Shack ORG';
+			nNGstep	:= 0;
+		END_IF
+	
 		strNGText	:= '50 Man. ';
 		IF Sen_ShockPos THEN
+			tmrNG(IN:=FALSE);
 			nNGstep	:= 0;
 		END_IF	
 END_CASE;	

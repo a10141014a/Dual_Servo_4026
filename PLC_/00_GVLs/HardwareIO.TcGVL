@@ -49,7 +49,7 @@
 	Cyl_Axis90								:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1S0MS, tOriginTimeout := TIME#1S0MS));	//90度 
 	Sen_Axis90Vacumm				AT%I*	:BOOL;
 	Vacm_Axis90						AT%Q*	:BOOL;
-	Cyl_AxisBottom							:ST_Cylinder := (stCylinderPara := (tEndTimeout := TIME#1S0MS, tOriginTimeout := TIME#1S0MS));	//底部壓和 
+	Cyl_AxisBottom							:ST_Cylinder := (stCylinderPara := (bEndNoSensor := TRUE, tEndTimeout := TIME#1s0ms, tOriginTimeout := TIME#1s0ms));	//底部壓和 
 	
 	//封箱底 
 	Motor_BoxSealBottom_L					:ST_Inventer;	//封箱底馬達-L 

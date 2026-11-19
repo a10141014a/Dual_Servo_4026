@@ -22,6 +22,7 @@ IF PB_Stop OR PB_EMG OR OP.bStop_Sign THEN
 	OP.xAutoRuning				:= FALSE;
 	OP.xInitialRuning			:=FALSE;	
 	OP.bInitialSign				:=FALSE;
+	OP.bStop_Sign 				:=FALSE;
 	OP.xAutoMode				:=FALSE;
 	RB_CS_SysIO.qENABLE			:= FALSE;
 	RB_CS_SysIO.qSTOP			:= TRUE;

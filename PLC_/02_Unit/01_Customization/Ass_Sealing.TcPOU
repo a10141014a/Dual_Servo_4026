@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.18">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.20">
   <POU Name="Ass_Sealing" Id="{25f63225-dbc9-4b1e-b86a-0e068b049cd3}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK Ass_Sealing IMPLEMENTS ITF_AutoStructCommand
 VAR_INPUT
@@ -12,6 +12,7 @@ VAR
 	_bProcessScan,_bInitialScan: BOOL;
 	_bHalt , _bError,_bHaltPause: BOOL;
 	nStep,nInitiStep ,nNextStep 	: INT;
+	bReload			:BOOL;	
 	_tmrT0			:TON;
 END_VAR
 ]]></Declaration>
@@ -207,6 +208,11 @@ IF _bError OR _bHaltPause THEN
 	RETURN;
 END_IF
 
+IF bReload THEN
+	nStep	:= 0;
+	bReload							:=FALSE;
+	Cyl_BeltBottomSup.qExtendCoil	:=FALSE;		
+END_IF
 //主程序 
 IF NOT _bHaltPause THEN
 	CASE nStep OF
